@@ -1097,15 +1097,43 @@ license:
   existingActivationKeySecret: "your-existing-secret"
 ```
 
-## S3 Binary Storage Configuration
+## Binary Data Storage Configuration
 
-The chart now supports storing binary data in S3-compatible external storage. To enable and configure it, update the `values.yaml` file:
+`binaryData.mode` selects where n8n stores binary data. Leave it unset (`~`) to let n8n choose for the deployment mode (`filesystem` in regular mode, `database` in queue mode). n8n 2.0 removed the in-memory mode, so `default` is no longer a valid value.
 
 ```yaml
 binaryData:
-  availableModes:
-    - s3
-  mode: "s3"
+  # filesystem | database | s3 (unset = n8n default for the deployment mode)
+  mode: filesystem
+```
+
+### Filesystem
+
+Override the storage path with `binaryData.localStoragePath`. It is only rendered in `filesystem` mode, so make sure the path is covered by a writable volume.
+
+```yaml
+binaryData:
+  mode: filesystem
+  localStoragePath: /home/node/.n8n/binaryData
+```
+
+### Database
+
+Binary data lives in the database. `databaseMaxFileSize` (MiB) caps a single file and cannot exceed `1024`, the column limit; storing a larger file fails.
+
+```yaml
+binaryData:
+  mode: database
+  databaseMaxFileSize: 512
+```
+
+### S3-compatible external storage
+
+S3 settings are only used when `binaryData.mode` is `s3`:
+
+```yaml
+binaryData:
+  mode: s3
   s3:
     host: "s3.us-east-1.amazonaws.com"
     bucketName: "your-bucket-name"
@@ -1118,9 +1146,7 @@ If you have an existing secret for the s3 access key and access secret with `acc
 
 ```yaml
 binaryData:
-  availableModes:
-    - s3
-  mode: "s3"
+  mode: s3
   s3:
     host: "s3.us-east-1.amazonaws.com"
     bucketName: "your-bucket-name"
@@ -1298,6 +1324,82 @@ This section outlines major updates and breaking changes for each version of the
 ---
 
 ###  Version-Specific Upgrade Notes
+
+#### Upgrading to Version 2.0.0
+
+Chart version 2.0.0 aligns the chart with the breaking changes introduced by n8n [2.0](https://docs.n8n.io/changelog/v20-breaking-changes) and n8n [3.0](https://docs.n8n.io/changelog/v30-breaking-changes).
+
+##### Breaking Changes
+
+- `binaryData.availableModes` is **no longer rendered**. n8n 2.0 dropped the `N8N_AVAILABLE_BINARY_DATA_MODES` environment variable - the field has no env binding in n8n's own config any more - so the value had no effect. The chart keeps accepting it for one release and prints a `NOTES.txt` warning; delete it from your values.
+- `binaryData.mode` no longer accepts `default`. In-memory binary data is gone: n8n 2.x defaults to `filesystem` in regular mode and `database` in queue mode, and n8n 3.0 removes the `default` mode outright. The chart default is now unset (`~`), which lets n8n choose per deployment mode. Set `binaryData.mode` explicitly to `filesystem`, `database` or `s3`.
+- Switching from the old `default` mode means binary data now lands on disk or in the database. Give the chosen storage enough capacity and, for `filesystem`, make sure the path is on a persistent writable volume, and include it in backups. In-memory binary data itself cannot be migrated and is lost on restart either way.
+- `N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` moved out of the hardcoded container environment into the new `<release>-security-configmap` and is configurable through `security.enforceSettingsFilePermissions`.
+- `db.sqlite.poolSize` is now actually rendered as `DB_SQLITE_POOL_SIZE`, and the default changed from `0` to `3` (see below). `0` is no longer a valid value on n8n 2.x.
+
+##### New Security Defaults (n8n 2.0)
+
+A new `<release>-security-configmap`, consumed by every n8n container, exposes the instance security settings that n8n 2.0 changed:
+
+|Value|Chart default|Variable|Notes|
+|---|---|---|---|
+|`security.enforceSettingsFilePermissions`|`true`|`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS`|Strict `0600` permissions on configuration files, the n8n 2.0 behavior.|
+|`security.blockEnvAccessInNode`|`true`|`N8N_BLOCK_ENV_ACCESS_IN_NODE`|Workflows reading `process.env` / `$env` in Code nodes and expressions stop working. Set to `false` only if you accept that every secret in the container becomes readable by anyone who can edit a Code node.|
+|`security.gitNodeDisableBareRepos`|`true`|`N8N_GIT_NODE_DISABLE_BARE_REPOS`|Set to `false` only if a workflow reads a bare repository from a mounted volume.|
+|`security.restrictFileAccessTo`|unset (`~`)|`N8N_RESTRICT_FILE_ACCESS_TO`|Semicolon-separated directory list for the `ReadWriteFile` / `ReadBinaryFiles` nodes. Unset inherits the n8n default, which is `~/.n8n-files` from 2.0 onwards. Set it to widen or narrow that list; set it to `""` to disable the restriction entirely (insecure).|
+
+##### Node Loading (`NODES_EXCLUDE` / `NODES_INCLUDE`)
+
+`nodes.exclude` and `nodes.include` are now supported (both unset by default). With n8n 2.0 the upstream default for `NODES_EXCLUDE` is `["n8n-nodes-base.executeCommand","n8n-nodes-base.localFileTrigger"]`, so those nodes stop loading unless you opt out:
+
+```yaml
+nodes:
+  # load every node, including executeCommand and localFileTrigger
+  exclude: []
+```
+
+##### Encryption Key Rotation (n8n 3.0) — One-Way Migration
+
+n8n 3.0 enables encryption key rotation (`N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION=true`) by default. The chart deliberately keeps `encryptionKeyRotation.enabled: false` because **this migration cannot be rolled back**: the first instance that starts with rotation enabled rewrites all encrypted data in a new keyed format, and running again with rotation disabled afterwards makes that data permanently unreadable.
+
+To enable it:
+
+1. Back up your database (and confirm the backup restores).
+2. Verify every main and worker instance shares the same `encryptionKey` (or `existingEncryptionKeySecret`). Mixed keys during the migration corrupt data.
+3. Set `encryptionKeyRotation.enabled: true` and upgrade all instances at once, so no instance runs with rotation disabled after the rewrite.
+
+```yaml
+encryptionKeyRotation:
+  enabled: true
+```
+
+If you skip this, a future n8n minor release will still flip rotation on by itself; the chart value only defers the decision, it does not disable the feature forever.
+
+##### SQLite Pooling (`DB_SQLITE_POOL_SIZE`)
+
+n8n 2.0 removed the legacy (non-pool) SQLite driver, so the pooling driver - WAL mode, one writer plus a pool of readers - is the only one. n8n 2.x requires `DB_SQLITE_POOL_SIZE` to be at least `1` and defaults to `3`. The chart previously documented `poolSize: 0` as "disable pooling" and never rendered the variable at all; it now defaults to `3` and renders it, and the schema rejects `0`:
+
+```yaml
+db:
+  type: sqlite
+  sqlite:
+    poolSize: 3
+```
+
+##### Compression Node Limits (n8n 3.0)
+
+n8n 3.0 lowered the compression node defaults from 2 GiB / 5000 ZIP entries to 256 MiB / 1000 entries. Workflows unpacking larger archives now fail unless you raise them:
+
+```yaml
+nodes:
+  compression:
+    maxDecompressedSizeBytes: 2147483648  # 2 GiB (pre-3.0 default)
+    maxZipEntries: 5000                   # pre-3.0 default
+```
+
+##### Upstream Changes With No Chart Surface
+
+These n8n 2.0/3.0 breaking changes are workflow-level and cannot be configured through the chart; review them in the [2.0](https://docs.n8n.io/changelog/v20-breaking-changes) and [3.0](https://docs.n8n.io/changelog/v30-breaking-changes) changelogs before upgrading: Chat Hub retirement and the removal of importing workflows from a URL, the legacy Function / Function Item nodes, the removed `$getPairedItem` expression variable, and AI Agent v1 no longer being creatable.
 
 #### Upgrading to Version 1.20.0
 

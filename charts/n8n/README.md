@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 1.24.40](https://img.shields.io/badge/Version-1.24.40-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -1097,15 +1097,43 @@ license:
   existingActivationKeySecret: "your-existing-secret"
 ```
 
-## S3 Binary Storage Configuration
+## Binary Data Storage Configuration
 
-The chart now supports storing binary data in S3-compatible external storage. To enable and configure it, update the `values.yaml` file:
+`binaryData.mode` selects where n8n stores binary data. Leave it unset (`~`) to let n8n choose for the deployment mode (`filesystem` in regular mode, `database` in queue mode). n8n 2.0 removed the in-memory mode, so `default` is no longer a valid value.
 
 ```yaml
 binaryData:
-  availableModes:
-    - s3
-  mode: "s3"
+  # filesystem | database | s3 (unset = n8n default for the deployment mode)
+  mode: filesystem
+```
+
+### Filesystem
+
+Override the storage path with `binaryData.localStoragePath`. It is only rendered in `filesystem` mode, so make sure the path is covered by a writable volume.
+
+```yaml
+binaryData:
+  mode: filesystem
+  localStoragePath: /home/node/.n8n/binaryData
+```
+
+### Database
+
+Binary data lives in the database. `databaseMaxFileSize` (MiB) caps a single file and cannot exceed `1024`, the column limit; storing a larger file fails.
+
+```yaml
+binaryData:
+  mode: database
+  databaseMaxFileSize: 512
+```
+
+### S3-compatible external storage
+
+S3 settings are only used when `binaryData.mode` is `s3`:
+
+```yaml
+binaryData:
+  mode: s3
   s3:
     host: "s3.us-east-1.amazonaws.com"
     bucketName: "your-bucket-name"
@@ -1118,9 +1146,7 @@ If you have an existing secret for the s3 access key and access secret with `acc
 
 ```yaml
 binaryData:
-  availableModes:
-    - s3
-  mode: "s3"
+  mode: s3
   s3:
     host: "s3.us-east-1.amazonaws.com"
     bucketName: "your-bucket-name"
@@ -1299,6 +1325,82 @@ This section outlines major updates and breaking changes for each version of the
 
 ###  Version-Specific Upgrade Notes
 
+#### Upgrading to Version 2.0.0
+
+Chart version 2.0.0 aligns the chart with the breaking changes introduced by n8n [2.0](https://docs.n8n.io/changelog/v20-breaking-changes) and n8n [3.0](https://docs.n8n.io/changelog/v30-breaking-changes).
+
+##### Breaking Changes
+
+- `binaryData.availableModes` is **no longer rendered**. n8n 2.0 dropped the `N8N_AVAILABLE_BINARY_DATA_MODES` environment variable - the field has no env binding in n8n's own config any more - so the value had no effect. The chart keeps accepting it for one release and prints a `NOTES.txt` warning; delete it from your values.
+- `binaryData.mode` no longer accepts `default`. In-memory binary data is gone: n8n 2.x defaults to `filesystem` in regular mode and `database` in queue mode, and n8n 3.0 removes the `default` mode outright. The chart default is now unset (`~`), which lets n8n choose per deployment mode. Set `binaryData.mode` explicitly to `filesystem`, `database` or `s3`.
+- Switching from the old `default` mode means binary data now lands on disk or in the database. Give the chosen storage enough capacity and, for `filesystem`, make sure the path is on a persistent writable volume, and include it in backups. In-memory binary data itself cannot be migrated and is lost on restart either way.
+- `N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` moved out of the hardcoded container environment into the new `<release>-security-configmap` and is configurable through `security.enforceSettingsFilePermissions`.
+- `db.sqlite.poolSize` is now actually rendered as `DB_SQLITE_POOL_SIZE`, and the default changed from `0` to `3` (see below). `0` is no longer a valid value on n8n 2.x.
+
+##### New Security Defaults (n8n 2.0)
+
+A new `<release>-security-configmap`, consumed by every n8n container, exposes the instance security settings that n8n 2.0 changed:
+
+|Value|Chart default|Variable|Notes|
+|---|---|---|---|
+|`security.enforceSettingsFilePermissions`|`true`|`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS`|Strict `0600` permissions on configuration files, the n8n 2.0 behavior.|
+|`security.blockEnvAccessInNode`|`true`|`N8N_BLOCK_ENV_ACCESS_IN_NODE`|Workflows reading `process.env` / `$env` in Code nodes and expressions stop working. Set to `false` only if you accept that every secret in the container becomes readable by anyone who can edit a Code node.|
+|`security.gitNodeDisableBareRepos`|`true`|`N8N_GIT_NODE_DISABLE_BARE_REPOS`|Set to `false` only if a workflow reads a bare repository from a mounted volume.|
+|`security.restrictFileAccessTo`|unset (`~`)|`N8N_RESTRICT_FILE_ACCESS_TO`|Semicolon-separated directory list for the `ReadWriteFile` / `ReadBinaryFiles` nodes. Unset inherits the n8n default, which is `~/.n8n-files` from 2.0 onwards. Set it to widen or narrow that list; set it to `""` to disable the restriction entirely (insecure).|
+
+##### Node Loading (`NODES_EXCLUDE` / `NODES_INCLUDE`)
+
+`nodes.exclude` and `nodes.include` are now supported (both unset by default). With n8n 2.0 the upstream default for `NODES_EXCLUDE` is `["n8n-nodes-base.executeCommand","n8n-nodes-base.localFileTrigger"]`, so those nodes stop loading unless you opt out:
+
+```yaml
+nodes:
+  # load every node, including executeCommand and localFileTrigger
+  exclude: []
+```
+
+##### Encryption Key Rotation (n8n 3.0) — One-Way Migration
+
+n8n 3.0 enables encryption key rotation (`N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION=true`) by default. The chart deliberately keeps `encryptionKeyRotation.enabled: false` because **this migration cannot be rolled back**: the first instance that starts with rotation enabled rewrites all encrypted data in a new keyed format, and running again with rotation disabled afterwards makes that data permanently unreadable.
+
+To enable it:
+
+1. Back up your database (and confirm the backup restores).
+2. Verify every main and worker instance shares the same `encryptionKey` (or `existingEncryptionKeySecret`). Mixed keys during the migration corrupt data.
+3. Set `encryptionKeyRotation.enabled: true` and upgrade all instances at once, so no instance runs with rotation disabled after the rewrite.
+
+```yaml
+encryptionKeyRotation:
+  enabled: true
+```
+
+If you skip this, a future n8n minor release will still flip rotation on by itself; the chart value only defers the decision, it does not disable the feature forever.
+
+##### SQLite Pooling (`DB_SQLITE_POOL_SIZE`)
+
+n8n 2.0 removed the legacy (non-pool) SQLite driver, so the pooling driver - WAL mode, one writer plus a pool of readers - is the only one. n8n 2.x requires `DB_SQLITE_POOL_SIZE` to be at least `1` and defaults to `3`. The chart previously documented `poolSize: 0` as "disable pooling" and never rendered the variable at all; it now defaults to `3` and renders it, and the schema rejects `0`:
+
+```yaml
+db:
+  type: sqlite
+  sqlite:
+    poolSize: 3
+```
+
+##### Compression Node Limits (n8n 3.0)
+
+n8n 3.0 lowered the compression node defaults from 2 GiB / 5000 ZIP entries to 256 MiB / 1000 entries. Workflows unpacking larger archives now fail unless you raise them:
+
+```yaml
+nodes:
+  compression:
+    maxDecompressedSizeBytes: 2147483648  # 2 GiB (pre-3.0 default)
+    maxZipEntries: 5000                   # pre-3.0 default
+```
+
+##### Upstream Changes With No Chart Surface
+
+These n8n 2.0/3.0 breaking changes are workflow-level and cannot be configured through the chart; review them in the [2.0](https://docs.n8n.io/changelog/v20-breaking-changes) and [3.0](https://docs.n8n.io/changelog/v30-breaking-changes) changelogs before upgrading: Chat Hub retirement and the removal of importing workflows from a URL, the legacy Function / Function Item nodes, the removed `$getPairedItem` expression variable, and AI Agent v1 no longer being creatable.
+
 #### Upgrading to Version 1.20.0
 
 ##### Deprecation Notices
@@ -1424,18 +1526,19 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | api.enabled | bool | `true` | Whether to enable the Public API |
 | api.path | string | `"api"` | Path segment for the Public API |
 | api.swagger | object | `{"enabled":true}` | Whether to enable the Swagger UI for the Public API |
-| binaryData | object | `{"availableModes":[],"localStoragePath":"","mode":"default","s3":{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}}` | Configuration for binary data storage |
-| binaryData.availableModes | list | `[]` | Available modes of binary data storage. If not set, the default mode will be used. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/ |
-| binaryData.localStoragePath | string | `""` | Path for binary data storage in "filesystem" mode. If not set, the default path will be used. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/ |
-| binaryData.mode | string | `"default"` | The default binary data mode. default keeps binary data in memory. Set to filesystem to use the filesystem, or s3 to AWS S3. Note that binary data pruning operates on the active binary data mode. For example, if your instance stored data in S3, and you later switched to filesystem mode, n8n only prunes binary data in the filesystem. This may change in future. Valid values are 'default' | 'filesystem' | 's3'. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/ |
-| binaryData.s3 | object | `{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}` | S3-compatible external storage configurations. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/external-data-storage/ |
+| binaryData | object | `{"availableModes":[],"databaseMaxFileSize":512,"localStoragePath":"","mode":null,"s3":{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}}` | Configuration for binary data storage |
+| binaryData.availableModes | list | `[]` | @deprecated Use `binaryData.mode` instead. n8n 2.0 removed `N8N_AVAILABLE_BINARY_DATA_MODES`, so this field is ignored and will be removed in a future release. |
+| binaryData.databaseMaxFileSize | int | `512` | Maximum size (in MiB) of a single file n8n stores when `binaryData.mode` is `database`. Cannot exceed `1024`, which is the database column limit; storing a larger file fails. Only rendered when `binaryData.mode` is `database`. |
+| binaryData.localStoragePath | string | `""` | Path for binary data storage in `filesystem` mode. If not set, n8n uses `<N8N_USER_FOLDER>/binaryData`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
+| binaryData.mode | string | `nil` | The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
+| binaryData.s3 | object | `{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}` | S3-compatible external storage configurations. Only used when `binaryData.mode` is `s3`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/external-data-storage/ |
 | binaryData.s3.accessKey | string | `""` | Access key in S3-compatible external storage |
 | binaryData.s3.accessSecret | string | `""` | Access secret in S3-compatible external storage. |
 | binaryData.s3.bucketName | string | `""` | Name of the n8n bucket in S3-compatible external storage. |
 | binaryData.s3.bucketRegion | string | `"us-east-1"` | Region of the n8n bucket in S3-compatible external storage. For example, us-east-1 |
 | binaryData.s3.existingSecret | string | `""` | This is for setting up the s3 file storage existing secret. Must contain access-key-id and secret-access-key keys. |
 | binaryData.s3.host | string | `""` | Host of the n8n bucket in S3-compatible external storage. For example, s3.us-east-1.amazonaws.com |
-| db | object | `{"logging":{"enabled":false,"maxQueryExecutionTime":0,"options":"error"},"postgresdb":{"connectionTimeout":20000,"idleConnectionTimeout":30000,"poolSize":2,"schema":"public","ssl":{"base64EncodedCertFile":"","base64EncodedCertificateAuthorityFile":"","base64EncodedPrivateKeyFile":"","enabled":false,"existingCertFileSecret":{"key":"cert.crt","name":""},"existingCertificateAuthorityFileSecret":{"key":"ca.crt","name":""},"existingPrivateKeyFileSecret":{"key":"cert.key","name":""},"rejectUnauthorized":true}},"sqlite":{"database":"database.sqlite","poolSize":0,"vacuum":false},"tablePrefix":"","type":"sqlite"}` | n8n database configurations |
+| db | object | `{"logging":{"enabled":false,"maxQueryExecutionTime":0,"options":"error"},"postgresdb":{"connectionTimeout":20000,"idleConnectionTimeout":30000,"poolSize":2,"schema":"public","ssl":{"base64EncodedCertFile":"","base64EncodedCertificateAuthorityFile":"","base64EncodedPrivateKeyFile":"","enabled":false,"existingCertFileSecret":{"key":"cert.crt","name":""},"existingCertificateAuthorityFileSecret":{"key":"ca.crt","name":""},"existingPrivateKeyFileSecret":{"key":"cert.key","name":""},"rejectUnauthorized":true}},"sqlite":{"database":"database.sqlite","poolSize":3,"vacuum":false},"tablePrefix":"","type":"sqlite"}` | n8n database configurations |
 | db.logging.enabled | bool | `false` | Whether database logging is enabled. |
 | db.logging.maxQueryExecutionTime | int | `0` | Only queries that exceed this time (ms) will be logged. Set `0` to disable. |
 | db.logging.options | string | `"error"` | Database logging level. Requires `maxQueryExecutionTime` to be higher than `0`. Valid values 'query' | 'error' | 'schema' | 'warn' | 'info' | 'log' | 'all' |
@@ -1459,7 +1562,7 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | db.postgresdb.ssl.existingPrivateKeyFileSecret.name | string | `""` | The name of the existing secret. |
 | db.postgresdb.ssl.rejectUnauthorized | bool | `true` | If n8n should reject unauthorized SSL connections (true) or not (false). |
 | db.sqlite.database | string | `"database.sqlite"` | SQLite database file name |
-| db.sqlite.poolSize | int | `0` | SQLite database pool size. Set to `0` to disable pooling. |
+| db.sqlite.poolSize | int | `3` | SQLite database pool size (`DB_SQLITE_POOL_SIZE`). n8n 2.0 removed the legacy driver, so this pooling driver (WAL mode, one writer plus a pool of readers) is the only one. Must be at least `1`; n8n defaults to `3`. |
 | db.sqlite.vacuum | bool | `false` | Runs VACUUM operation on startup to rebuild the database. Reduces file size and optimizes indexes. This is a long running blocking operation and increases start-up time. |
 | db.tablePrefix | string | `""` | Prefix to use for table names. |
 | db.type | string | `"sqlite"` | Type of database to use. Valid values 'sqlite' | 'postgresdb' |
@@ -1472,6 +1575,8 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | dnsConfig | object | `{}` | For more information checkout: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config |
 | dnsPolicy | string | `""` | For more information checkout: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy |
 | encryptionKey | string | `""` | If you install n8n first time, you can keep this empty and it will be auto generated and never change again. If you already have a encryption key generated before, please use it here. |
+| encryptionKeyRotation | object | `{"enabled":false}` | Encryption key rotation (`N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION`). n8n 3.0 enables this by default.   WARNING: this is a one-way migration. The first instance to start with it enabled rewrites all encrypted data in a new format.   Once rewritten, running with rotation disabled makes that data permanently unreadable and there is no way back.   Every main and worker instance must share the same `encryptionKey` at all times, including during the migration.   Back up the database before enabling this. The chart leaves it `false` so that upgrading the chart cannot silently start an   irreversible migration; set it to `true` deliberately once the backup exists. |
+| encryptionKeyRotation.enabled | bool | `false` | Enable encryption key rotation. One-way; see the warning above. |
 | existingEncryptionKeySecret | string | `""` | The name of an existing secret with encryption key. The secret must contain a key with the name N8N_ENCRYPTION_KEY. |
 | externalPostgresql | object | `{"database":"n8n","existingSecret":"","existingSecretPasswordKey":"","host":"","password":"","port":5432,"username":"postgres"}` | External PostgreSQL parameters |
 | externalPostgresql.database | string | `"n8n"` | The name of the external PostgreSQL database. For more information: https://docs.n8n.io/hosting/configuration/supported-databases-settings/#required-permissions |
@@ -1602,10 +1707,14 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | minio.users[0].secretKey | string | `"Change_Me"` | n8n user secret key |
 | nameOverride | string | `""` | This is to override the chart name. |
 | nodeSelector | object | `{}` | For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
-| nodes | object | `{"builtin":{"enabled":false,"modules":[]},"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false},"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
+| nodes | object | `{"builtin":{"enabled":false,"modules":[]},"compression":{"maxDecompressedSizeBytes":null,"maxZipEntries":null},"exclude":null,"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false},"include":null,"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
 | nodes.builtin | object | `{"enabled":false,"modules":[]}` | Enable built-in node functions (e.g., HTTP Request, Code Node, etc.) |
 | nodes.builtin.enabled | bool | `false` | Enable built-in modules for the Code node |
 | nodes.builtin.modules | list | `[]` | List of built-in Node.js modules to allow in the Code node (e.g., crypto, fs). Use '*' to allow all. |
+| nodes.compression | object | `{"maxDecompressedSizeBytes":null,"maxZipEntries":null}` | Compression node limits. n8n 3.0 lowered the upstream defaults from 2 GiB / 5000 entries to 256 MiB / 1000 entries; raise them here if workflows unpack larger archives. |
+| nodes.compression.maxDecompressedSizeBytes | string | `nil` | Maximum total decompressed output size in bytes (`N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES`). Unset uses the n8n default (268435456, i.e. 256 MiB). |
+| nodes.compression.maxZipEntries | string | `nil` | Maximum number of entries allowed in a ZIP archive (`N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES`). Unset uses the n8n default (1000). |
+| nodes.exclude | string | `nil` | Nodes that should not be loaded, rendered as `NODES_EXCLUDE`. Leave unset (`~`) to use the n8n default, which excludes `n8n-nodes-base.executeCommand` and `n8n-nodes-base.localFileTrigger` from n8n 2.0 onwards. Set to `[]` to load every node, or list node types to exclude more of them. |
 | nodes.external | object | `{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false}` | External npm packages to install and allow in the Code node |
 | nodes.external.allowAll | bool | `false` | Allow all external npm packages |
 | nodes.external.packages | list | `[]` | List of npm package names and versions (e.g., "package-name@1.0.0") |
@@ -1617,6 +1726,7 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | nodes.external.persistence.size | string | `"1Gi"` | Size of the PVC. |
 | nodes.external.persistence.storageClass | string | `""` | Storage class for the PVC. Empty string uses the cluster default. |
 | nodes.external.reinstallMissingPackages | bool | `false` | Whether to reinstall missing packages. For more information, see https://docs.n8n.io/integrations/community-nodes/troubleshooting/#error-missing-packages |
+| nodes.include | string | `nil` | Nodes that should be loaded, rendered as `NODES_INCLUDE`. Leave unset (`~`) to load everything that isn't excluded. |
 | nodes.initContainer | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"},"resources":{}}` | Image for the init container to install npm packages |
 | nodes.initContainer.image | object | `{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"}` | Image for the init container to install npm packages |
 | nodes.initContainer.image.pullPolicy | string | `"IfNotPresent"` | Pull policy for the init container to install npm packages |
@@ -1677,6 +1787,11 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | redis.master.service.ports.redis | int | `6379` | Redis master service port |
 | resources | object | `{}` | @deprecated Use main, worker, and webhook blocks resources fields instead. This field will be removed in a future release. |
 | revisionHistoryLimit | string | `nil` | The number of old ReplicaSets to retain for rollback. More information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy |
+| security | object | `{"blockEnvAccessInNode":true,"enforceSettingsFilePermissions":true,"gitNodeDisableBareRepos":true,"restrictFileAccessTo":null}` | Instance security defaults introduced by n8n 2.0, rendered into a ConfigMap consumed by every n8n container. |
+| security.blockEnvAccessInNode | bool | `true` | Block environment variable access from within nodes (`N8N_BLOCK_ENV_ACCESS_IN_NODE`). n8n 2.0 defaults this to `true`; set to `false` only when workflows rely on reading `$env`, which exposes every secret in the container to anyone who can edit a Code node. |
+| security.enforceSettingsFilePermissions | bool | `true` | Enforce `0600` permissions on n8n configuration files (`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS`). Strict enforcement is the default from n8n 2.0 onwards; set to `false` only if a mounted file legitimately needs wider permissions. |
+| security.gitNodeDisableBareRepos | bool | `true` | Forbid bare Git repositories in the Git node (`N8N_GIT_NODE_DISABLE_BARE_REPOS`). n8n 2.0 defaults this to `true`; set to `false` only when a workflow needs to read a bare repository from a shared volume. |
+| security.restrictFileAccessTo | string | `nil` | Directories the `ReadWriteFile` and `ReadBinaryFiles` nodes may access (`N8N_RESTRICT_FILE_ACCESS_TO`), as a semicolon-separated list. Leave unset (`~`) to inherit the n8n default, which is `~/.n8n-files` from n8n 2.0 onwards. Set it explicitly to widen or narrow the allowed paths; set it to `""` to disable the restriction entirely (insecure - the whole filesystem becomes reachable from file nodes). |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000}` | This is for setting Security Context to a Container. For more information checkout: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
 | sentry.backendDsn | string | `""` | Sentry DSN for backend. |
 | sentry.enabled | bool | `false` | Whether sentry is enabled. |

@@ -1,3 +1,36 @@
+# -- Instance security and node hardening. Consumed by every n8n container (main, worker, webhook, MCP webhook).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "n8n.fullname" . }}-security-configmap
+  labels:
+    app: {{ include "n8n.name" . }}
+    chart: {{ include "n8n.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: {{ .Values.security.enforceSettingsFilePermissions | quote }}
+  N8N_BLOCK_ENV_ACCESS_IN_NODE: {{ .Values.security.blockEnvAccessInNode | quote }}
+  N8N_GIT_NODE_DISABLE_BARE_REPOS: {{ .Values.security.gitNodeDisableBareRepos | quote }}
+{{- if not (kindIs "invalid" .Values.security.restrictFileAccessTo) }}
+  N8N_RESTRICT_FILE_ACCESS_TO: {{ .Values.security.restrictFileAccessTo | quote }}
+{{- end }}
+{{- if .Values.encryptionKeyRotation.enabled }}
+  N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION: "true"
+{{- end }}
+{{- if not (kindIs "invalid" .Values.nodes.exclude) }}
+  NODES_EXCLUDE: {{ .Values.nodes.exclude | toJson | quote }}
+{{- end }}
+{{- if not (kindIs "invalid" .Values.nodes.include) }}
+  NODES_INCLUDE: {{ .Values.nodes.include | toJson | quote }}
+{{- end }}
+{{- if not (kindIs "invalid" .Values.nodes.compression.maxDecompressedSizeBytes) }}
+  N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES: {{ .Values.nodes.compression.maxDecompressedSizeBytes | int64 | quote }}
+{{- end }}
+{{- if not (kindIs "invalid" .Values.nodes.compression.maxZipEntries) }}
+  N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES: {{ .Values.nodes.compression.maxZipEntries | quote }}
+{{- end }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -41,6 +74,7 @@ data:
 {{- else }}
   DB_TYPE: {{ .Values.db.type | default "sqlite" }}
   DB_SQLITE_VACUUM_ON_STARTUP: {{ .Values.db.sqlite.vacuum | quote }}
+  DB_SQLITE_POOL_SIZE: {{ .Values.db.sqlite.poolSize | quote }}
 {{- end }}
 {{- if .Values.db.logging.enabled }}
   DB_LOGGING_ENABLED: "true"
@@ -313,14 +347,16 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:
+{{- if not (kindIs "invalid" .Values.binaryData.mode) }}
   N8N_DEFAULT_BINARY_DATA_MODE: {{ .Values.binaryData.mode | quote }}
-{{- if gt (len .Values.binaryData.availableModes) 0 }}
-  N8N_AVAILABLE_BINARY_DATA_MODES: {{ join "," .Values.binaryData.availableModes | quote }}
 {{- end }}
-{{- if and (has "filesystem" .Values.binaryData.availableModes) (ne .Values.binaryData.localStoragePath "") }}
+{{- if and (eq .Values.binaryData.mode "filesystem") (ne .Values.binaryData.localStoragePath "") }}
   N8N_BINARY_DATA_STORAGE_PATH: {{ .Values.binaryData.localStoragePath | quote }}
 {{- end }}
-{{- if has "s3" .Values.binaryData.availableModes }}
+{{- if eq .Values.binaryData.mode "database" }}
+  N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE: {{ .Values.binaryData.databaseMaxFileSize | quote }}
+{{- end }}
+{{- if eq .Values.binaryData.mode "s3" }}
   {{- if .Values.minio.enabled }}
   N8N_EXTERNAL_STORAGE_S3_HOST: {{ template "n8n.fullname" . }}-minio:9000
     {{- if gt (len .Values.minio.buckets) 0 }}

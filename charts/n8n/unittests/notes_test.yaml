@@ -88,3 +88,36 @@ tests:
       - notMatchRegex:
           path: raw
           pattern: "WARNING: license.autoNenew is deprecated"
+
+  - it: should show deprecation warning when binaryData.availableModes is set
+    set:
+      binaryData:
+        availableModes:
+          - filesystem
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: binaryData.availableModes is deprecated and ignored"
+
+  - it: should not show binaryData.availableModes deprecation warning when it is empty
+    set: {}
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "WARNING: binaryData.availableModes is deprecated and ignored"
+
+  - it: should warn about the one-way encryption key rotation migration when enabled
+    set:
+      encryptionKeyRotation:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: encryptionKeyRotation.enabled is on"
+
+  - it: should not warn about encryption key rotation by default
+    set: {}
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "WARNING: encryptionKeyRotation.enabled is on"

@@ -106,8 +106,6 @@ spec:
               value: "false"
             - name: NODE_ENV
               value: production
-            - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-              value: "true"
             - name: N8N_PORT
               value: {{ .Values.service.port | quote }}
             - name: N8N_DEFAULT_LOCALE
@@ -164,6 +162,8 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           envFrom:
+            - configMapRef:
+                name: {{ template "n8n.fullname" . }}-security-configmap
             - configMapRef:
                 name: {{ template "n8n.fullname" . }}-database-configmap
             - configMapRef:

@@ -14,7 +14,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 1.24.40
+version: 2.0.0
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
@@ -50,16 +50,42 @@ annotations:
       url: https://docs.n8n.io/
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |-
-    - kind: changed
-      description: Update n8nio/n8n image version to 2.38.4
+    - kind: removed
+      description: "`N8N_AVAILABLE_BINARY_DATA_MODES` is no longer rendered. n8n 2.0 dropped the variable, so `binaryData.availableModes` had no effect; it is now accepted for one release and emits a NOTES warning."
       links:
-        - name: Upstream Project
-          url: https://github.com/n8n-io/n8n
-    - kind: changed
-      description: Update dependency postgresql from 18.9.0 to 18.10.0
+        - name: Official Documentation
+          url: https://docs.n8n.io/changelog/v20-breaking-changes
+    - kind: removed
+      description: "`default` (in-memory) is no longer a valid `binaryData.mode`. Valid values are `filesystem`, `database` and `s3`; the chart default is now unset so n8n picks `filesystem` in regular mode and `database` in queue mode."
       links:
-        - name: ArtifactHub
-          url: https://artifacthub.io/packages/helm/bitnami/postgresql
+        - name: Official Documentation
+          url: https://docs.n8n.io/changelog/v20-breaking-changes
+    - kind: changed
+      description: "New `<release>-security-configmap`, consumed by every n8n container, carries the instance security settings that n8n 2.0 changed its defaults for: `security.enforceSettingsFilePermissions`, `security.blockEnvAccessInNode`, `security.gitNodeDisableBareRepos` and `security.restrictFileAccessTo`."
+      links:
+        - name: Official Documentation
+          url: https://docs.n8n.io/changelog/v20-breaking-changes
+    - kind: changed
+      description: "`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` moved out of the hardcoded container environment into the security ConfigMap and is now configurable."
+    - kind: changed
+      description: "`db.sqlite.poolSize` is now rendered as `DB_SQLITE_POOL_SIZE` and defaults to `3`. n8n 2.0 removed the legacy non-pool SQLite driver and rejects `0`, which the chart previously shipped as the default."
+      links:
+        - name: Official Documentation
+          url: https://docs.n8n.io/changelog/v20-breaking-changes
+    - kind: added
+      description: "`nodes.exclude` and `nodes.include` (`NODES_EXCLUDE` / `NODES_INCLUDE`). n8n 2.0 excludes `n8n-nodes-base.executeCommand` and `n8n-nodes-base.localFileTrigger` by default; set `nodes.exclude: []` to load every node."
+    - kind: added
+      description: "`nodes.compression.maxDecompressedSizeBytes` and `nodes.compression.maxZipEntries`, needed to restore the pre-3.0 limits after n8n 3.0 lowered them to 256 MiB / 1000 ZIP entries."
+      links:
+        - name: Official Documentation
+          url: https://docs.n8n.io/changelog/v30-breaking-changes
+    - kind: added
+      description: "`encryptionKeyRotation.enabled` (`N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION`). The chart keeps it `false` because the migration is one-way and irreversible; see the Upgrading section in the README before enabling it."
+      links:
+        - name: Official Documentation
+          url: https://docs.n8n.io/changelog/v30-breaking-changes
+    - kind: added
+      description: "`binaryData.databaseMaxFileSize` (`N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE`) for the `database` binary data mode."
   artifacthub.io/images: |
     - name: n8n
       image: n8nio/n8n:2.38.4

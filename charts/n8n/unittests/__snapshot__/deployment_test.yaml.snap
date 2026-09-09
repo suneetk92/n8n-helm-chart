@@ -2,6 +2,21 @@ should match snapshot of default values:
   1: |
     apiVersion: v1
     data:
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-security-configmap
+  2: |
+    apiVersion: v1
+    data:
+      DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite
     kind: ConfigMap
@@ -12,7 +27,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-database-configmap
-  2: |
+  3: |
     apiVersion: v1
     data:
       N8N_LOG_FORMAT: text
@@ -26,7 +41,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-logging-configmap
-  3: |
+  4: |
     apiVersion: v1
     data:
       N8N_DIAGNOSTICS_CONFIG_BACKEND: ""
@@ -44,7 +59,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-diagnostics-configmap
-  4: |
+  5: |
     apiVersion: v1
     data:
       N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
@@ -56,7 +71,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-version-notifications-configmap
-  5: |
+  6: |
     apiVersion: v1
     data:
       N8N_PUBLIC_API_DISABLED: "false"
@@ -70,7 +85,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-public-api-configmap
-  6: |
+  7: |
     apiVersion: v1
     data:
       N8N_WORKFLOW_HISTORY_ENABLED: "true"
@@ -83,7 +98,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-workflow-history-configmap
-  7: |
+  8: |
     apiVersion: v1
     data:
       N8N_RUNNERS_HEARTBEAT_INTERVAL: "30"
@@ -98,7 +113,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-task-broker-configmap
-  8: |
+  9: |
     apiVersion: v1
     data:
       N8N_METRICS: "false"
@@ -122,10 +137,9 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-metrics-configmap
-  9: |
+  10: |
     apiVersion: v1
-    data:
-      N8N_DEFAULT_BINARY_DATA_MODE: default
+    data: null
     kind: ConfigMap
     metadata:
       labels:
@@ -134,7 +148,7 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-binary-data-configmap
-  10: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -161,7 +175,7 @@ should match snapshot of default values:
       template:
         metadata:
           annotations:
-            checksum/config: d901bed51fb592c293c1a3219b46282e3f3aa1b4391bf43f1f6eb70459061d2a
+            checksum/config: ed2b2a1de756ba40a92d56cac692cf586e340b1b8dd8f8642a551d4ba16f8da4
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -177,8 +191,6 @@ should match snapshot of default values:
                   value: "false"
                 - name: NODE_ENV
                   value: production
-                - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-                  value: "true"
                 - name: N8N_PORT
                   value: "5678"
                 - name: N8N_DEFAULT_LOCALE
@@ -190,6 +202,8 @@ should match snapshot of default values:
                 - name: NPM_CONFIG_CACHE
                   value: /home/node/.cache/npm
               envFrom:
+                - configMapRef:
+                    name: n8n-security-configmap
                 - configMapRef:
                     name: n8n-database-configmap
                 - configMapRef:
@@ -261,7 +275,7 @@ should match snapshot of default values:
               name: npm-home
             - emptyDir: {}
               name: node-modules
-  11: |
+  12: |
     apiVersion: v1
     data:
       N8N_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleQ==
@@ -283,6 +297,21 @@ should match snapshot of main persistence:
   1: |
     apiVersion: v1
     data:
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-security-configmap
+  2: |
+    apiVersion: v1
+    data:
+      DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite
     kind: ConfigMap
@@ -293,7 +322,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-database-configmap
-  2: |
+  3: |
     apiVersion: v1
     data:
       N8N_LOG_FORMAT: text
@@ -307,7 +336,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-logging-configmap
-  3: |
+  4: |
     apiVersion: v1
     data:
       N8N_DIAGNOSTICS_CONFIG_BACKEND: ""
@@ -325,7 +354,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-diagnostics-configmap
-  4: |
+  5: |
     apiVersion: v1
     data:
       N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
@@ -337,7 +366,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-version-notifications-configmap
-  5: |
+  6: |
     apiVersion: v1
     data:
       N8N_PUBLIC_API_DISABLED: "false"
@@ -351,7 +380,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-public-api-configmap
-  6: |
+  7: |
     apiVersion: v1
     data:
       N8N_WORKFLOW_HISTORY_ENABLED: "true"
@@ -364,7 +393,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-workflow-history-configmap
-  7: |
+  8: |
     apiVersion: v1
     data:
       N8N_RUNNERS_HEARTBEAT_INTERVAL: "30"
@@ -379,7 +408,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-task-broker-configmap
-  8: |
+  9: |
     apiVersion: v1
     data:
       N8N_METRICS: "false"
@@ -403,10 +432,9 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-metrics-configmap
-  9: |
+  10: |
     apiVersion: v1
-    data:
-      N8N_DEFAULT_BINARY_DATA_MODE: default
+    data: null
     kind: ConfigMap
     metadata:
       labels:
@@ -415,7 +443,7 @@ should match snapshot of main persistence:
         heritage: Helm
         release: n8n
       name: n8n-binary-data-configmap
-  10: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -442,7 +470,7 @@ should match snapshot of main persistence:
       template:
         metadata:
           annotations:
-            checksum/config: d901bed51fb592c293c1a3219b46282e3f3aa1b4391bf43f1f6eb70459061d2a
+            checksum/config: ed2b2a1de756ba40a92d56cac692cf586e340b1b8dd8f8642a551d4ba16f8da4
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -458,8 +486,6 @@ should match snapshot of main persistence:
                   value: "false"
                 - name: NODE_ENV
                   value: production
-                - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-                  value: "true"
                 - name: N8N_PORT
                   value: "5678"
                 - name: N8N_DEFAULT_LOCALE
@@ -471,6 +497,8 @@ should match snapshot of main persistence:
                 - name: NPM_CONFIG_CACHE
                   value: /home/node/.cache/npm
               envFrom:
+                - configMapRef:
+                    name: n8n-security-configmap
                 - configMapRef:
                     name: n8n-database-configmap
                 - configMapRef:
@@ -543,7 +571,7 @@ should match snapshot of main persistence:
             - name: node-modules
               persistentVolumeClaim:
                 claimName: n8n-main-persistence
-  11: |
+  12: |
     apiVersion: v1
     data:
       N8N_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleQ==
@@ -565,6 +593,21 @@ should match snapshot of main persistence with multiple main node and mode read 
   1: |
     apiVersion: v1
     data:
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-security-configmap
+  2: |
+    apiVersion: v1
+    data:
+      DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite
     kind: ConfigMap
@@ -575,7 +618,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-database-configmap
-  2: |
+  3: |
     apiVersion: v1
     data:
       N8N_LOG_FORMAT: text
@@ -589,7 +632,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-logging-configmap
-  3: |
+  4: |
     apiVersion: v1
     data:
       N8N_DIAGNOSTICS_CONFIG_BACKEND: ""
@@ -607,7 +650,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-diagnostics-configmap
-  4: |
+  5: |
     apiVersion: v1
     data:
       N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
@@ -619,7 +662,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-version-notifications-configmap
-  5: |
+  6: |
     apiVersion: v1
     data:
       N8N_PUBLIC_API_DISABLED: "false"
@@ -633,7 +676,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-public-api-configmap
-  6: |
+  7: |
     apiVersion: v1
     data:
       N8N_WORKFLOW_HISTORY_ENABLED: "true"
@@ -646,7 +689,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-workflow-history-configmap
-  7: |
+  8: |
     apiVersion: v1
     data:
       N8N_RUNNERS_HEARTBEAT_INTERVAL: "30"
@@ -661,7 +704,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-task-broker-configmap
-  8: |
+  9: |
     apiVersion: v1
     data:
       N8N_METRICS: "false"
@@ -685,10 +728,9 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-metrics-configmap
-  9: |
+  10: |
     apiVersion: v1
-    data:
-      N8N_DEFAULT_BINARY_DATA_MODE: default
+    data: null
     kind: ConfigMap
     metadata:
       labels:
@@ -697,7 +739,7 @@ should match snapshot of main persistence with multiple main node and mode read 
         heritage: Helm
         release: n8n
       name: n8n-binary-data-configmap
-  10: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -724,7 +766,7 @@ should match snapshot of main persistence with multiple main node and mode read 
       template:
         metadata:
           annotations:
-            checksum/config: d901bed51fb592c293c1a3219b46282e3f3aa1b4391bf43f1f6eb70459061d2a
+            checksum/config: ed2b2a1de756ba40a92d56cac692cf586e340b1b8dd8f8642a551d4ba16f8da4
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -740,8 +782,6 @@ should match snapshot of main persistence with multiple main node and mode read 
                   value: "false"
                 - name: NODE_ENV
                   value: production
-                - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-                  value: "true"
                 - name: N8N_PORT
                   value: "5678"
                 - name: N8N_DEFAULT_LOCALE
@@ -755,6 +795,8 @@ should match snapshot of main persistence with multiple main node and mode read 
                 - name: N8N_MULTI_MAIN_SETUP_ENABLED
                   value: "true"
               envFrom:
+                - configMapRef:
+                    name: n8n-security-configmap
                 - configMapRef:
                     name: n8n-database-configmap
                 - configMapRef:
@@ -827,7 +869,7 @@ should match snapshot of main persistence with multiple main node and mode read 
             - name: node-modules
               persistentVolumeClaim:
                 claimName: n8n-main-persistence
-  11: |
+  12: |
     apiVersion: v1
     data:
       N8N_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleQ==
@@ -847,6 +889,20 @@ should match snapshot of main persistence with multiple main node and mode read 
     type: Opaque
 should match snapshot of postgres ssl certificate values:
   1: |
+    apiVersion: v1
+    data:
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_GIT_NODE_DISABLE_BARE_REPOS: "true"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-security-configmap
+  2: |
     apiVersion: v1
     data:
       DB_POSTGRESDB_CONNECTION_TIMEOUT: "20000"
@@ -869,7 +925,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-database-configmap
-  2: |
+  3: |
     apiVersion: v1
     data:
       N8N_LOG_FORMAT: text
@@ -883,7 +939,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-logging-configmap
-  3: |
+  4: |
     apiVersion: v1
     data:
       N8N_DIAGNOSTICS_CONFIG_BACKEND: ""
@@ -901,7 +957,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-diagnostics-configmap
-  4: |
+  5: |
     apiVersion: v1
     data:
       N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
@@ -913,7 +969,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-version-notifications-configmap
-  5: |
+  6: |
     apiVersion: v1
     data:
       N8N_PUBLIC_API_DISABLED: "false"
@@ -927,7 +983,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-public-api-configmap
-  6: |
+  7: |
     apiVersion: v1
     data:
       N8N_WORKFLOW_HISTORY_ENABLED: "true"
@@ -940,7 +996,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-workflow-history-configmap
-  7: |
+  8: |
     apiVersion: v1
     data:
       N8N_RUNNERS_HEARTBEAT_INTERVAL: "30"
@@ -955,7 +1011,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-task-broker-configmap
-  8: |
+  9: |
     apiVersion: v1
     data:
       N8N_METRICS: "false"
@@ -979,10 +1035,9 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-metrics-configmap
-  9: |
+  10: |
     apiVersion: v1
-    data:
-      N8N_DEFAULT_BINARY_DATA_MODE: default
+    data: null
     kind: ConfigMap
     metadata:
       labels:
@@ -991,7 +1046,7 @@ should match snapshot of postgres ssl certificate values:
         heritage: Helm
         release: n8n
       name: n8n-binary-data-configmap
-  10: |
+  11: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -1018,7 +1073,7 @@ should match snapshot of postgres ssl certificate values:
       template:
         metadata:
           annotations:
-            checksum/config: 82094f949bc99f6ed45977d6ba0ea93596c594bd8ded004e33d82db9c5b06cab
+            checksum/config: 384a32b8220f7fd1e2cf672a3aa3474745135420fbc88c3c8c4083bd7bac6d2c
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -1034,8 +1089,6 @@ should match snapshot of postgres ssl certificate values:
                   value: "false"
                 - name: NODE_ENV
                   value: production
-                - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-                  value: "true"
                 - name: N8N_PORT
                   value: "5678"
                 - name: N8N_DEFAULT_LOCALE
@@ -1055,6 +1108,8 @@ should match snapshot of postgres ssl certificate values:
                       name: n8n-postgresql
                       optional: true
               envFrom:
+                - configMapRef:
+                    name: n8n-security-configmap
                 - configMapRef:
                     name: n8n-database-configmap
                 - configMapRef:
@@ -1156,7 +1211,7 @@ should match snapshot of postgres ssl certificate values:
                   - key: client.key
                     path: cert.key
                 secretName: my-client-cert-private-key-secret
-  11: |
+  12: |
     apiVersion: v1
     data:
       postgres-password: ""
@@ -1169,7 +1224,7 @@ should match snapshot of postgres ssl certificate values:
         release: n8n
       name: n8n-postgresql
     type: Opaque
-  12: |
+  13: |
     apiVersion: v1
     data:
       N8N_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleQ==

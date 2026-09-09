@@ -510,13 +510,13 @@ tests:
             value: production
         template: deployment-webhook.yaml
 
-  - it: should set enforce settings file permissions
+  - it: should consume the security configmap
     asserts:
       - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-webhook")].env
+          path: spec.template.spec.containers[?(@.name == "n8n-webhook")].envFrom
           content:
-            name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-            value: "true"
+            configMapRef:
+              name: n8n-security-configmap
         template: deployment-webhook.yaml
 
   - it: should set port environment variable when service.port is set

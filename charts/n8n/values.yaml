@@ -128,6 +128,18 @@ nodes:
     modules: []
       # - crypto
       # - fs
+  # -- Nodes that should not be loaded, rendered as `NODES_EXCLUDE`. Leave unset (`~`) to use the n8n default, which excludes `n8n-nodes-base.executeCommand` and `n8n-nodes-base.localFileTrigger` from n8n 2.0 onwards. Set to `[]` to load every node, or list node types to exclude more of them.
+  exclude: ~
+    # - n8n-nodes-base.executeCommand
+  # -- Nodes that should be loaded, rendered as `NODES_INCLUDE`. Leave unset (`~`) to load everything that isn't excluded.
+  include: ~
+    # - n8n-nodes-base.code
+  # -- Compression node limits. n8n 3.0 lowered the upstream defaults from 2 GiB / 5000 entries to 256 MiB / 1000 entries; raise them here if workflows unpack larger archives.
+  compression:
+    # -- Maximum total decompressed output size in bytes (`N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES`). Unset uses the n8n default (268435456, i.e. 256 MiB).
+    maxDecompressedSizeBytes: ~
+    # -- Maximum number of entries allowed in a ZIP archive (`N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES`). Unset uses the n8n default (1000).
+    maxZipEntries: ~
   # -- External npm packages to install and allow in the Code node
   external:
     # -- Allow all external npm packages
@@ -234,13 +246,15 @@ npmRegistry:
 
 # -- Configuration for binary data storage
 binaryData:
-  # -- Available modes of binary data storage. If not set, the default mode will be used. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/
+  # -- @deprecated Use `binaryData.mode` instead. n8n 2.0 removed `N8N_AVAILABLE_BINARY_DATA_MODES`, so this field is ignored and will be removed in a future release.
   availableModes: []
-  # -- The default binary data mode. default keeps binary data in memory. Set to filesystem to use the filesystem, or s3 to AWS S3. Note that binary data pruning operates on the active binary data mode. For example, if your instance stored data in S3, and you later switched to filesystem mode, n8n only prunes binary data in the filesystem. This may change in future. Valid values are 'default' | 'filesystem' | 's3'. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/
-  mode: "default"
-  # -- Path for binary data storage in "filesystem" mode. If not set, the default path will be used. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/
+  # -- The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
+  mode: ~
+  # -- Path for binary data storage in `filesystem` mode. If not set, n8n uses `<N8N_USER_FOLDER>/binaryData`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
   localStoragePath: ""
-  # -- S3-compatible external storage configurations. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/external-data-storage/
+  # -- Maximum size (in MiB) of a single file n8n stores when `binaryData.mode` is `database`. Cannot exceed `1024`, which is the database column limit; storing a larger file fails. Only rendered when `binaryData.mode` is `database`.
+  databaseMaxFileSize: 512
+  # -- S3-compatible external storage configurations. Only used when `binaryData.mode` is `s3`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/external-data-storage/
   s3:
     # -- Host of the n8n bucket in S3-compatible external storage. For example, s3.us-east-1.amazonaws.com
     host: ""
@@ -273,8 +287,8 @@ db:
   sqlite:
     # -- SQLite database file name
     database: "database.sqlite"
-    # -- SQLite database pool size. Set to `0` to disable pooling.
-    poolSize: 0
+    # -- SQLite database pool size (`DB_SQLITE_POOL_SIZE`). n8n 2.0 removed the legacy driver, so this pooling driver (WAL mode, one writer plus a pool of readers) is the only one. Must be at least `1`; n8n defaults to `3`.
+    poolSize: 3
     # -- Runs VACUUM operation on startup to rebuild the database. Reduces file size and optimizes indexes. This is a long running blocking operation and increases start-up time.
     vacuum: false
 
@@ -991,6 +1005,27 @@ encryptionKey: ""
 
 # -- The name of an existing secret with encryption key. The secret must contain a key with the name N8N_ENCRYPTION_KEY.
 existingEncryptionKeySecret: ""
+
+# -- Encryption key rotation (`N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION`). n8n 3.0 enables this by default.
+#   WARNING: this is a one-way migration. The first instance to start with it enabled rewrites all encrypted data in a new format.
+#   Once rewritten, running with rotation disabled makes that data permanently unreadable and there is no way back.
+#   Every main and worker instance must share the same `encryptionKey` at all times, including during the migration.
+#   Back up the database before enabling this. The chart leaves it `false` so that upgrading the chart cannot silently start an
+#   irreversible migration; set it to `true` deliberately once the backup exists.
+encryptionKeyRotation:
+  # -- Enable encryption key rotation. One-way; see the warning above.
+  enabled: false
+
+# -- Instance security defaults introduced by n8n 2.0, rendered into a ConfigMap consumed by every n8n container.
+security:
+  # -- Enforce `0600` permissions on n8n configuration files (`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS`). Strict enforcement is the default from n8n 2.0 onwards; set to `false` only if a mounted file legitimately needs wider permissions.
+  enforceSettingsFilePermissions: true
+  # -- Block environment variable access from within nodes (`N8N_BLOCK_ENV_ACCESS_IN_NODE`). n8n 2.0 defaults this to `true`; set to `false` only when workflows rely on reading `$env`, which exposes every secret in the container to anyone who can edit a Code node.
+  blockEnvAccessInNode: true
+  # -- Directories the `ReadWriteFile` and `ReadBinaryFiles` nodes may access (`N8N_RESTRICT_FILE_ACCESS_TO`), as a semicolon-separated list. Leave unset (`~`) to inherit the n8n default, which is `~/.n8n-files` from n8n 2.0 onwards. Set it explicitly to widen or narrow the allowed paths; set it to `""` to disable the restriction entirely (insecure - the whole filesystem becomes reachable from file nodes).
+  restrictFileAccessTo: ~
+  # -- Forbid bare Git repositories in the Git node (`N8N_GIT_NODE_DISABLE_BARE_REPOS`). n8n 2.0 defaults this to `true`; set to `false` only when a workflow needs to read a bare repository from a shared volume.
+  gitNodeDisableBareRepos: true
 
 # -- For instance, the Schedule node uses it to know at what time the workflow should start. Find you timezone from here: https://momentjs.com/timezone/
 timezone: "Europe/Berlin"

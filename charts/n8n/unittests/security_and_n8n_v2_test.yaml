@@ -1,0 +1,283 @@
+suite: test n8n 2.0/3.0 security and hardening values
+
+templates:
+  - configmap.yaml
+
+release:
+  name: n8n
+  namespace: n8n
+
+chart:
+  version: 1.0.0
+  appVersion: 1.0.0
+
+tests:
+  - it: should render the security configmap with the hardened n8n 2.0 defaults
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
+          value: "true"
+      - equal:
+          path: data.N8N_BLOCK_ENV_ACCESS_IN_NODE
+          value: "true"
+      - equal:
+          path: data.N8N_GIT_NODE_DISABLE_BARE_REPOS
+          value: "true"
+
+  - it: should not render N8N_RESTRICT_FILE_ACCESS_TO when restrictFileAccessTo is unset so the n8n default applies
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_RESTRICT_FILE_ACCESS_TO
+
+  - it: should render N8N_RESTRICT_FILE_ACCESS_TO when restrictFileAccessTo is set
+    set:
+      security:
+        restrictFileAccessTo: /home/node/.n8n-files;/data
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_RESTRICT_FILE_ACCESS_TO
+          value: /home/node/.n8n-files;/data
+
+  - it: should render an empty N8N_RESTRICT_FILE_ACCESS_TO to explicitly disable the file access restriction
+    set:
+      security:
+        restrictFileAccessTo: ""
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_RESTRICT_FILE_ACCESS_TO
+          value: ""
+
+  - it: should render the security toggles as false when disabled
+    set:
+      security:
+        enforceSettingsFilePermissions: false
+        blockEnvAccessInNode: false
+        gitNodeDisableBareRepos: false
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
+          value: "false"
+      - equal:
+          path: data.N8N_BLOCK_ENV_ACCESS_IN_NODE
+          value: "false"
+      - equal:
+          path: data.N8N_GIT_NODE_DISABLE_BARE_REPOS
+          value: "false"
+
+  - it: should not render N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION by default
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION
+
+  - it: should render N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION when encryptionKeyRotation.enabled is true
+    set:
+      encryptionKeyRotation:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION
+          value: "true"
+
+  - it: should not render NODES_EXCLUDE or NODES_INCLUDE when both are unset
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - notExists:
+          path: data.NODES_EXCLUDE
+      - notExists:
+          path: data.NODES_INCLUDE
+
+  - it: should render NODES_EXCLUDE as a JSON array when nodes.exclude is set
+    set:
+      nodes:
+        exclude:
+          - n8n-nodes-base.executeCommand
+          - n8n-nodes-base.localFileTrigger
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.NODES_EXCLUDE
+          value: '["n8n-nodes-base.executeCommand","n8n-nodes-base.localFileTrigger"]'
+
+  - it: should render an empty NODES_EXCLUDE when nodes.exclude is an empty list so every node loads
+    set:
+      nodes:
+        exclude: []
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.NODES_EXCLUDE
+          value: "[]"
+
+  - it: should render NODES_INCLUDE as a JSON array when nodes.include is set
+    set:
+      nodes:
+        include:
+          - n8n-nodes-base.code
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.NODES_INCLUDE
+          value: '["n8n-nodes-base.code"]'
+
+  - it: should not render compression limits when unset so the n8n defaults apply
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES
+      - notExists:
+          path: data.N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES
+
+  - it: should render compression limits when nodes.compression is set
+    set:
+      nodes:
+        compression:
+          maxDecompressedSizeBytes: 1073741824
+          maxZipEntries: 5000
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES
+          value: "1073741824"
+      - equal:
+          path: data.N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES
+          value: "5000"
+
+  - it: should render DB_SQLITE_POOL_SIZE with the n8n pooling default
+    documentSelector:
+      path: metadata.name
+      value: n8n-database-configmap
+    asserts:
+      - equal:
+          path: data.DB_SQLITE_POOL_SIZE
+          value: "3"
+
+  - it: should render a custom DB_SQLITE_POOL_SIZE
+    set:
+      db:
+        sqlite:
+          poolSize: 4
+    documentSelector:
+      path: metadata.name
+      value: n8n-database-configmap
+    asserts:
+      - equal:
+          path: data.DB_SQLITE_POOL_SIZE
+          value: "4"
+
+  - it: should not render DB_SQLITE_POOL_SIZE when using postgresdb
+    set:
+      db:
+        type: postgresdb
+    documentSelector:
+      path: metadata.name
+      value: n8n-database-configmap
+    asserts:
+      - notExists:
+          path: data.DB_SQLITE_POOL_SIZE
+
+  - it: should not render N8N_DEFAULT_BINARY_DATA_MODE when binaryData.mode is unset so the n8n default applies
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_DEFAULT_BINARY_DATA_MODE
+
+  - it: should render N8N_DEFAULT_BINARY_DATA_MODE when binaryData.mode is filesystem
+    set:
+      binaryData:
+        mode: filesystem
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - equal:
+          path: data.N8N_DEFAULT_BINARY_DATA_MODE
+          value: filesystem
+
+  - it: should render the database binary data size limit when binaryData.mode is database
+    set:
+      binaryData:
+        mode: database
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - equal:
+          path: data.N8N_DEFAULT_BINARY_DATA_MODE
+          value: database
+      - equal:
+          path: data.N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE
+          value: "512"
+
+  - it: should honour a custom databaseMaxFileSize when binaryData.mode is database
+    set:
+      binaryData:
+        mode: database
+        databaseMaxFileSize: 1024
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - equal:
+          path: data.N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE
+          value: "1024"
+
+  - it: should not render the database size limit when binaryData.mode is s3
+    set:
+      binaryData:
+        mode: s3
+        s3:
+          host: s3.mydomain.com
+          bucketName: mybucket
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE
+
+  - it: should not render the filesystem storage path when binaryData.mode is database
+    set:
+      binaryData:
+        mode: database
+        localStoragePath: /home/node/.n8n/binaryData
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_BINARY_DATA_STORAGE_PATH

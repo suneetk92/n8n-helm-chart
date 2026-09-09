@@ -395,13 +395,13 @@ tests:
             value: production
         template: statefulset.yaml
 
-  - it: should set enforce settings file permissions
+  - it: should consume the security configmap
     asserts:
       - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
           content:
-            name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-            value: "true"
+            configMapRef:
+              name: n8n-security-configmap
         template: statefulset.yaml
 
   - it: should set port environment variable when service.port is set
@@ -1595,9 +1595,6 @@ tests:
       minio:
         enabled: false
       binaryData:
-        availableModes:
-          - filesystem
-          - s3
         mode: s3
         s3:
           accessKey: fake-access-key-id
@@ -1615,9 +1612,6 @@ tests:
   - it: should set aws access key from rootUser key when binaryData.mode is s3 and minio is enabled and users are not set
     set:
       binaryData:
-        availableModes:
-          - filesystem
-          - s3
         mode: s3
       minio:
         enabled: true
@@ -1636,9 +1630,6 @@ tests:
   - it: should set aws access key from existing secret when binaryData.mode is s3 and minio is not enabled
     set:
       binaryData:
-        availableModes:
-          - filesystem
-          - s3
         mode: s3
         s3:
           existingSecret: fake-existing-secret
@@ -1660,9 +1651,6 @@ tests:
       minio:
         enabled: false
       binaryData:
-        availableModes:
-          - filesystem
-          - s3
         mode: s3
         s3:
           accessSecret: fake-secret-access-key
@@ -1680,9 +1668,6 @@ tests:
   - it: should set aws secret access key from rootPassword key when binaryData.mode is s3 and minio is enabled and users are not set
     set:
       binaryData:
-        availableModes:
-          - filesystem
-          - s3
         mode: s3
       minio:
         enabled: true
@@ -1701,9 +1686,6 @@ tests:
   - it: should set aws secret access key from existing secret when binaryData.mode is s3 and minio is not enabled
     set:
       binaryData:
-        availableModes:
-          - filesystem
-          - s3
         mode: s3
         s3:
           existingSecret: fake-existing-secret

@@ -132,8 +132,6 @@ spec:
               value: "false"
             - name: NODE_ENV
               value: production
-            - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
-              value: "true"
             - name: N8N_PORT
               value: {{ .Values.service.port | quote }}
             - name: N8N_DEFAULT_LOCALE
@@ -197,7 +195,7 @@ spec:
             - name: N8N_MULTI_MAIN_SETUP_ENABLED
               value: "true"
           {{- end }}
-          {{- if has "s3" .Values.binaryData.availableModes }}
+          {{- if eq .Values.binaryData.mode "s3" }}
             - name: N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
@@ -242,6 +240,8 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           envFrom:
+            - configMapRef:
+                name: {{ template "n8n.fullname" . }}-security-configmap
             - configMapRef:
                 name: {{ template "n8n.fullname" . }}-database-configmap
             - configMapRef:

@@ -30,3 +30,9 @@
 {{- if or (not (kindIs "invalid" .Values.license.autoNenew.enabled)) (not (kindIs "invalid" .Values.license.autoNenew.offsetInHours)) }}
   {{- printf "WARNING: license.autoNenew is deprecated and has been removed in a future release. Please migrate to license.autoRenew field." | trimAll " " }}
 {{- end }}
+{{- if gt (len .Values.binaryData.availableModes) 0 }}
+  {{ printf "\nWARNING: binaryData.availableModes is deprecated and ignored. n8n 2.0 removed N8N_AVAILABLE_BINARY_DATA_MODES, so only binaryData.mode takes effect. Remove this field and set binaryData.mode to filesystem, database, or s3.\n" | trimAll " " }}
+{{- end }}
+{{- if .Values.encryptionKeyRotation.enabled }}
+  {{ printf "\nWARNING: encryptionKeyRotation.enabled is on. This is a one-way migration: n8n rewrites all encrypted data in a new keyed format, and reverting to disabled makes that data permanently unreadable. Ensure every main and worker instance shares the same encryptionKey and that you have a recent database backup.\n" | trimAll " " }}
+{{- end }}
