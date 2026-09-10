@@ -1538,6 +1538,33 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
 ```
 
+### To 3.3.0
+
+**Only affects installs with `sandboxService.enabled: true`.** If you do not run the sandbox, this
+upgrade needs no manual steps.
+
+The sandbox API and runner previously carried `app.kubernetes.io/name: n8n`, the same value the main
+`n8n` Service selects on, so that Service adopted the sandbox pods as endpoints and served a large
+share of requests from the wrong pod. Their selectors now use dedicated `n8n-sandbox-api` and
+`n8n-sandbox-runner` names.
+
+`spec.selector` is immutable on a Deployment and a StatefulSet, so **delete the two sandbox
+workloads before upgrading**, otherwise Helm fails with a "field is immutable" error:
+
+```console
+kubectl delete deployment <release>-sandbox-api -n <namespace>
+kubectl delete statefulset <release>-sandbox-runner -n <namespace>
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
+```
+
+Deleting them is safe: sandboxes are ephemeral, the API's state lives on its PVC, and the certificate
+Secrets are owned by cert-manager (or by you, under `existingSecret`). After upgrading, confirm the
+main Service has exactly one endpoint:
+
+```console
+kubectl get endpoints <release> -n <namespace>
+```
+
 ### To 3.2.0
 
 Two changes can make an upgrade fail that previously succeeded. Neither removes or renames a value.

@@ -622,6 +622,13 @@ Check postgres ssl certificate file content exist or not
 
 
 {{/*
+Sandbox service API name
+*/}}
+{{- define "n8n.sandbox-api.name" -}}
+{{- printf "%s-sandbox-api" (include "n8n.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
 Sandbox service API full name
 */}}
 {{- define "n8n.sandbox-api.fullname" -}}
@@ -646,9 +653,16 @@ Sandbox service API selector labels
 Selector fields are immutable after kubernetes resource creation. Do not edit this function.
 */}}
 {{- define "n8n.sandbox-api.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "n8n.name" . }}
+app.kubernetes.io/name: {{ include "n8n.sandbox-api.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: sandbox-api
+{{- end }}
+
+{{/*
+Sandbox service runner name
+*/}}
+{{- define "n8n.sandbox-runner.name" -}}
+{{- printf "%s-sandbox-runner" (include "n8n.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
@@ -676,7 +690,7 @@ Sandbox service runner selector labels
 Selector fields are immutable after kubernetes resource creation. Do not edit this function.
 */}}
 {{- define "n8n.sandbox-runner.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "n8n.name" . }}
+app.kubernetes.io/name: {{ include "n8n.sandbox-runner.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/component: sandbox-runner
 {{- end }}

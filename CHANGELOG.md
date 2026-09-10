@@ -4,6 +4,23 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+## 3.3.0
+
+### Fixed
+
+- The sandbox pods are no longer picked up as endpoints of the main `n8n` Service. Both sandbox
+  `selectorLabels` helpers set `app.kubernetes.io/name` from `n8n.name`, which is exactly what the
+  main Service selects on — that selector carries no component label — so the Service adopted the
+  sandbox API and runner pods alongside the real one. Roughly two thirds of the traffic to the n8n
+  host was answered by the wrong pod: `401` from the sandbox API, and `502` from the runner, whose
+  HTTP port serves TLS and reset the ingress controller's plaintext connections. In practice the
+  n8n Assistant could not work at all. The sandbox selectors now use dedicated
+  `n8n-sandbox-api` / `n8n-sandbox-runner` names, matching what the worker, webhook and MCP webhook
+  components already did.
+
+  **This changes `spec.selector` on the sandbox Deployment and StatefulSet, which Kubernetes treats
+  as immutable.** See the chart README's "To 3.3.0" section for the manual step.
+
 ## 3.2.0
 
 ### Fixed

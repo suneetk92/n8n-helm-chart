@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 3.2.0](https://img.shields.io/badge/Version-3.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 3.3.0](https://img.shields.io/badge/Version-3.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -16,14 +16,14 @@ architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 This chart is published as an OCI artifact, so no `helm repo add` is required:
 
 ```console
-helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.2.0
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.3.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 3.2.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 3.3.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1537,7 +1537,34 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.2.0
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.3.0
+```
+
+### To 3.3.0
+
+**Only affects installs with `sandboxService.enabled: true`.** If you do not run the sandbox, this
+upgrade needs no manual steps.
+
+The sandbox API and runner previously carried `app.kubernetes.io/name: n8n`, the same value the main
+`n8n` Service selects on, so that Service adopted the sandbox pods as endpoints and served a large
+share of requests from the wrong pod. Their selectors now use dedicated `n8n-sandbox-api` and
+`n8n-sandbox-runner` names.
+
+`spec.selector` is immutable on a Deployment and a StatefulSet, so **delete the two sandbox
+workloads before upgrading**, otherwise Helm fails with a "field is immutable" error:
+
+```console
+kubectl delete deployment <release>-sandbox-api -n <namespace>
+kubectl delete statefulset <release>-sandbox-runner -n <namespace>
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.3.0
+```
+
+Deleting them is safe: sandboxes are ephemeral, the API's state lives on its PVC, and the certificate
+Secrets are owned by cert-manager (or by you, under `existingSecret`). After upgrading, confirm the
+main Service has exactly one endpoint:
+
+```console
+kubectl get endpoints <release> -n <namespace>
 ```
 
 ### To 3.2.0

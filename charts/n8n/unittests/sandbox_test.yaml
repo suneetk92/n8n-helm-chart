@@ -459,3 +459,50 @@ tests:
               kind: ClusterIssuer
     asserts:
       - notFailedTemplate: {}
+
+  # The sandbox pods previously carried `app.kubernetes.io/name: n8n`, which is exactly what the
+  # main n8n Service selects on (that selector has no component label). The Service therefore
+  # adopted the sandbox API and runner pods as endpoints, so roughly two thirds of the traffic to
+  # the n8n host was answered by the wrong pod - 401s from the sandbox API and 502s from the
+  # runner, whose HTTP port serves TLS and rejected the ingress controller's plaintext requests.
+  - it: should not carry the main pod selector labels on the sandbox API
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+    template: sandbox-deployment-api.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/name"]
+          value: n8n-sandbox-api
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: n8n-sandbox-api
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: sandbox-api
+
+  - it: should not carry the main pod selector labels on the sandbox runner
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+    template: sandbox-statefulset-runner.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/name"]
+          value: n8n-sandbox-runner
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: n8n-sandbox-runner
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: sandbox-runner
