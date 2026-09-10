@@ -27,6 +27,7 @@ jobs:
       - name: Pull official chart and push to GHCR
         run: |
           helm repo add community-charts https://community-charts.github.io/helm-charts/
+          mkdir -p ./dist
           helm pull community-charts/n8n --version "$VERSION" --destination ./dist
           echo "::group::Publishing official n8n:${VERSION}"
           # ghcr.io/<owner>/n8n:<version> — same flat repo path the auto-published fork chart uses,
