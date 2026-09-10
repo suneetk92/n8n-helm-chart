@@ -70,7 +70,7 @@ waitContainer:
     # -- Repository for the wait-for-main init container.
     repository: busybox
     # -- Tag for the wait-for-main init container.
-    tag: "1.36"
+    tag: "1.38"
     # -- Pull policy for the wait-for-main init container.
     pullPolicy: IfNotPresent
 
