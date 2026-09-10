@@ -27,6 +27,7 @@ should match snapshot of postgres ssl certificate values:
       DB_POSTGRESDB_SSL_CERT: /home/node/certs/cert/cert.crt
       DB_POSTGRESDB_SSL_ENABLED: "true"
       DB_POSTGRESDB_SSL_KEY: /home/node/certs/key/cert.key
+      DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: "true"
       DB_TYPE: postgresdb
     kind: ConfigMap
     metadata:
@@ -227,7 +228,7 @@ should match snapshot of postgres ssl certificate values:
       template:
         metadata:
           annotations:
-            checksum/config: 089a34ce95adfe68ccc8a5957d1114e2f77cd7208a9d31ac48ff9c59686499fc
+            checksum/config: 00cd028f6db1409a619eea08ee6801f1bdd7626216406c7c9e897ff0fe2252f4
           labels:
             app.kubernetes.io/component: webhook
             app.kubernetes.io/instance: n8n

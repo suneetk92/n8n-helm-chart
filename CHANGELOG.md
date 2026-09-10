@@ -16,6 +16,13 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
   runner authenticate each other with mTLS and there is no plaintext mode, so all four Secrets must
   exist: either pre-create them and set the names, or use `tls.mode: certManager` with an
   `issuerRef`.
+- Four documented values that reached no rendered output are now honoured:
+  `sandboxService.tls.certManager.duration` / `renewBefore` (never emitted on any of the four
+  Certificates, so cert-manager silently applied its own 90d/30d defaults instead of the documented
+  values), `db.sqlite.database` (no `DB_SQLITE_DATABASE`), `db.postgresdb.ssl.rejectUnauthorized`
+  (no `DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED`, so SSL verification could not be relaxed), and
+  `npmRegistry.url`, which is now turned into a minimal `.npmrc` when `customNpmrc` and
+  `secretName` are unset rather than doing nothing.
 - `waitContainerSecurityContext` is now nil-guarded in the four templates that use it. It is the only
   optional root value that was dereferenced unguarded, so setting it to `null` emitted
   `securityContext: null` and silently discarded the hardening defaults.

@@ -65,9 +65,15 @@ data:
   {{- if eq (include "n8n.postgres.ssl.hasKey" .) "true" }}
   DB_POSTGRESDB_SSL_KEY: "/home/node/certs/key/cert.key"
   {{- end }}
+  {{- if not (kindIs "invalid" .Values.db.postgresdb.ssl.rejectUnauthorized) }}
+  DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: {{ .Values.db.postgresdb.ssl.rejectUnauthorized | quote }}
+  {{- end }}
   {{- end }}
 {{- else }}
   DB_TYPE: {{ .Values.db.type | default "sqlite" }}
+  {{- with .Values.db.sqlite.database }}
+  DB_SQLITE_DATABASE: {{ . | quote }}
+  {{- end }}
   DB_SQLITE_VACUUM_ON_STARTUP: {{ .Values.db.sqlite.vacuum | quote }}
   DB_SQLITE_POOL_SIZE: {{ .Values.db.sqlite.poolSize | quote }}
 {{- end }}

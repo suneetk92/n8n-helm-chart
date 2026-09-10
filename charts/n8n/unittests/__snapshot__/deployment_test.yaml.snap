@@ -16,6 +16,7 @@ should match snapshot of default values:
   2: |
     apiVersion: v1
     data:
+      DB_SQLITE_DATABASE: database.sqlite
       DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite
@@ -199,7 +200,7 @@ should match snapshot of default values:
       template:
         metadata:
           annotations:
-            checksum/config: 4303def958c589fb63e4d893a34b6d2d61333ee81288ebc2a54610088d15b5fb
+            checksum/config: fe0bc1148e12ce984728ae9765680d8d3f3ce254344acdcaf2de902120a487a6
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -337,6 +338,7 @@ should match snapshot of main persistence:
   2: |
     apiVersion: v1
     data:
+      DB_SQLITE_DATABASE: database.sqlite
       DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite
@@ -520,7 +522,7 @@ should match snapshot of main persistence:
       template:
         metadata:
           annotations:
-            checksum/config: 4303def958c589fb63e4d893a34b6d2d61333ee81288ebc2a54610088d15b5fb
+            checksum/config: fe0bc1148e12ce984728ae9765680d8d3f3ce254344acdcaf2de902120a487a6
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -659,6 +661,7 @@ should match snapshot of main persistence with multiple main node and mode read 
   2: |
     apiVersion: v1
     data:
+      DB_SQLITE_DATABASE: database.sqlite
       DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite
@@ -842,7 +845,7 @@ should match snapshot of main persistence with multiple main node and mode read 
       template:
         metadata:
           annotations:
-            checksum/config: 4303def958c589fb63e4d893a34b6d2d61333ee81288ebc2a54610088d15b5fb
+            checksum/config: fe0bc1148e12ce984728ae9765680d8d3f3ce254344acdcaf2de902120a487a6
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -994,6 +997,7 @@ should match snapshot of postgres ssl certificate values:
       DB_POSTGRESDB_SSL_CERT: /home/node/certs/cert/cert.crt
       DB_POSTGRESDB_SSL_ENABLED: "true"
       DB_POSTGRESDB_SSL_KEY: /home/node/certs/key/cert.key
+      DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: "true"
       DB_TYPE: postgresdb
     kind: ConfigMap
     metadata:
@@ -1175,7 +1179,7 @@ should match snapshot of postgres ssl certificate values:
       template:
         metadata:
           annotations:
-            checksum/config: bf8457f4e641b01228c2388e76471b4a651d50a301862523be1e7b32e39a275a
+            checksum/config: 933bc693e00e9802599b2042b25e199c3380b3407004a42b51f050c81925e5fc
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n

@@ -16,6 +16,7 @@ should match snapshot of default values:
   2: |
     apiVersion: v1
     data:
+      DB_SQLITE_DATABASE: database.sqlite
       DB_SQLITE_POOL_SIZE: "3"
       DB_SQLITE_VACUUM_ON_STARTUP: "false"
       DB_TYPE: sqlite

@@ -1,5 +1,6 @@
 {{- include "n8n.sandbox.validate" . -}}
 {{- if and .Values.sandboxService.enabled (eq .Values.sandboxService.tls.mode "certManager") }}
+{{- $certManager := .Values.sandboxService.tls.certManager -}}
 {{- $issuerRef := .Values.sandboxService.tls.certManager.issuerRef -}}
 {{- $apiRegistration := .Values.sandboxService.tls.certificates.apiRegistrationServer -}}
 {{- $apiControlClient := .Values.sandboxService.tls.certificates.apiControlClient -}}
@@ -15,6 +16,12 @@ spec:
   secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $apiRegistration "suffix" "sandbox-api-registration-tls") }}
   commonName: {{ include "n8n.sandbox-api.fullname" . }}
   isCA: false
+  {{- with $certManager.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
   privateKey:
     rotationPolicy: Always
   usages:
@@ -39,6 +46,12 @@ spec:
   secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $apiControlClient "suffix" "sandbox-api-control-client-tls") }}
   commonName: {{ printf "%s-control-client" (include "n8n.sandbox-api.fullname" .) | trunc 64 | trimSuffix "-" }}
   isCA: false
+  {{- with $certManager.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
   privateKey:
     rotationPolicy: Always
   usages:
@@ -58,6 +71,12 @@ spec:
   secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $runnerRegistration "suffix" "sandbox-runner-registration-tls") }}
   commonName: {{ printf "%s-registration-client" (include "n8n.sandbox-runner.fullname" .) | trunc 64 | trimSuffix "-" }}
   isCA: false
+  {{- with $certManager.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
   privateKey:
     rotationPolicy: Always
   usages:
@@ -77,6 +96,12 @@ spec:
   secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $runnerControl "suffix" "sandbox-runner-control-tls") }}
   commonName: {{ include "n8n.sandbox-runner.fullname" . }}
   isCA: false
+  {{- with $certManager.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with $certManager.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
   privateKey:
     rotationPolicy: Always
   usages:

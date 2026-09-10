@@ -93,14 +93,18 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Create redis name secret name.
+Name of the chart-managed Secret holding the external Redis credentials.
+Used as the default when externalRedis.existingSecret is unset. Not a subchart reference;
+the bundled redis subchart was removed in 3.0.0.
 */}}
 {{- define "n8n.redis.fullname" -}}
 {{- printf "%s-redis" (include "n8n.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
-Create postgresql name secret name.
+Name of the chart-managed Secret holding the external PostgreSQL credentials.
+Used as the default when externalPostgresql.existingSecret is unset. Not a subchart reference;
+the bundled postgresql subchart was removed in 3.0.0.
 */}}
 {{- define "n8n.postgresql.fullname" -}}
 {{- printf "%s-postgresql" (include "n8n.fullname" .) | trunc 63 | trimSuffix "-" -}}
