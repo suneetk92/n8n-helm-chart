@@ -10,6 +10,7 @@
   "commitMessagePrefix": "[n8n]",
   "prConcurrentLimit": 3,
   "prHourlyLimit": 0,
+  "platformAutomerge": false,
   "labels": [
     "dependencies"
   ],
