@@ -1559,10 +1559,14 @@ tests:
           any: true
         template: statefulset.yaml
 
-  - it: should have multi main setup enabled when main.count is greater than 1
+  - it: should enable multi main setup when main.count is greater than 1
     set:
       main:
         count: 2
+      worker:
+        mode: queue
+      webhook:
+        mode: queue
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == "n8n-main")].env
@@ -1571,6 +1575,20 @@ tests:
             value: "true"
           any: true
         template: statefulset.yaml
+
+  - it: should not enable multi main setup when main.count is 1
+    set:
+      main:
+        count: 1
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_MULTI_MAIN_SETUP_ENABLED
+            value: "true"
+          any: true
+        template: statefulset.yaml
+
 
   - it: should use license configmap and secret when license.enabled is true
     set:

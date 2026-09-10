@@ -401,7 +401,10 @@ license:
 
 # -- Main node configurations
 main:
-  # -- Number of main nodes. Only enterprise license users can have one leader main node and mutiple follower main nodes.
+  # -- Number of main nodes. Only enterprise license users can have one leader main node and multiple follower main nodes.
+  #    Setting this above 1 enables multi-main (`N8N_MULTI_MAIN_SETUP_ENABLED`): all main instances must share the same
+  #    database, encryption key and Redis, and n8n needs a queue backend (`worker.mode: queue`) plus an Enterprise licence
+  #    upstream for the extra replicas to take over scheduling. With a Community licence they cannot schedule executions.
   count: 1
 
   # -- Editor based URL. If it's not defined and ingress definition exists, ingress host will be used.
@@ -1412,3 +1415,255 @@ minio:
       # set versioning for
       # bucket [true|false]
       versioning: false
+
+# -- Execution lifecycle and request-size limits, rendered into the operations ConfigMap consumed by every n8n container.
+operations:
+  # -- Default workflow timeout in seconds (`EXECUTIONS_TIMEOUT`). `-1` disables it. Users can override per workflow up to `timeoutMax`.
+  timeout: -1
+  # -- Maximum timeout in seconds a user may set on a single workflow (`EXECUTIONS_TIMEOUT_MAX`).
+  timeoutMax: 3600
+  # -- Save execution data on error (`EXECUTIONS_DATA_SAVE_ON_ERROR`).
+  saveDataOnError: all
+  # -- Save execution data on success (`EXECUTIONS_DATA_SAVE_ON_SUCCESS`). Setting this to `none` is the single most effective way to slow database growth, but it removes the ability to inspect or retry successful runs.
+  saveDataOnSuccess: all
+  # -- Save progress for every executed node (`EXECUTIONS_DATA_SAVE_ON_PROGRESS`). Increases write volume substantially; only enable while debugging.
+  saveDataOnProgress: false
+  # -- Save data for manually triggered executions (`EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS`).
+  saveDataManualExecutions: true
+  # -- Delete old execution data on a rolling basis (`EXECUTIONS_DATA_PRUNE`). Off by upstream default; leaving it `false` lets the database grow without bound.
+  pruneData: false
+  # -- Execution age in hours before deletion (`EXECUTIONS_DATA_MAX_AGE`). Only used when `pruneData` is `true`.
+  pruneDataMaxAge: 336
+  # -- Maximum number of executions to keep (`EXECUTIONS_DATA_PRUNE_MAX_COUNT`). `0` means no limit. Only used when `pruneData` is `true`.
+  pruneDataMaxCount: 10000
+  # -- Age in hours after which finished execution data is hard-deleted (`EXECUTIONS_DATA_HARD_DELETE_BUFFER`).
+  pruneDataHardDeleteBuffer: 1
+  # -- Maximum request payload size in MB for webhooks and the REST API (`N8N_PAYLOAD_SIZE_MAX`).
+  payloadSizeMax: 16
+  # -- Maximum uploaded file size in MB for form submissions (`N8N_FORMDATA_FILE_SIZE_MAX`).
+  formDataFileSizeMax: 200
+  # -- Maximum size in bytes of execution data loaded when displaying an execution (`EXECUTIONS_DATA_MAX_DISPLAY_SIZE`). Larger executions are shown as "too large to display". `0` disables the limit.
+  maxDisplaySize: 104857600
+
+# -- SSRF protection for outbound requests from user-controllable nodes. Available from n8n 2.12; not license-gated. This is application-level defence-in-depth and does not replace network policy.
+ssrfProtection:
+  # -- Enable SSRF validation of outbound HTTP requests (`N8N_SSRF_PROTECTION_ENABLED`). Enabling it blocks RFC1918, loopback and link-local ranges by default, so internal services stop being reachable until allowlisted below.
+  enabled: false
+  # -- Hostname patterns allowed to bypass the blocklist (`N8N_SSRF_ALLOWED_HOSTNAMES`), supports wildcards such as `*.n8n.internal`. Takes precedence over the IP allowlist.
+  allowedHostnames: []
+  # -- CIDR ranges allowed to bypass the blocklist (`N8N_SSRF_ALLOWED_IP_RANGES`). Takes precedence over `blockedIpRanges`.
+  allowedIpRanges: []
+  # -- Additional CIDR ranges to block on top of the upstream defaults (`N8N_SSRF_BLOCKED_IP_RANGES`). Include the literal string `default` to keep the upstream list alongside your own.
+  blockedIpRanges: []
+  # -- Hostnames that are always blocked (`N8N_SSRF_BLOCKED_HOSTNAMES`).
+  blockedHostnames: []
+  # -- Maximum DNS cache entries (`N8N_SSRF_DNS_CACHE_MAX_SIZE`).
+  dnsCacheMaxSize: 1048576
+
+# -- Durable, database-backed scheduler for time-based workflows. Available from n8n 2.36 (Preview from 2.32). Requires `operations`-independent Postgres or SQLite; runs on main instances.
+durableScheduler:
+  # -- Take over Schedule Trigger nodes (`N8N_SCHEDULER_ENABLED`). Setting this to `true` also enables the workflow publication service, which n8n requires for the scheduler to take effect - enabling one without the other is a silent no-op.
+  enabled: false
+  # -- Also take over poll triggers such as Google Sheets Trigger (`N8N_SCHEDULER_POLL_TRIGGERS_ENABLED`). Upstream warns this is not yet fully stable; keep it off in production. Requires `enabled`.
+  pollTriggers: false
+  # -- Store each poll's cursor transactionally so a crash mid-poll cannot drop or duplicate data (`N8N_POLLER_DURABLE_CURSORS_ENABLED`). Requires `enabled` and `pollTriggers`.
+  durableCursors: false
+  # -- Show a per-node "Skip Durable Scheduler" option to keep individual triggers on the in-memory scheduler (`N8N_ENV_FEAT_SKIP_DURABLE_SCHEDULER`). Temporary upstream escape hatch.
+  allowSkip: false
+
+# -- Outbound email via SMTP. Without this, n8n cannot send invitations, password resets or shared-workflow notifications.
+smtp:
+  # -- Enable SMTP (`N8N_EMAIL_MODE`). Set to `smtp`; leave `false` to disable outbound email entirely.
+  enabled: false
+  # -- SMTP host (`N8N_SMTP_HOST`).
+  host: ""
+  # -- SMTP port (`N8N_SMTP_PORT`). `465` is implicit TLS, `587` is STARTTLS.
+  port: 465
+  # -- Username for SMTP auth (`N8N_SMTP_USER`).
+  user: ""
+  # -- Sender address (`N8N_SMTP_SENDER`).
+  sender: ""
+  # -- Use implicit TLS (`N8N_SMTP_SSL`). Keep `true` for port 465, set `false` with `startTls: true` for 587.
+  ssl: true
+  # -- Upgrade to TLS with STARTTLS (`N8N_SMTP_STARTTLS`).
+  startTls: true
+  # -- Existing secret holding the SMTP password. The chart reads the key named in `passwordKey` and exposes it as `N8N_SMTP_PASS`. Takes precedence over `password`.
+  existingSecret: ""
+  # -- Key inside `existingSecret` that holds the password.
+  passwordKey: password
+  # -- SMTP password written into the chart-managed Secret. Ignored when `existingSecret` is set. Prefer `existingSecret` so the value stays out of your values file.
+  password: ""
+
+# -- Bootstrap and pin the instance owner from the environment, for GitOps installations where nobody should have to complete a first-run form.
+instanceOwner:
+  # -- Manage the instance owner from environment variables (`N8N_INSTANCE_OWNER_MANAGED_BY_ENV`). While `true` n8n overwrites the owner details on every startup, locks those fields in the UI and rejects API writes.
+  enabled: false
+  # -- Owner email address (`N8N_INSTANCE_OWNER_EMAIL`). Must not already belong to another user on the instance.
+  email: ""
+  # -- Owner first name (`N8N_INSTANCE_OWNER_FIRST_NAME`).
+  firstName: ""
+  # -- Owner last name (`N8N_INSTANCE_OWNER_LAST_NAME`).
+  lastName: ""
+  # -- Bcrypt hash of the owner password, written into the chart-managed Secret as `N8N_INSTANCE_OWNER_PASSWORD_HASH`. Ignored when `existingSecret` is set. Generate one with `npx bcrypt '<password>'`; a plaintext value here breaks login and commits a credential.
+  passwordHash: ""
+  # -- Existing secret holding a bcrypt hash of the owner password, exposed as `N8N_INSTANCE_OWNER_PASSWORD_HASH`. The value must be a bcrypt hash; a plaintext password breaks login.
+  existingSecret: ""
+  # -- Key inside `existingSecret` that holds the bcrypt hash.
+  passwordHashKey: password-hash
+
+# -- n8n Assistant and agents (`instance-ai`, `agents`). Preview feature; available on self-hosted Community, Registered Community and Business, not self-hosted Enterprise. Requires a sandbox; see `sandboxService`.
+aiAssistant:
+  # -- Enable the AI module surface and render its ConfigMap. Does not by itself pick modules; see `modules`.
+  enabled: false
+  # -- Modules to load via `N8N_ENABLED_MODULES`, for example `["instance-ai", "agents"]`. `agents` can be run without `instance-ai`; keep both for AI-assisted agent building.
+  modules:
+    - instance-ai
+  # -- Model in `provider/model` form (`N8N_INSTANCE_AI_MODEL`). Supported providers: `anthropic`, `openai`, `openrouter`.
+  model: anthropic/claude-opus-4-8
+  # -- OpenAI-compatible endpoint for a local or custom model server (`N8N_INSTANCE_AI_MODEL_URL`). Leave empty to use the provider's hosted API.
+  modelUrl: ""
+  # -- Existing secret holding the model API key, exposed as `N8N_INSTANCE_AI_MODEL_API_KEY`. When empty, n8n falls back to the provider's own environment variable and to in-UI configuration.
+  existingModelApiKeySecret: ""
+  # -- Key inside `existingModelApiKeySecret` that holds the API key.
+  modelApiKeyKey: api-key
+  # -- Model API key written into the chart-managed Secret as `N8N_INSTANCE_AI_MODEL_API_KEY`. Ignored when `existingModelApiKeySecret` is set. Prefer `existingModelApiKeySecret` so the key stays out of your values file.
+  modelApiKey: ""
+  # -- MCP servers the assistant may use (`N8N_INSTANCE_AI_MCP_SERVERS`), as a JSON string.
+  mcpServers: ""
+  # -- Sandbox used to run AI-generated code. Required for n8n Assistant.
+  sandbox:
+    # -- Point n8n at a sandbox service (`N8N_INSTANCE_AI_SANDBOX_ENABLED`).
+    enabled: false
+    # -- Sandbox provider (`N8N_INSTANCE_AI_SANDBOX_PROVIDER`). The chart supports `n8n-sandbox`; use `external` when the service runs outside this cluster.
+    provider: n8n-sandbox
+    # -- Sandbox API URL (`N8N_SANDBOX_SERVICE_URL`). Defaults to the in-cluster `sandboxService` URL when it is enabled; set it explicitly for an external service.
+    serviceUrl: ""
+    # -- Existing secret holding the sandbox API key, exposed as `N8N_SANDBOX_SERVICE_API_KEY`. Must match a value in the sandbox service's `SANDBOX_API_KEYS`. When empty and `sandboxService.enabled` is `true`, the chart reuses that service's generated key.
+    existingApiKeySecret: ""
+    # -- Key inside `existingApiKeySecret` that holds the API key.
+    apiKeyKey: api-key
+  # -- Web search backend for the assistant.
+  searxng:
+    # -- SearXNG base URL (`N8N_INSTANCE_AI_SEARXNG_URL`) of an externally managed SearXNG instance. Must include a scheme (http:// or https://).
+    url: ""
+
+# -- The n8n Sandbox Service: a control-plane API plus an in-cluster runner that executes AI-generated code. Deployed only when `sandboxService.enabled`. Treat the runner as root-equivalent on its node.
+sandboxService:
+  # -- Deploy the sandbox API and runner pods.
+  enabled: false
+  # -- Number of API replicas. Keep `1` unless `api.store` is `postgres`; the default SQLite store cannot be shared between replicas.
+  replicas: 1
+  image:
+    # -- Sandbox service API image repository.
+    repository: ghcr.io/n8n-io/n8n-sandbox-service-api
+    # -- Image tag. Defaults to the pinned version below when empty.
+    tag: ""
+    # -- Overrides the pinned service version used as the default image tag. The API, runner and sandbox images are released together and must match.
+    version: 1.3.4
+    # -- Image pull policy.
+    pullPolicy: IfNotPresent
+    # -- Sandbox runner image repository (Docker-in-Docker build).
+    runnerRepository: ghcr.io/n8n-io/n8n-sandbox-service-runner-dind
+    # -- Sandbox image used for the per-execution sandbox containers created by the runner.
+    sandboxRepository: ghcr.io/n8n-io/n8n-sandbox-service-sandbox
+  # -- Authentication material. The API key handed to n8n must be one of `apiKeys`.
+  auth:
+    # -- Existing secret supplying the sandbox credentials instead of generated ones. Expected keys are configurable below.
+    existingSecret: ""
+    # -- Comma-separated admin API keys accepted by the API (`SANDBOX_API_KEYS`). Required unless `existingSecret` is set. Generate a long random value; do not commit a real key.
+    apiKeys: ""
+    # -- Shared secret runners use to register with the API (`SANDBOX_API_RUNNER_REGISTRATION_TOKEN`). Must match the runner. Required unless `existingSecret` is set.
+    runnerRegistrationToken: ""
+    # -- Key the API uses when calling the runner (`SANDBOX_API_RUNNER_API_KEY`). Required unless `existingSecret` is set.
+    runnerApiKey: ""
+    # -- Comma-separated keys the runner accepts from the API (`SANDBOX_RUNNER_API_KEYS`). Must include `runnerApiKey`. Required unless `existingSecret` is set.
+    runnerApiKeys: ""
+    # -- Key names inside the auth secret.
+    keys:
+      # -- Key holding `SANDBOX_API_KEYS`.
+      apiKeys: api-keys
+      # -- Key holding `SANDBOX_API_RUNNER_REGISTRATION_TOKEN`.
+      runnerRegistrationToken: runner-registration-token
+      # -- Key holding `SANDBOX_API_RUNNER_API_KEY`.
+      runnerApiKey: runner-api-key
+      # -- Key holding `SANDBOX_RUNNER_API_KEYS`.
+      runnerApiKeys: runner-api-keys
+  # -- Mutual TLS between the API and the runner. Both peers require certificates; the stack does not run without them.
+  tls:
+    # -- How certificate Secrets are supplied: `existingSecret` (you provide them) or `certManager` (cert-manager issues them).
+    mode: existingSecret
+    # -- cert-manager issuer used when `mode` is `certManager`.
+    certManager:
+      # -- Issuer or ClusterIssuer name. Required when `mode` is `certManager`.
+      issuerRef:
+        name: ""
+        # -- Kind of the issuer reference.
+        kind: Issuer
+        # -- API group of the issuer reference.
+        group: cert-manager.io
+      # -- Certificate lifetime (`duration`) and renewal lead time (`renewBefore`), in Go duration format.
+      duration: 2160h
+      renewBefore: 360h
+    # -- The four certificates the stack needs. Each is a kubernetes.io/tls Secret containing `tls.crt`, `tls.key` and `ca.crt`.
+    certificates:
+      # -- Server certificate presented by the API's registration gRPC listener. DNS names are generated from the API service name.
+      apiRegistrationServer:
+        secretName: ""
+        mountPath: /tls/api-registration
+      # -- Client certificate the API uses against the runner's control listener.
+      apiControlClient:
+        secretName: ""
+        mountPath: /tls/api-control-client
+      # -- Client certificate the runner uses when registering with the API.
+      runnerRegistrationClient:
+        secretName: ""
+        mountPath: /tls/runner-registration
+      # -- Server certificate for the runner's control gRPC and HTTPS listeners. Its SANs must match the runner host in `httpBaseUrl`.
+      runnerControlServer:
+        secretName: ""
+        mountPath: /tls/runner-control
+  api:
+    # -- Store backend: `sqlite` for a single API pod, `postgres` when running more than one replica.
+    store: sqlite
+    # -- Default per-tenant sandbox quota (`SANDBOX_API_DEFAULT_MAX_SANDBOXES`). `0` means unlimited.
+    defaultMaxSandboxes: 50
+    # -- Maximum file upload size in bytes accepted by the API (`SANDBOX_API_MAX_FILE_BYTES`).
+    maxFileBytes: 10485760
+    # -- How long after the last heartbeat a runner still counts as eligible for placement (`SANDBOX_API_RUNNER_HEARTBEAT_GRACE`).
+    runnerHeartbeatGrace: 45s
+    # -- Persist the SQLite store so sandbox state survives API pod restarts. Ignored when `store` is `postgres`.
+    persistence:
+      enabled: true
+      size: 1Gi
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: ""
+    resources: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+  runner:
+    # -- Isolation mode for the runner. `privileged` runs Docker-in-Docker with `privileged: true`; an escape reaches the node, so it must be acknowledged explicitly.
+    isolation: privileged
+    # -- Explicit acceptance of the privileged DinD security trade-off. Required when `isolation` is `privileged`. The namespace also needs Pod Security Admission level `privileged`.
+    acknowledgePrivileged: false
+    # -- Sandbox resource defaults applied by the runner.
+    defaultMemoryMb: 512
+    defaultCpuPercent: 100
+    defaultPidsMax: 256
+    # -- Reported capacity for placement (`SANDBOX_RUNNER_CAPACITY_TOTAL`). `0` means unlimited.
+    capacityTotal: 1000
+    # -- Number of runner pods. Each registers itself with the API and sandboxes are placed on the least-loaded one.
+    replicas: 1
+    # -- Port the runner serves HTTPS on; must match its certificate SANs via `httpBaseUrl`.
+    httpPort: 8080
+    # -- Port for the control gRPC listener.
+    controlGrpcPort: 9091
+    # -- Base URL the API uses to reach this runner (`SANDBOX_RUNNER_HTTP_BASE_URL`). Defaults to the in-cluster headless service, which keeps the host stable enough for per-pod certificates only when `replicas` is 1.
+    httpBaseUrl: ""
+    resources: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    # -- Runtime class for the runner pod, for example a Kata Containers class so `privileged: true` applies inside a guest VM.
+    runtimeClassName: ""

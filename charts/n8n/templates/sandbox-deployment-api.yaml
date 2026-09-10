@@ -1,0 +1,138 @@
+{{- include "n8n.sandbox.validate" . -}}
+{{- if .Values.sandboxService.enabled }}
+{{- $apiRegistration := .Values.sandboxService.tls.certificates.apiRegistrationServer -}}
+{{- $apiControlClient := .Values.sandboxService.tls.certificates.apiControlClient -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "n8n.sandbox-api.fullname" . }}
+  labels:
+    {{- include "n8n.sandbox-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.sandboxService.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      {{- include "n8n.sandbox-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/sandbox-configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "n8n.sandbox-api.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.sandboxService.image.repository }}:{{ .Values.sandboxService.image.tag | default .Values.sandboxService.image.version }}"
+          imagePullPolicy: {{ .Values.sandboxService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: grpc
+              containerPort: 9090
+          envFrom:
+            - configMapRef:
+                name: {{ include "n8n.sandbox-api.fullname" . }}-config
+          env:
+            - name: SANDBOX_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.sandbox.authSecretName" . }}
+                  key: {{ .Values.sandboxService.auth.keys.apiKeys }}
+            - name: SANDBOX_API_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.sandbox.authSecretName" . }}
+                  key: {{ .Values.sandboxService.auth.keys.runnerRegistrationToken }}
+            - name: SANDBOX_API_RUNNER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.sandbox.authSecretName" . }}
+                  key: {{ .Values.sandboxService.auth.keys.runnerApiKey }}
+            - name: SANDBOX_API_GRPC_TLS_CERT_FILE
+              value: {{ printf "%s/tls.crt" $apiRegistration.mountPath | quote }}
+            - name: SANDBOX_API_GRPC_TLS_KEY_FILE
+              value: {{ printf "%s/tls.key" $apiRegistration.mountPath | quote }}
+            - name: SANDBOX_API_GRPC_TLS_CLIENT_CA_FILE
+              value: {{ printf "%s/ca.crt" $apiRegistration.mountPath | quote }}
+            - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_CA_FILE
+              value: {{ printf "%s/ca.crt" $apiControlClient.mountPath | quote }}
+            - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_CERT_FILE
+              value: {{ printf "%s/tls.crt" $apiControlClient.mountPath | quote }}
+            - name: SANDBOX_API_RUNNER_CONTROL_GRPC_TLS_KEY_FILE
+              value: {{ printf "%s/tls.key" $apiControlClient.mountPath | quote }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          {{- with .Values.sandboxService.api.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: api-registration-tls
+              mountPath: {{ $apiRegistration.mountPath | quote }}
+              readOnly: true
+            - name: api-control-client-tls
+              mountPath: {{ $apiControlClient.mountPath | quote }}
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/n8n-sandbox-api
+      volumes:
+        - name: api-registration-tls
+          secret:
+            secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $apiRegistration "suffix" "sandbox-api-registration-tls") }}
+        - name: api-control-client-tls
+          secret:
+            secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $apiControlClient "suffix" "sandbox-api-control-client-tls") }}
+        {{- if and .Values.sandboxService.api.persistence.enabled (eq .Values.sandboxService.api.store "sqlite") }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "n8n.sandbox-api.fullname" . }}
+        {{- else }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+      {{- with .Values.sandboxService.api.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sandboxService.api.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.sandboxService.api.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- if and .Values.sandboxService.api.persistence.enabled (eq .Values.sandboxService.api.store "sqlite") }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "n8n.sandbox-api.fullname" . }}
+  labels:
+    {{- include "n8n.sandbox-api.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.sandboxService.api.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.sandboxService.api.persistence.size | quote }}
+  {{- if .Values.sandboxService.api.persistence.storageClassName }}
+  storageClassName: {{ .Values.sandboxService.api.persistence.storageClassName | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

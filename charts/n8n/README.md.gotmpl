@@ -1397,6 +1397,61 @@ nodes:
     maxZipEntries: 5000                   # pre-3.0 default
 ```
 
+##### Operational Configuration Blocks (new)
+
+Chart 2.0.0 adds blocks for operational configuration that n8n 2.x exposes through environment variables but the chart previously had no surface for. `operations` is always rendered (it only adds a ConfigMap with safe defaults); `ssrfProtection` and `durableScheduler` are **disabled by default** (`enabled: false`) — enable them explicitly.
+
+- `operations` — execution lifecycle and request-size limits, rendered into a dedicated operations ConfigMap consumed by every n8n container. Maps to `N8N_EXECUTIONS_TIMEOUT`, `N8N_EXECUTIONS_TIMEOUT_MAX`, the `EXECUTIONS_DATA_*` save/pruning knobs (`EXECUTIONS_DATA_PRUNE`, `_MAX_AGE`, `_PRUNE_MAX_COUNT`, `_HARD_DELETE_BUFFER`), and `N8N_PAYLOAD_SIZE_MAX` / `N8N_FORMDATA_FILE_SIZE_MAX`.
+- `ssrfProtection` — application-level SSRF protection for outbound requests from user-controllable nodes (`N8N_SSRF_PROTECTION_ENABLED` plus the allowed/blocked host and IP-range lists). Available from n8n 2.12; it is defence-in-depth and does **not** replace network policy.
+- `durableScheduler` — the durable, database-backed scheduler for time-based workflows (`N8N_SCHEDULER_ENABLED`, `N8N_USE_WORKFLOW_PUBLICATION_SERVICE`, `N8N_SCHEDULER_POLL_TRIGGERS_ENABLED`). Preview upstream; keep poll triggers disabled in production until stable and back up the database before upgrades that change its schema.
+
+```yaml
+# operations has no enabled flag; tune these values as needed
+operations:
+  timeoutMax: 7200
+ssrfProtection:
+  enabled: true
+durableScheduler:
+  enabled: true
+```
+
+##### Email and Instance Owner (new, opt-in)
+
+- `smtp` — outbound email. Without it n8n cannot send invitations, password resets or shared-workflow notifications. Set `smtp.enabled`, `host`, `port`, `sender` and either `password` (stored in a generated `<release>-smtp` Secret) or `existingSecret`.
+- `instanceOwner` — bootstrap and pin the instance owner from the environment for GitOps installs where nobody should complete a first-run form. Requires a **bcrypt** hash (`instanceOwner.passwordHash`); a plaintext password breaks login. A generated `<release>-instance-owner` Secret carries the hash, or point at an existing one with `existingSecret`.
+
+```yaml
+smtp:
+  enabled: true
+  host: smtp.example.com
+  port: 587
+  sender: "n8n <no-reply@example.com>"
+  password: change-me
+instanceOwner:
+  enabled: true
+  email: admin@example.com
+  firstName: Admin
+  lastName: Owner
+  passwordHash: "$2b$10$..."   # bcrypt hash, not a plaintext password
+```
+
+##### n8n Assistant and Sandbox Service (new, opt-in)
+
+- `aiAssistant` — enables the n8n Assistant and agents (`N8N_ENABLED_MODULES: instance-ai,agents`) plus its model settings (`N8N_INSTANCE_AI_MODEL`, `_MODEL_URL`, `_MCP_SERVERS`). **Preview feature upstream.** It requires a sandbox to execute AI-generated code: either the in-cluster `sandboxService` below, or an external one via `aiAssistant.sandbox.serviceUrl` + `existingApiKeySecret`.
+- `aiAssistant.searxng.url` — points the Assistant at an **externally managed** SearXNG instance (`N8N_INSTANCE_AI_SEARXNG_URL`). The chart does not deploy SearXNG; run your own and set this to its base URL (it must include a scheme, `http://` or `https://`).
+- `sandboxService` — deploys the n8n Sandbox Service as separate pods: a control-plane API plus an in-cluster runner that executes AI-generated code via Docker-in-Docker. Disabled by default. **Security:** the runner defaults to `isolation: privileged`, which is root-equivalent on its node — set `runner.acknowledgePrivileged: true` to accept this, pin it with `runner.nodeSelector`, prefer a runtime class (e.g. Kata Containers) where possible, and keep an unprivileged Pod Security Admission profile on every other namespace.
+
+```yaml
+aiAssistant:
+  enabled: true
+  searxng:
+    url: https://searxng.example.com   # externally managed SearXNG
+sandboxService:
+  enabled: true
+  runner:
+    acknowledgePrivileged: true        # required for the default privileged isolation
+```
+
 ##### Upstream Changes With No Chart Surface
 
 These n8n 2.0/3.0 breaking changes are workflow-level and cannot be configured through the chart; review them in the [2.0](https://docs.n8n.io/changelog/v20-breaking-changes) and [3.0](https://docs.n8n.io/changelog/v30-breaking-changes) changelogs before upgrading: Chat Hub retirement and the removal of importing workflows from a URL, the legacy Function / Function Item nodes, the removed `$getPairedItem` expression variable, and AI Agent v1 no longer being creatable.

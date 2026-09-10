@@ -130,6 +130,22 @@ spec:
           env:
             - name: N8N_HIRING_BANNER_ENABLED
               value: "false"
+          {{- if .Values.aiAssistant.enabled }}
+          {{- if or .Values.aiAssistant.modelApiKey (not .Values.aiAssistant.existingModelApiKeySecret) }}
+            - name: N8N_INSTANCE_AI_MODEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (printf "%s-ai" (include "n8n.fullname" .)) .Values.aiAssistant.existingModelApiKeySecret }}
+                  key: {{ .Values.aiAssistant.modelApiKeyKey }}
+          {{- end }}
+          {{- if .Values.aiAssistant.sandbox.enabled }}
+            - name: N8N_SANDBOX_SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.sandbox.apiKeyName" . }}
+                  key: {{ include "n8n.sandbox.apiKeyKeyName" . }}
+          {{- end }}
+          {{- end }}
             - name: NODE_ENV
               value: production
             - name: N8N_PORT
@@ -272,6 +288,20 @@ spec:
           {{- end }}
             - secretRef:
                 name: {{ default (printf "%s-encryption-key-secret-v2" (include "n8n.fullname" .)) .Values.existingEncryptionKeySecret }}
+            - configMapRef:
+                name: {{ template "n8n.fullname" . }}-operations-configmap
+          {{- if or .Values.smtp.enabled .Values.instanceOwner.enabled }}
+            - configMapRef:
+                name: {{ template "n8n.fullname" . }}-email-configmap
+          {{- end }}
+          {{- if .Values.ssrfProtection.enabled }}
+            - configMapRef:
+                name: {{ template "n8n.fullname" . }}-ssrf-configmap
+          {{- end }}
+          {{- if .Values.aiAssistant.enabled }}
+            - configMapRef:
+                name: {{ template "n8n.fullname" . }}-ai-configmap
+          {{- end }}
           {{- range (default .Values.extraSecretNamesForEnvFrom .Values.main.extraSecretNamesForEnvFrom) }}
             - secretRef:
                 name: {{ . }}

@@ -1,0 +1,38 @@
+{{- include "n8n.sandbox.validate" . -}}
+{{- if .Values.sandboxService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "n8n.sandbox-api.fullname" . }}
+  labels:
+    {{- include "n8n.sandbox-api.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "n8n.sandbox-api.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: grpc
+      port: 9090
+      targetPort: grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "n8n.sandbox-runner.fullname" . }}
+  labels:
+    {{- include "n8n.sandbox-runner.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "n8n.sandbox-runner.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.sandboxService.runner.httpPort }}
+      targetPort: http
+    - name: control-grpc
+      port: {{ .Values.sandboxService.runner.controlGrpcPort }}
+      targetPort: control-grpc
+{{- end }}

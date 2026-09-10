@@ -148,6 +148,30 @@ should match snapshot of default values:
         heritage: Helm
         release: n8n
       name: n8n-binary-data-configmap
+  11: |
+    apiVersion: v1
+    data:
+      EXECUTIONS_DATA_HARD_DELETE_BUFFER: "1"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+      EXECUTIONS_DATA_MAX_DISPLAY_SIZE: "104857600"
+      EXECUTIONS_DATA_PRUNE: "false"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "true"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_TIMEOUT: "-1"
+      EXECUTIONS_TIMEOUT_MAX: "3600"
+      N8N_FORMDATA_FILE_SIZE_MAX: "200"
+      N8N_PAYLOAD_SIZE_MAX: "16"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-operations-configmap
 should match snapshot of external redis values:
   1: |
     apiVersion: v1
@@ -321,3 +345,27 @@ should match snapshot of external redis values:
         heritage: Helm
         release: n8n
       name: n8n-binary-data-configmap
+  12: |
+    apiVersion: v1
+    data:
+      EXECUTIONS_DATA_HARD_DELETE_BUFFER: "1"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+      EXECUTIONS_DATA_MAX_DISPLAY_SIZE: "104857600"
+      EXECUTIONS_DATA_PRUNE: "false"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "true"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_TIMEOUT: "-1"
+      EXECUTIONS_TIMEOUT_MAX: "3600"
+      N8N_FORMDATA_FILE_SIZE_MAX: "200"
+      N8N_PAYLOAD_SIZE_MAX: "16"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-operations-configmap

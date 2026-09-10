@@ -1,0 +1,93 @@
+{{- include "n8n.sandbox.validate" . -}}
+{{- if and .Values.sandboxService.enabled (eq .Values.sandboxService.tls.mode "certManager") }}
+{{- $issuerRef := .Values.sandboxService.tls.certManager.issuerRef -}}
+{{- $apiRegistration := .Values.sandboxService.tls.certificates.apiRegistrationServer -}}
+{{- $apiControlClient := .Values.sandboxService.tls.certificates.apiControlClient -}}
+{{- $runnerRegistration := .Values.sandboxService.tls.certificates.runnerRegistrationClient -}}
+{{- $runnerControl := .Values.sandboxService.tls.certificates.runnerControlServer -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "n8n.sandbox-api.fullname" . }}-registration-tls
+  labels:
+    {{- include "n8n.sandbox-api.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $apiRegistration "suffix" "sandbox-api-registration-tls") }}
+  commonName: {{ include "n8n.sandbox-api.fullname" . }}
+  isCA: false
+  privateKey:
+    rotationPolicy: Always
+  usages:
+    - server auth
+  dnsNames:
+    - {{ include "n8n.sandbox-api.fullname" . }}
+    - {{ printf "%s.%s" (include "n8n.sandbox-api.fullname" .) .Release.Namespace }}
+    - {{ printf "%s.%s.svc" (include "n8n.sandbox-api.fullname" .) .Release.Namespace }}
+    - {{ printf "%s.%s.svc.cluster.local" (include "n8n.sandbox-api.fullname" .) .Release.Namespace }}
+  issuerRef:
+    name: {{ $issuerRef.name | quote }}
+    kind: {{ $issuerRef.kind | quote }}
+    group: {{ $issuerRef.group | quote }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "n8n.sandbox-api.fullname" . }}-control-client-tls
+  labels:
+    {{- include "n8n.sandbox-api.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $apiControlClient "suffix" "sandbox-api-control-client-tls") }}
+  commonName: {{ printf "%s-control-client" (include "n8n.sandbox-api.fullname" .) | trunc 64 | trimSuffix "-" }}
+  isCA: false
+  privateKey:
+    rotationPolicy: Always
+  usages:
+    - client auth
+  issuerRef:
+    name: {{ $issuerRef.name | quote }}
+    kind: {{ $issuerRef.kind | quote }}
+    group: {{ $issuerRef.group | quote }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "n8n.sandbox-runner.fullname" . }}-registration-tls
+  labels:
+    {{- include "n8n.sandbox-runner.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $runnerRegistration "suffix" "sandbox-runner-registration-tls") }}
+  commonName: {{ printf "%s-registration-client" (include "n8n.sandbox-runner.fullname" .) | trunc 64 | trimSuffix "-" }}
+  isCA: false
+  privateKey:
+    rotationPolicy: Always
+  usages:
+    - client auth
+  issuerRef:
+    name: {{ $issuerRef.name | quote }}
+    kind: {{ $issuerRef.kind | quote }}
+    group: {{ $issuerRef.group | quote }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "n8n.sandbox-runner.fullname" . }}-control-tls
+  labels:
+    {{- include "n8n.sandbox-runner.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "n8n.sandbox.certSecretName" (dict "root" $ "cert" $runnerControl "suffix" "sandbox-runner-control-tls") }}
+  commonName: {{ include "n8n.sandbox-runner.fullname" . }}
+  isCA: false
+  privateKey:
+    rotationPolicy: Always
+  usages:
+    - server auth
+  dnsNames:
+    - {{ include "n8n.sandbox-runner.fullname" . }}
+    - {{ printf "%s.%s" (include "n8n.sandbox-runner.fullname" .) .Release.Namespace }}
+    - {{ printf "%s.%s.svc" (include "n8n.sandbox-runner.fullname" .) .Release.Namespace }}
+    - {{ printf "%s.%s.svc.cluster.local" (include "n8n.sandbox-runner.fullname" .) .Release.Namespace }}
+    # Per-pod DNS names used by SANDBOX_RUNNER_HTTP_BASE_URL with replicas > 1.
+    - {{ printf "*.%s.%s.svc.cluster.local" (include "n8n.sandbox-runner.fullname" .) .Release.Namespace | quote }}
+  issuerRef:
+    name: {{ $issuerRef.name | quote }}
+{{- end }}

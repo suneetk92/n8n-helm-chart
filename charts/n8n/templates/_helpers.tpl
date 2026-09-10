@@ -536,3 +536,187 @@ Check postgres ssl certificate file content exist or not
 {{- $internalResult -}}
 {{- end -}}
 
+
+{{/*
+Sandbox service API full name
+*/}}
+{{- define "n8n.sandbox-api.fullname" -}}
+{{- printf "%s-sandbox-api" (include "n8n.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Sandbox service API labels
+*/}}
+{{- define "n8n.sandbox-api.labels" -}}
+helm.sh/chart: {{ include "n8n.chart" . }}
+{{ include "n8n.sandbox-api.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: n8n
+{{- end }}
+
+{{/*
+Sandbox service API selector labels
+Selector fields are immutable after kubernetes resource creation. Do not edit this function.
+*/}}
+{{- define "n8n.sandbox-api.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "n8n.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: sandbox-api
+{{- end }}
+
+{{/*
+Sandbox service runner full name
+*/}}
+{{- define "n8n.sandbox-runner.fullname" -}}
+{{- printf "%s-sandbox-runner" (include "n8n.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Sandbox service runner labels
+*/}}
+{{- define "n8n.sandbox-runner.labels" -}}
+helm.sh/chart: {{ include "n8n.chart" . }}
+{{ include "n8n.sandbox-runner.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: n8n
+{{- end }}
+
+{{/*
+Sandbox service runner selector labels
+Selector fields are immutable after kubernetes resource creation. Do not edit this function.
+*/}}
+{{- define "n8n.sandbox-runner.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "n8n.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: sandbox-runner
+{{- end }}
+
+{{/*
+Sandbox auth Secret name: user-supplied, or the chart-managed one.
+*/}}
+{{- define "n8n.sandbox.authSecretName" -}}
+{{- default (printf "%s-sandbox-auth" (include "n8n.fullname" .)) .Values.sandboxService.auth.existingSecret -}}
+{{- end }}
+
+{{/*
+Resolve one sandbox auth value.
+Usage: include "n8n.sandbox.authValue" (dict "root" $ "key" "api-keys" "value" .Values.sandboxService.auth.apiKeys)
+When an existing Secret is supplied the chart cannot read it at render time, so nothing is rendered into the
+chart-managed Secret and pods consume the user's Secret directly. Otherwise a configured value wins over a
+generated one, and a previously generated value is reused so repeated upgrades do not rotate credentials.
+*/}}
+{{- define "n8n.sandbox.authValue" -}}
+{{- $root := .root -}}
+{{- if $root.Values.sandboxService.auth.existingSecret -}}
+{{- else if .value -}}
+{{- .value -}}
+{{- else -}}
+{{- $existing := lookup "v1" "Secret" $root.Release.Namespace (include "n8n.sandbox.authSecretName" $root) -}}
+{{- $current := "" -}}
+{{- if and $existing $existing.data (index $existing.data .key) -}}
+{{- $current = index $existing.data .key | b64dec -}}
+{{- end -}}
+{{- default (include "n8n.generateRandomHex" 32) $current -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Name of the Secret that carries the sandbox service API key consumed by n8n.
+An explicit `aiAssistant.sandbox.existingApiKeySecret` wins; otherwise the sandbox service's own auth Secret is
+reused, so an in-cluster deployment needs no extra wiring.
+*/}}
+{{- define "n8n.sandbox.apiKeyName" -}}
+{{- if .Values.aiAssistant.sandbox.existingApiKeySecret -}}
+{{- .Values.aiAssistant.sandbox.existingApiKeySecret -}}
+{{- else -}}
+{{- include "n8n.sandbox.authSecretName" . -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Key inside `n8n.sandbox.apiKeyName` that holds the sandbox service API key.
+*/}}
+{{- define "n8n.sandbox.apiKeyKeyName" -}}
+{{- if .Values.aiAssistant.sandbox.existingApiKeySecret -}}
+{{- .Values.aiAssistant.sandbox.apiKeyKey -}}
+{{- else -}}
+{{- .Values.sandboxService.auth.keys.apiKeys -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Sandbox API base URL as seen by n8n. An explicit value always wins so an external service can be pointed at
+without disabling the in-cluster one.
+*/}}
+{{- define "n8n.sandbox.serviceUrl" -}}
+{{- if .Values.aiAssistant.sandbox.serviceUrl -}}
+{{- .Values.aiAssistant.sandbox.serviceUrl -}}
+{{- else -}}
+{{- printf "http://%s.%s.svc.cluster.local:8080" (include "n8n.sandbox-api.fullname" .) .Release.Namespace -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Sandbox certificate Secret name for one of the four certificates.
+Usage: include "n8n.sandbox.certSecretName" (dict "root" $ "cert" .Values.sandboxService.tls.certificates.apiRegistrationServer "suffix" "registration-tls")
+*/}}
+{{- define "n8n.sandbox.certSecretName" -}}
+{{- if .cert.secretName -}}
+{{- .cert.secretName -}}
+{{- else -}}
+{{- printf "%s-%s" (include "n8n.fullname" .root) .suffix | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Fail fast on sandbox service misconfiguration. Rendered at the top of every sandbox template so a broken
+configuration is reported instead of producing pods that crash-loop.
+*/}}
+{{- define "n8n.sandbox.validate" -}}
+{{- if .Values.sandboxService.enabled -}}
+{{- if and (eq .Values.sandboxService.runner.isolation "privileged") (not .Values.sandboxService.runner.acknowledgePrivileged) -}}
+{{- fail "sandboxService.runner.isolation is \"privileged\", which grants root-equivalent access to its node. Set sandboxService.runner.acknowledgePrivileged=true to accept this, and make sure the namespace allows privileged pods (Pod Security Admission level \"privileged\")." -}}
+{{- end -}}
+{{- if eq .Values.sandboxService.tls.mode "certManager" -}}
+{{- if not .Values.sandboxService.tls.certManager.issuerRef.name -}}
+{{- fail "sandboxService.tls.certManager.issuerRef.name is required when sandboxService.tls.mode is \"certManager\"." -}}
+{{- end -}}
+{{- else if not (has .Values.sandboxService.tls.mode (list "existingSecret" "certManager")) -}}
+{{- fail "sandboxService.tls.mode must be either \"existingSecret\" or \"certManager\"." -}}
+{{- end -}}
+{{- if and (not .Values.sandboxService.auth.existingSecret) (eq .Values.sandboxService.api.store "postgres") -}}
+{{- range $k, $v := dict "apiKeys" .Values.sandboxService.auth.apiKeys "runnerRegistrationToken" .Values.sandboxService.auth.runnerRegistrationToken "runnerApiKey" .Values.sandboxService.auth.runnerApiKey "runnerApiKeys" .Values.sandboxService.auth.runnerApiKeys -}}
+{{- if and $v (contains "changeme" $v) -}}
+{{- fail (printf "sandboxService.auth.%s looks like a placeholder. Generate a real secret; do not commit it." $k) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if gt (int .Values.sandboxService.replicas) 1 -}}
+{{- if eq .Values.sandboxService.api.store "sqlite" -}}
+{{- fail "sandboxService.replicas must be 1 while sandboxService.api.store is \"sqlite\"; the SQLite store cannot be shared between API pods. Set sandboxService.api.store to \"postgres\" to scale the API." -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- if and .Values.aiAssistant.sandbox.enabled (not .Values.sandboxService.enabled) -}}
+{{- if or (not .Values.aiAssistant.sandbox.serviceUrl) (not .Values.aiAssistant.sandbox.existingApiKeySecret) -}}
+{{- fail "aiAssistant.sandbox.enabled points at a sandbox service outside this cluster; set aiAssistant.sandbox.serviceUrl and aiAssistant.sandbox.existingApiKeySecret." -}}
+{{- end -}}
+{{- end -}}
+{{- if and .Values.aiAssistant.searxng.url (not (hasPrefix "http" .Values.aiAssistant.searxng.url)) -}}
+{{- fail "aiAssistant.searxng.url must include a scheme (http:// or https://)." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Whether n8n containers should consume the AI ConfigMap.
+*/}}
+{{- define "n8n.ai.enabled" -}}
+{{- if .Values.aiAssistant.enabled -}}true{{- end -}}
+{{- end }}
+

@@ -1,3 +1,4 @@
+{{- include "n8n.sandbox.validate" . -}}
 # -- Instance security and node hardening. Consumed by every n8n container (main, worker, webhook, MCP webhook).
 apiVersion: v1
 kind: ConfigMap
@@ -371,4 +372,133 @@ data:
   N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME: {{ .Values.binaryData.s3.bucketName | quote }}
   {{- end }}
   N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION: {{ .Values.binaryData.s3.bucketRegion | quote }}
+{{- end }}
+---
+# -- Execution lifecycle, request-size limits and the durable scheduler. Consumed by every n8n container (main, worker, webhook, MCP webhook).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "n8n.fullname" . }}-operations-configmap
+  labels:
+    app: {{ include "n8n.name" . }}
+    chart: {{ include "n8n.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  EXECUTIONS_TIMEOUT: {{ .Values.operations.timeout | quote }}
+  EXECUTIONS_TIMEOUT_MAX: {{ .Values.operations.timeoutMax | quote }}
+  EXECUTIONS_DATA_SAVE_ON_ERROR: {{ .Values.operations.saveDataOnError | quote }}
+  EXECUTIONS_DATA_SAVE_ON_SUCCESS: {{ .Values.operations.saveDataOnSuccess | quote }}
+  EXECUTIONS_DATA_SAVE_ON_PROGRESS: {{ .Values.operations.saveDataOnProgress | quote }}
+  EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: {{ .Values.operations.saveDataManualExecutions | quote }}
+  EXECUTIONS_DATA_PRUNE: {{ .Values.operations.pruneData | quote }}
+  EXECUTIONS_DATA_MAX_AGE: {{ .Values.operations.pruneDataMaxAge | quote }}
+  EXECUTIONS_DATA_PRUNE_MAX_COUNT: {{ .Values.operations.pruneDataMaxCount | quote }}
+  EXECUTIONS_DATA_HARD_DELETE_BUFFER: {{ .Values.operations.pruneDataHardDeleteBuffer | quote }}
+  N8N_PAYLOAD_SIZE_MAX: {{ .Values.operations.payloadSizeMax | quote }}
+  N8N_FORMDATA_FILE_SIZE_MAX: {{ .Values.operations.formDataFileSizeMax | quote }}
+  EXECUTIONS_DATA_MAX_DISPLAY_SIZE: {{ .Values.operations.maxDisplaySize | int64 | quote }}
+{{- if .Values.durableScheduler.enabled }}
+  N8N_SCHEDULER_ENABLED: "true"
+  # The scheduler only takes over triggers once the workflow publication service is on; enabling one without the
+  # other is a documented silent no-op, so the chart turns both on together.
+  N8N_USE_WORKFLOW_PUBLICATION_SERVICE: "true"
+  {{- if .Values.durableScheduler.pollTriggers }}
+  N8N_SCHEDULER_POLL_TRIGGERS_ENABLED: "true"
+    {{- if .Values.durableScheduler.durableCursors }}
+  N8N_POLLER_DURABLE_CURSORS_ENABLED: "true"
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if .Values.durableScheduler.allowSkip }}
+  N8N_ENV_FEAT_SKIP_DURABLE_SCHEDULER: "true"
+{{- end }}
+{{- if or .Values.smtp.enabled .Values.instanceOwner.enabled }}
+---
+# -- Outbound email and instance-owner bootstrap. Consumed by every n8n container (main, worker, webhook, MCP webhook).
+#   The SMTP password and the owner password hash live in a Secret, not here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "n8n.fullname" . }}-email-configmap
+  labels:
+    app: {{ include "n8n.name" . }}
+    chart: {{ include "n8n.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  {{- if .Values.smtp.enabled }}
+  N8N_EMAIL_MODE: "smtp"
+  N8N_SMTP_HOST: {{ .Values.smtp.host | quote }}
+  N8N_SMTP_PORT: {{ .Values.smtp.port | quote }}
+  N8N_SMTP_USER: {{ .Values.smtp.user | quote }}
+  N8N_SMTP_SENDER: {{ .Values.smtp.sender | quote }}
+  N8N_SMTP_SSL: {{ .Values.smtp.ssl | quote }}
+  N8N_SMTP_STARTTLS: {{ .Values.smtp.startTls | quote }}
+  {{- end }}
+  {{- if .Values.instanceOwner.enabled }}
+  N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
+  N8N_INSTANCE_OWNER_EMAIL: {{ .Values.instanceOwner.email | quote }}
+  N8N_INSTANCE_OWNER_FIRST_NAME: {{ .Values.instanceOwner.firstName | quote }}
+  N8N_INSTANCE_OWNER_LAST_NAME: {{ .Values.instanceOwner.lastName | quote }}
+  {{- end }}
+{{- end }}
+---
+# -- SSRF protection for outbound requests. Consumed by every n8n container when enabled.
+{{- if .Values.ssrfProtection.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "n8n.fullname" . }}-ssrf-configmap
+  labels:
+    app: {{ include "n8n.name" . }}
+    chart: {{ include "n8n.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  N8N_SSRF_PROTECTION_ENABLED: "true"
+  {{- with .Values.ssrfProtection.allowedHostnames }}
+  N8N_SSRF_ALLOWED_HOSTNAMES: {{ join "," . | quote }}
+  {{- end }}
+  {{- with .Values.ssrfProtection.allowedIpRanges }}
+  N8N_SSRF_ALLOWED_IP_RANGES: {{ join "," . | quote }}
+  {{- end }}
+  {{- with .Values.ssrfProtection.blockedIpRanges }}
+  N8N_SSRF_BLOCKED_IP_RANGES: {{ join "," . | quote }}
+  {{- end }}
+  {{- with .Values.ssrfProtection.blockedHostnames }}
+  N8N_SSRF_BLOCKED_HOSTNAMES: {{ join "," . | quote }}
+  {{- end }}
+  N8N_SSRF_DNS_CACHE_MAX_SIZE: {{ .Values.ssrfProtection.dnsCacheMaxSize | quote }}
+{{- end }}
+---
+# -- n8n Assistant / agents configuration. Consumed by every n8n container when `aiAssistant.enabled`.
+#   API keys are delivered through the AI Secret, not here.
+{{- if .Values.aiAssistant.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "n8n.fullname" . }}-ai-configmap
+  labels:
+    app: {{ include "n8n.name" . }}
+    chart: {{ include "n8n.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  N8N_ENABLED_MODULES: {{ join "," .Values.aiAssistant.modules | quote }}
+  N8N_INSTANCE_AI_MODEL: {{ .Values.aiAssistant.model | quote }}
+  {{- if .Values.aiAssistant.modelUrl }}
+  N8N_INSTANCE_AI_MODEL_URL: {{ .Values.aiAssistant.modelUrl | quote }}
+  {{- end }}
+  {{- if .Values.aiAssistant.mcpServers }}
+  N8N_INSTANCE_AI_MCP_SERVERS: {{ .Values.aiAssistant.mcpServers | quote }}
+  {{- end }}
+  {{- if .Values.aiAssistant.sandbox.enabled }}
+  N8N_INSTANCE_AI_SANDBOX_ENABLED: "true"
+  N8N_INSTANCE_AI_SANDBOX_PROVIDER: {{ .Values.aiAssistant.sandbox.provider | quote }}
+  N8N_SANDBOX_SERVICE_URL: {{ include "n8n.sandbox.serviceUrl" . | quote }}
+  {{- end }}
+  {{- if .Values.aiAssistant.searxng.url }}
+  N8N_INSTANCE_AI_SEARXNG_URL: {{ .Values.aiAssistant.searxng.url | quote }}
+  {{- end }}
 {{- end }}

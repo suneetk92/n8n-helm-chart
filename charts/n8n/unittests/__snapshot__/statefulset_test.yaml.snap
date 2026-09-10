@@ -151,6 +151,30 @@ should match snapshot of default values:
   11: |
     apiVersion: v1
     data:
+      EXECUTIONS_DATA_HARD_DELETE_BUFFER: "1"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+      EXECUTIONS_DATA_MAX_DISPLAY_SIZE: "104857600"
+      EXECUTIONS_DATA_PRUNE: "false"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "true"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_TIMEOUT: "-1"
+      EXECUTIONS_TIMEOUT_MAX: "3600"
+      N8N_FORMDATA_FILE_SIZE_MAX: "200"
+      N8N_PAYLOAD_SIZE_MAX: "16"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-operations-configmap
+  12: |
+    apiVersion: v1
+    data:
       N8N_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleQ==
     kind: Secret
     metadata:
@@ -166,7 +190,7 @@ should match snapshot of default values:
       name: n8n-encryption-key-secret-v2
       namespace: n8n
     type: Opaque
-  12: |
+  13: |
     apiVersion: apps/v1
     kind: StatefulSet
     metadata:
@@ -189,7 +213,7 @@ should match snapshot of default values:
       template:
         metadata:
           annotations:
-            checksum/config: ed2b2a1de756ba40a92d56cac692cf586e340b1b8dd8f8642a551d4ba16f8da4
+            checksum/config: 4303def958c589fb63e4d893a34b6d2d61333ee81288ebc2a54610088d15b5fb
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -240,6 +264,8 @@ should match snapshot of default values:
                     name: n8n-binary-data-configmap
                 - secretRef:
                     name: n8n-encryption-key-secret-v2
+                - configMapRef:
+                    name: n8n-operations-configmap
               image: n8nio/n8n:1.0.0
               imagePullPolicy: IfNotPresent
               livenessProbe:
@@ -462,6 +488,30 @@ should match snapshot of postgres ssl certificate values:
   11: |
     apiVersion: v1
     data:
+      EXECUTIONS_DATA_HARD_DELETE_BUFFER: "1"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+      EXECUTIONS_DATA_MAX_DISPLAY_SIZE: "104857600"
+      EXECUTIONS_DATA_PRUNE: "false"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "true"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_TIMEOUT: "-1"
+      EXECUTIONS_TIMEOUT_MAX: "3600"
+      N8N_FORMDATA_FILE_SIZE_MAX: "200"
+      N8N_PAYLOAD_SIZE_MAX: "16"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-operations-configmap
+  12: |
+    apiVersion: v1
+    data:
       postgres-password: ""
     kind: Secret
     metadata:
@@ -472,7 +522,7 @@ should match snapshot of postgres ssl certificate values:
         release: n8n
       name: n8n-postgresql
     type: Opaque
-  12: |
+  13: |
     apiVersion: v1
     data:
       N8N_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleQ==
@@ -490,7 +540,7 @@ should match snapshot of postgres ssl certificate values:
       name: n8n-encryption-key-secret-v2
       namespace: n8n
     type: Opaque
-  13: |
+  14: |
     apiVersion: apps/v1
     kind: StatefulSet
     metadata:
@@ -513,7 +563,7 @@ should match snapshot of postgres ssl certificate values:
       template:
         metadata:
           annotations:
-            checksum/config: 384a32b8220f7fd1e2cf672a3aa3474745135420fbc88c3c8c4083bd7bac6d2c
+            checksum/config: bf8457f4e641b01228c2388e76471b4a651d50a301862523be1e7b32e39a275a
           labels:
             app.kubernetes.io/component: main
             app.kubernetes.io/instance: n8n
@@ -572,6 +622,8 @@ should match snapshot of postgres ssl certificate values:
                     name: n8n-binary-data-configmap
                 - secretRef:
                     name: n8n-encryption-key-secret-v2
+                - configMapRef:
+                    name: n8n-operations-configmap
               image: n8nio/n8n:1.0.0
               imagePullPolicy: IfNotPresent
               livenessProbe:

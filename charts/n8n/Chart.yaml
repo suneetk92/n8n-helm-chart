@@ -86,6 +86,20 @@ annotations:
           url: https://docs.n8n.io/changelog/v30-breaking-changes
     - kind: added
       description: "`binaryData.databaseMaxFileSize` (`N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE`) for the `database` binary data mode."
+    - kind: added
+      description: "`operations` block (always rendered): execution lifecycle and request-size limits in a dedicated operations ConfigMap — `N8N_EXECUTIONS_TIMEOUT`, `N8N_EXECUTIONS_TIMEOUT_MAX`, the `EXECUTIONS_DATA_*` save/pruning knobs, and `N8N_PAYLOAD_SIZE_MAX` / `N8N_FORMDATA_FILE_SIZE_MAX`."
+    - kind: added
+      description: "`ssrfProtection` block (disabled by default): application-level SSRF protection for outbound requests from user-controllable nodes (`N8N_SSRF_PROTECTION_ENABLED` plus allowed/blocked host and IP-range lists). Defence-in-depth only; does not replace network policy."
+    - kind: added
+      description: "`durableScheduler` block (disabled by default): the durable, database-backed scheduler for time-based workflows (`N8N_SCHEDULER_ENABLED`, `N8N_USE_WORKFLOW_PUBLICATION_SERVICE`, `N8N_SCHEDULER_POLL_TRIGGERS_ENABLED`). Preview upstream."
+    - kind: added
+      description: "`smtp` block (disabled by default): outbound email configuration. The password is stored in a generated `<release>-smtp` Secret unless `existingSecret` is set."
+    - kind: added
+      description: "`instanceOwner` block (disabled by default): bootstrap and pin the instance owner from the environment using a bcrypt hash, for GitOps installs. Requires `passwordHash`; a plaintext password breaks login."
+    - kind: added
+      description: "`aiAssistant` block (disabled by default): n8n Assistant and agents (`N8N_ENABLED_MODULES: instance-ai,agents`) plus model settings. Preview upstream. `aiAssistant.searxng.url` points the Assistant at an externally managed SearXNG instance (`N8N_INSTANCE_AI_SEARXNG_URL`); the chart does not deploy SearXNG."
+    - kind: added
+      description: "`sandboxService` block (disabled by default): deploys the n8n Sandbox Service as separate pods — a control-plane API plus an in-cluster runner that executes AI-generated code via Docker-in-Docker. The runner defaults to `isolation: privileged`; set `runner.acknowledgePrivileged: true` to accept it."
   artifacthub.io/images: |
     - name: n8n
       image: n8nio/n8n:2.38.4

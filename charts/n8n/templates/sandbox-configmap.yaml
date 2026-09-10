@@ -1,0 +1,34 @@
+{{- include "n8n.sandbox.validate" . -}}
+{{- if .Values.sandboxService.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "n8n.sandbox-api.fullname" . }}-config
+  labels:
+    {{- include "n8n.sandbox-api.labels" . | nindent 4 }}
+data:
+  SANDBOX_API_LISTEN_ADDR: ":8080"
+  SANDBOX_API_GRPC_LISTEN_ADDR: ":9090"
+  SANDBOX_API_STORE: {{ .Values.sandboxService.api.store | quote }}
+  SANDBOX_API_DATA_DIR: "/var/lib/n8n-sandbox-api"
+  SANDBOX_API_DEFAULT_MAX_SANDBOXES: {{ .Values.sandboxService.api.defaultMaxSandboxes | int64 | quote }}
+  SANDBOX_API_MAX_FILE_BYTES: {{ .Values.sandboxService.api.maxFileBytes | int64 | quote }}
+  SANDBOX_API_RUNNER_HEARTBEAT_GRACE: {{ .Values.sandboxService.api.runnerHeartbeatGrace | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "n8n.sandbox-runner.fullname" . }}-config
+  labels:
+    {{- include "n8n.sandbox-runner.labels" . | nindent 4 }}
+data:
+  SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE: "{{ .Values.sandboxService.image.sandboxRepository }}:{{ .Values.sandboxService.image.tag | default .Values.sandboxService.image.version }}"
+  SANDBOX_RUNNER_DOCKER_HOST: "unix:///var/run/docker.sock"
+  SANDBOX_RUNNER_LISTEN_ADDR: {{ printf ":%d" (int .Values.sandboxService.runner.httpPort) | quote }}
+  SANDBOX_RUNNER_CONTROL_GRPC_LISTEN_ADDR: {{ printf ":%d" (int .Values.sandboxService.runner.controlGrpcPort) | quote }}
+  SANDBOX_RUNNER_DATA_DIR: "/var/sandboxes"
+  SANDBOX_RUNNER_CAPACITY_TOTAL: {{ .Values.sandboxService.runner.capacityTotal | int64 | quote }}
+  SANDBOX_RUNNER_DEFAULT_MEMORY_MB: {{ .Values.sandboxService.runner.defaultMemoryMb | int64 | quote }}
+  SANDBOX_RUNNER_DEFAULT_CPU_PERCENT: {{ .Values.sandboxService.runner.defaultCpuPercent | int64 | quote }}
+  SANDBOX_RUNNER_DEFAULT_PIDS_MAX: {{ .Values.sandboxService.runner.defaultPidsMax | int64 | quote }}
+{{- end }}

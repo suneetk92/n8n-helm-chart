@@ -1506,3 +1506,283 @@ tests:
       appVersion: 1.0.0
     asserts:
       - matchSnapshot: { }
+
+  - it: should render default operations execution lifecycle settings
+    documentSelector:
+      path: metadata.name
+      value: n8n-operations-configmap
+    asserts:
+      - equal:
+          path: data.EXECUTIONS_TIMEOUT
+          value: "-1"
+      - equal:
+          path: data.EXECUTIONS_TIMEOUT_MAX
+          value: "3600"
+      - equal:
+          path: data.EXECUTIONS_DATA_PRUNE
+          value: "false"
+      - equal:
+          path: data.EXECUTIONS_DATA_MAX_AGE
+          value: "336"
+      - equal:
+          path: data.EXECUTIONS_DATA_PRUNE_MAX_COUNT
+          value: "10000"
+      - equal:
+          path: data.N8N_PAYLOAD_SIZE_MAX
+          value: "16"
+      - equal:
+          path: data.EXECUTIONS_DATA_MAX_DISPLAY_SIZE
+          value: "104857600"
+
+  - it: should override operations timeout and pruning settings
+    set:
+      operations:
+        timeout: 300
+        pruneData: true
+        pruneDataMaxAge: 24
+        pruneDataMaxCount: 500
+    documentSelector:
+      path: metadata.name
+      value: n8n-operations-configmap
+    asserts:
+      - equal:
+          path: data.EXECUTIONS_TIMEOUT
+          value: "300"
+      - equal:
+          path: data.EXECUTIONS_DATA_PRUNE
+          value: "true"
+      - equal:
+          path: data.EXECUTIONS_DATA_MAX_AGE
+          value: "24"
+      - equal:
+          path: data.EXECUTIONS_DATA_PRUNE_MAX_COUNT
+          value: "500"
+
+  - it: should enable the durable scheduler together with the workflow publication service
+    set:
+      durableScheduler:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-operations-configmap
+    asserts:
+      - equal:
+          path: data.N8N_SCHEDULER_ENABLED
+          value: "true"
+      - equal:
+          path: data.N8N_USE_WORKFLOW_PUBLICATION_SERVICE
+          value: "true"
+
+  - it: should enable poll triggers and durable cursors when both are set
+    set:
+      durableScheduler:
+        enabled: true
+        pollTriggers: true
+        durableCursors: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-operations-configmap
+    asserts:
+      - equal:
+          path: data.N8N_SCHEDULER_POLL_TRIGGERS_ENABLED
+          value: "true"
+      - equal:
+          path: data.N8N_POLLER_DURABLE_CURSORS_ENABLED
+          value: "true"
+
+  - it: should expose the durable scheduler skip escape hatch when allowSkip is set
+    set:
+      durableScheduler:
+        enabled: true
+        allowSkip: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-operations-configmap
+    asserts:
+      - equal:
+          path: data.N8N_ENV_FEAT_SKIP_DURABLE_SCHEDULER
+          value: "true"
+
+  - it: should render smtp settings into the email configmap when smtp is enabled
+    set:
+      smtp:
+        enabled: true
+        host: mail.example.com
+        port: 587
+        user: n8n@example.com
+        sender: n8n <n8n@example.com>
+        ssl: false
+        startTls: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-email-configmap
+    asserts:
+      - equal:
+          path: data.N8N_EMAIL_MODE
+          value: smtp
+      - equal:
+          path: data.N8N_SMTP_HOST
+          value: mail.example.com
+      - equal:
+          path: data.N8N_SMTP_PORT
+          value: "587"
+      - equal:
+          path: data.N8N_SMTP_USER
+          value: n8n@example.com
+      - equal:
+          path: data.N8N_SMTP_SENDER
+          value: n8n <n8n@example.com>
+      - equal:
+          path: data.N8N_SMTP_SSL
+          value: "false"
+      - equal:
+          path: data.N8N_SMTP_STARTTLS
+          value: "true"
+
+  - it: should render instance owner settings into the email configmap when instanceOwner is enabled
+    set:
+      instanceOwner:
+        enabled: true
+        email: owner@example.com
+        firstName: Ada
+        lastName: Lovelace
+    documentSelector:
+      path: metadata.name
+      value: n8n-email-configmap
+    asserts:
+      - equal:
+          path: data.N8N_INSTANCE_OWNER_MANAGED_BY_ENV
+          value: "true"
+      - equal:
+          path: data.N8N_INSTANCE_OWNER_EMAIL
+          value: owner@example.com
+      - equal:
+          path: data.N8N_INSTANCE_OWNER_FIRST_NAME
+          value: Ada
+      - equal:
+          path: data.N8N_INSTANCE_OWNER_LAST_NAME
+          value: Lovelace
+
+  - it: should render ssrf protection settings when enabled
+    set:
+      ssrfProtection:
+        enabled: true
+        allowedHostnames:
+          - "*.internal"
+        allowedIpRanges:
+          - 10.0.0.0/8
+        blockedIpRanges:
+          - default
+          - 192.168.0.0/16
+        blockedHostnames:
+          - evil.example.com
+        dnsCacheMaxSize: 4096
+    documentSelector:
+      path: metadata.name
+      value: n8n-ssrf-configmap
+    asserts:
+      - equal:
+          path: data.N8N_SSRF_PROTECTION_ENABLED
+          value: "true"
+      - equal:
+          path: data.N8N_SSRF_ALLOWED_HOSTNAMES
+          value: "*.internal"
+      - equal:
+          path: data.N8N_SSRF_ALLOWED_IP_RANGES
+          value: 10.0.0.0/8
+      - equal:
+          path: data.N8N_SSRF_BLOCKED_IP_RANGES
+          value: default,192.168.0.0/16
+      - equal:
+          path: data.N8N_SSRF_BLOCKED_HOSTNAMES
+          value: evil.example.com
+      - equal:
+          path: data.N8N_SSRF_DNS_CACHE_MAX_SIZE
+          value: "4096"
+
+  - it: should render ai assistant modules and model into the ai configmap by default
+    set:
+      aiAssistant:
+        enabled: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-ai-configmap
+    asserts:
+      - equal:
+          path: data.N8N_ENABLED_MODULES
+          value: instance-ai
+      - equal:
+          path: data.N8N_INSTANCE_AI_MODEL
+          value: anthropic/claude-opus-4-8
+
+  - it: should render ai assistant model url and mcp servers when set
+    set:
+      aiAssistant:
+        enabled: true
+        modules:
+          - instance-ai
+          - agents
+        modelUrl: http://localhost:1234/v1
+        mcpServers: '{"fetch":"http://mcp.example.com"}'
+    documentSelector:
+      path: metadata.name
+      value: n8n-ai-configmap
+    asserts:
+      - equal:
+          path: data.N8N_ENABLED_MODULES
+          value: instance-ai,agents
+      - equal:
+          path: data.N8N_INSTANCE_AI_MODEL_URL
+          value: http://localhost:1234/v1
+      - equal:
+          path: data.N8N_INSTANCE_AI_MCP_SERVERS
+          value: '{"fetch":"http://mcp.example.com"}'
+
+  - it: should point the ai assistant at the in-cluster sandbox service by default
+    set:
+      aiAssistant:
+        enabled: true
+        sandbox:
+          enabled: true
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+    documentSelector:
+      path: metadata.name
+      value: n8n-ai-configmap
+    asserts:
+      - equal:
+          path: data.N8N_INSTANCE_AI_SANDBOX_ENABLED
+          value: "true"
+      - equal:
+          path: data.N8N_INSTANCE_AI_SANDBOX_PROVIDER
+          value: n8n-sandbox
+      - equal:
+          path: data.N8N_SANDBOX_SERVICE_URL
+          value: http://n8n-sandbox-api.n8n.svc.cluster.local:8080
+
+  - it: should emit the external searxng url into the ai configmap when set
+    set:
+      aiAssistant:
+        enabled: true
+        searxng:
+          url: https://searxng.example.com:8080
+    documentSelector:
+      path: metadata.name
+      value: n8n-ai-configmap
+    asserts:
+      - equal:
+          path: data.N8N_INSTANCE_AI_SEARXNG_URL
+          value: https://searxng.example.com:8080
+
+  - it: should fail when the searxng url is set without a scheme
+    set:
+      aiAssistant:
+        enabled: true
+        searxng:
+          url: searxng.n8n.svc.cluster.local:8080
+    template: configmap.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: must include a scheme

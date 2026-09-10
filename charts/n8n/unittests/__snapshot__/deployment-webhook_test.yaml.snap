@@ -176,6 +176,30 @@ should match snapshot of postgres ssl certificate values:
         release: n8n
       name: n8n-binary-data-configmap
   12: |
+    apiVersion: v1
+    data:
+      EXECUTIONS_DATA_HARD_DELETE_BUFFER: "1"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+      EXECUTIONS_DATA_MAX_DISPLAY_SIZE: "104857600"
+      EXECUTIONS_DATA_PRUNE: "false"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "true"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_TIMEOUT: "-1"
+      EXECUTIONS_TIMEOUT_MAX: "3600"
+      N8N_FORMDATA_FILE_SIZE_MAX: "200"
+      N8N_PAYLOAD_SIZE_MAX: "16"
+    kind: ConfigMap
+    metadata:
+      labels:
+        app: n8n
+        chart: n8n-1.0.0
+        heritage: Helm
+        release: n8n
+      name: n8n-operations-configmap
+  13: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -203,7 +227,7 @@ should match snapshot of postgres ssl certificate values:
       template:
         metadata:
           annotations:
-            checksum/config: 9ed2a0a844b5f1515e877d9c6982cf0e37a21a20af9bb5b37dae48328704040d
+            checksum/config: 089a34ce95adfe68ccc8a5957d1114e2f77cd7208a9d31ac48ff9c59686499fc
           labels:
             app.kubernetes.io/component: webhook
             app.kubernetes.io/instance: n8n
@@ -280,6 +304,8 @@ should match snapshot of postgres ssl certificate values:
                     name: n8n-queue-configmap
                 - secretRef:
                     name: n8n-encryption-key-secret-v2
+                - configMapRef:
+                    name: n8n-operations-configmap
               image: n8nio/n8n:1.0.0
               imagePullPolicy: IfNotPresent
               livenessProbe:

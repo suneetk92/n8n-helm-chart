@@ -37,12 +37,18 @@
               "type": "boolean"
             }
           },
-          "required": ["enabled"],
+          "required": [
+            "enabled"
+          ],
           "title": "swagger",
           "type": "object"
         }
       },
-      "required": ["enabled", "path", "swagger"],
+      "required": [
+        "enabled",
+        "path",
+        "swagger"
+      ],
       "title": "api",
       "type": "object"
     },
@@ -58,7 +64,10 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["filesystem", "s3"]
+            "enum": [
+              "filesystem",
+              "s3"
+            ]
           }
         },
         "mode": {
@@ -67,8 +76,17 @@
           "required": [],
           "title": "mode",
           "oneOf": [
-            {"type": "string", "enum": ["filesystem", "database", "s3"]},
-            {"type": "null"}
+            {
+              "type": "string",
+              "enum": [
+                "filesystem",
+                "database",
+                "s3"
+              ]
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "localStoragePath": {
@@ -134,12 +152,23 @@
               "type": "string"
             }
           },
-          "required": ["host", "bucketName", "bucketRegion", "accessKey", "accessSecret", "existingSecret"],
+          "required": [
+            "host",
+            "bucketName",
+            "bucketRegion",
+            "accessKey",
+            "accessSecret",
+            "existingSecret"
+          ],
           "title": "s3",
           "type": "object"
         }
       },
-      "required": ["localStoragePath", "databaseMaxFileSize", "s3"],
+      "required": [
+        "localStoragePath",
+        "databaseMaxFileSize",
+        "s3"
+      ],
       "title": "binaryData",
       "type": "object"
     },
@@ -171,10 +200,22 @@
               "required": [],
               "title": "options",
               "type": "string",
-              "enum": ["query", "error", "schema", "warn", "info", "log", "all"]
+              "enum": [
+                "query",
+                "error",
+                "schema",
+                "warn",
+                "info",
+                "log",
+                "all"
+              ]
             }
           },
-          "required": ["enabled", "options", "maxQueryExecutionTime"],
+          "required": [
+            "enabled",
+            "options",
+            "maxQueryExecutionTime"
+          ],
           "title": "logging",
           "type": "object"
         },
@@ -204,7 +245,11 @@
               "type": "boolean"
             }
           },
-          "required": ["database", "poolSize", "vacuum"],
+          "required": [
+            "database",
+            "poolSize",
+            "vacuum"
+          ],
           "title": "sqlite",
           "type": "object"
         },
@@ -293,7 +338,10 @@
                       "type": "string"
                     }
                   },
-                  "required": ["name", "key"],
+                  "required": [
+                    "name",
+                    "key"
+                  ],
                   "title": "existingCertificateAuthorityFileSecret",
                   "type": "object"
                 },
@@ -316,7 +364,10 @@
                       "type": "string"
                     }
                   },
-                  "required": ["name", "key"],
+                  "required": [
+                    "name",
+                    "key"
+                  ],
                   "title": "existingCertFileSecret",
                   "type": "object"
                 },
@@ -339,7 +390,10 @@
                       "type": "string"
                     }
                   },
-                  "required": ["name", "key"],
+                  "required": [
+                    "name",
+                    "key"
+                  ],
                   "title": "existingPrivateKeySecret",
                   "type": "object"
                 },
@@ -351,12 +405,27 @@
                   "type": "boolean"
                 }
               },
-              "required": ["enabled", "base64EncodedCertificateAuthorityFile", "base64EncodedCertFile", "base64EncodedPrivateKeyFile", "existingCertificateAuthorityFileSecret", "existingCertFileSecret", "existingPrivateKeyFileSecret", "rejectUnauthorized"],
+              "required": [
+                "enabled",
+                "base64EncodedCertificateAuthorityFile",
+                "base64EncodedCertFile",
+                "base64EncodedPrivateKeyFile",
+                "existingCertificateAuthorityFileSecret",
+                "existingCertFileSecret",
+                "existingPrivateKeyFileSecret",
+                "rejectUnauthorized"
+              ],
               "title": "ssl",
               "type": "object"
             }
           },
-          "required": ["poolSize", "connectionTimeout", "idleConnectionTimeout", "schema", "ssl"],
+          "required": [
+            "poolSize",
+            "connectionTimeout",
+            "idleConnectionTimeout",
+            "schema",
+            "ssl"
+          ],
           "title": "postgresdb",
           "type": "object"
         },
@@ -373,10 +442,19 @@
           "required": [],
           "title": "type",
           "type": "string",
-          "enum": ["sqlite", "postgresdb"]
+          "enum": [
+            "sqlite",
+            "postgresdb"
+          ]
         }
       },
-      "required": ["tablePrefix", "type", "logging", "sqlite", "postgresdb"],
+      "required": [
+        "tablePrefix",
+        "type",
+        "logging",
+        "sqlite",
+        "postgresdb"
+      ],
       "title": "db",
       "type": "object"
     },
@@ -493,7 +571,12 @@
           "type": "string"
         }
       },
-      "required": ["enabled", "backendDsn", "frontendDsn", "externalTaskRunnersDsn"],
+      "required": [
+        "enabled",
+        "backendDsn",
+        "frontendDsn",
+        "externalTaskRunnersDsn"
+      ],
       "title": "sentry",
       "type": "object"
     },
@@ -539,12 +622,20 @@
               "type": "string"
             }
           },
-          "required": ["apiKey", "apiHost"],
+          "required": [
+            "apiKey",
+            "apiHost"
+          ],
           "title": "postHog",
           "type": "object"
         }
       },
-      "required": ["enabled", "frontendConfig", "backendConfig", "postHog"],
+      "required": [
+        "enabled",
+        "frontendConfig",
+        "backendConfig",
+        "postHog"
+      ],
       "title": "diagnostics",
       "type": "object"
     },
@@ -567,7 +658,9 @@
           "type": "boolean"
         }
       },
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "title": "encryptionKeyRotation",
       "type": "object"
     },
@@ -725,7 +818,10 @@
                 "type": "integer"
               }
             },
-            "required": ["host", "port"],
+            "required": [
+              "host",
+              "port"
+            ],
             "title": "clusterNode",
             "type": "object"
           },
@@ -745,7 +841,9 @@
               "type": "boolean"
             }
           },
-          "required": ["enabled"],
+          "required": [
+            "enabled"
+          ],
           "title": "tls",
           "type": "object"
         },
@@ -757,7 +855,19 @@
           "type": "boolean"
         }
       },
-      "required": ["database", "host", "username", "password", "port", "existingSecret", "existingUsernameKey", "existingPasswordKey", "clusterNodes", "tls", "dualStack"],
+      "required": [
+        "database",
+        "host",
+        "username",
+        "password",
+        "port",
+        "existingSecret",
+        "existingUsernameKey",
+        "existingPasswordKey",
+        "clusterNodes",
+        "tls",
+        "dualStack"
+      ],
       "title": "externalRedis",
       "type": "object"
     },
@@ -847,7 +957,11 @@
           "type": "string"
         }
       },
-      "required": ["repository", "pullPolicy", "tag"],
+      "required": [
+        "repository",
+        "pullPolicy",
+        "tag"
+      ],
       "title": "image",
       "type": "object"
     },
@@ -914,7 +1028,10 @@
                               "type": "string"
                             }
                           },
-                          "required": ["path", "pathType"],
+                          "required": [
+                            "path",
+                            "pathType"
+                          ],
                           "type": "object"
                         }
                       ],
@@ -925,7 +1042,10 @@
                     "type": "array"
                   }
                 },
-                "required": ["host", "paths"],
+                "required": [
+                  "host",
+                  "paths"
+                ],
                 "type": "object"
               }
             ],
@@ -944,7 +1064,13 @@
           "type": "array"
         }
       },
-      "required": ["enabled", "className", "annotations", "hosts", "tls"],
+      "required": [
+        "enabled",
+        "className",
+        "annotations",
+        "hosts",
+        "tls"
+      ],
       "title": "ingress",
       "type": "object"
     },
@@ -968,7 +1094,10 @@
               "type": "string"
             }
           },
-          "required": ["path", "port"],
+          "required": [
+            "path",
+            "port"
+          ],
           "title": "httpGet",
           "type": "object"
         }
@@ -1008,7 +1137,11 @@
               "minimum": 1
             }
           },
-          "required": ["location", "maxsize", "maxcount"],
+          "required": [
+            "location",
+            "maxsize",
+            "maxcount"
+          ],
           "title": "file",
           "type": "object"
         },
@@ -1018,7 +1151,10 @@
           "required": [],
           "title": "format",
           "type": "string",
-          "enum": ["text", "json"]
+          "enum": [
+            "text",
+            "json"
+          ]
         },
         "level": {
           "default": "info",
@@ -1026,13 +1162,21 @@
           "required": [],
           "title": "level",
           "type": "string",
-          "enum": ["error", "warn", "info", "debug"]
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ]
         },
         "output": {
           "description": "Where to output logs to. Options are: `console` or `file` or both.",
           "items": {
             "type": "string",
-            "enum": ["console", "file"]
+            "enum": [
+              "console",
+              "file"
+            ]
           },
           "required": [],
           "title": "output",
@@ -1062,7 +1206,13 @@
           "type": "array"
         }
       },
-      "required": ["level", "format", "output", "scopes", "file"],
+      "required": [
+        "level",
+        "format",
+        "output",
+        "scopes",
+        "file"
+      ],
       "title": "log",
       "type": "object"
     },
@@ -1153,7 +1303,10 @@
                 "accessMode": {
                   "default": "ReadWriteOnce",
                   "description": "Access mode. Use ReadWriteMany when worker pods may be scheduled on different nodes.",
-                  "enum": ["ReadWriteOnce", "ReadWriteMany"],
+                  "enum": [
+                    "ReadWriteOnce",
+                    "ReadWriteMany"
+                  ],
                   "required": [],
                   "title": "accessMode",
                   "type": "string"
@@ -1173,12 +1326,24 @@
                   "type": "object"
                 }
               },
-              "required": ["enabled", "existingClaim", "storageClass", "accessMode", "size", "annotations"],
+              "required": [
+                "enabled",
+                "existingClaim",
+                "storageClass",
+                "accessMode",
+                "size",
+                "annotations"
+              ],
               "title": "persistence",
               "type": "object"
             }
           },
-          "required": ["allowAll", "reinstallMissingPackages", "packages", "persistence"],
+          "required": [
+            "allowAll",
+            "reinstallMissingPackages",
+            "packages",
+            "persistence"
+          ],
           "title": "external",
           "type": "object"
         },
@@ -1212,7 +1377,11 @@
                   "type": "string"
                 }
               },
-              "required": ["repository", "tag", "pullPolicy"],
+              "required": [
+                "repository",
+                "tag",
+                "pullPolicy"
+              ],
               "title": "image",
               "type": "object"
             },
@@ -1272,7 +1441,10 @@
               "type": "object"
             }
           },
-          "required": ["image", "resources"],
+          "required": [
+            "image",
+            "resources"
+          ],
           "title": "initContainer",
           "type": "object"
         },
@@ -1304,7 +1476,9 @@
                   "type": "array"
                 }
               },
-              "required": ["modules"],
+              "required": [
+                "modules"
+              ],
               "title": "builtin",
               "type": "object"
             },
@@ -1330,7 +1504,10 @@
                   "type": "array"
                 }
               },
-              "required": ["allowAll", "packages"],
+              "required": [
+                "allowAll",
+                "packages"
+              ],
               "title": "external",
               "type": "object"
             },
@@ -1362,7 +1539,10 @@
                 "accessMode": {
                   "default": "ReadWriteOnce",
                   "description": "Access mode. Use ReadWriteMany when worker pods may be scheduled on different nodes.",
-                  "enum": ["ReadWriteOnce", "ReadWriteMany"],
+                  "enum": [
+                    "ReadWriteOnce",
+                    "ReadWriteMany"
+                  ],
                   "required": [],
                   "title": "accessMode",
                   "type": "string"
@@ -1382,12 +1562,24 @@
                   "type": "object"
                 }
               },
-              "required": ["enabled", "existingClaim", "storageClass", "accessMode", "size", "annotations"],
+              "required": [
+                "enabled",
+                "existingClaim",
+                "storageClass",
+                "accessMode",
+                "size",
+                "annotations"
+              ],
               "title": "persistence",
               "type": "object"
             }
           },
-          "required": ["enabled", "builtin", "external", "persistence"],
+          "required": [
+            "enabled",
+            "builtin",
+            "external",
+            "persistence"
+          ],
           "title": "python",
           "type": "object"
         },
@@ -1397,8 +1589,16 @@
           "required": [],
           "title": "exclude",
           "oneOf": [
-            {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-            {"type": "null"}
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "include": {
@@ -1407,8 +1607,16 @@
           "required": [],
           "title": "include",
           "oneOf": [
-            {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-            {"type": "null"}
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "compression": {
@@ -1420,14 +1628,30 @@
               "description": "Maximum total decompressed output size in bytes (`N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES`). Unset uses the n8n default (268435456, i.e. 256 MiB).",
               "required": [],
               "title": "maxDecompressedSizeBytes",
-              "oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "maxZipEntries": {
               "default": null,
               "description": "Maximum number of entries allowed in a ZIP archive (`N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES`). Unset uses the n8n default (1000).",
               "required": [],
               "title": "maxZipEntries",
-              "oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [],
@@ -1435,7 +1659,11 @@
           "type": "object"
         }
       },
-      "required": ["initContainer", "python", "compression"],
+      "required": [
+        "initContainer",
+        "python",
+        "compression"
+      ],
       "title": "nodes",
       "type": "object"
     },
@@ -1476,7 +1704,13 @@
           "default": ""
         }
       },
-      "required": ["enabled", "url", "secretName", "secretKey", "customUvConfig"]
+      "required": [
+        "enabled",
+        "url",
+        "secretName",
+        "secretKey",
+        "customUvConfig"
+      ]
     },
     "npmRegistry": {
       "type": "object",
@@ -1515,7 +1749,13 @@
           "default": ""
         }
       },
-      "required": ["enabled", "url", "secretName", "secretKey", "customNpmrc"]
+      "required": [
+        "enabled",
+        "url",
+        "secretName",
+        "secretKey",
+        "customNpmrc"
+      ]
     },
     "license": {
       "additionalProperties": false,
@@ -1594,7 +1834,10 @@
               "type": "integer"
             }
           },
-          "required": ["enabled", "offsetInHours"],
+          "required": [
+            "enabled",
+            "offsetInHours"
+          ],
           "title": "autoRenew",
           "type": "object"
         },
@@ -1611,7 +1854,14 @@
           "type": "integer"
         }
       },
-      "required": ["enabled", "activationKey", "existingActivationKeySecret", "autoRenew", "serverUrl", "tenantId"],
+      "required": [
+        "enabled",
+        "activationKey",
+        "existingActivationKeySecret",
+        "autoRenew",
+        "serverUrl",
+        "tenantId"
+      ],
       "title": "license",
       "type": "object"
     },
@@ -1691,7 +1941,10 @@
               "oneOf": [
                 {
                   "type": "string",
-                  "enum": ["IfHealthyBudget", "AlwaysAllow"]
+                  "enum": [
+                    "IfHealthyBudget",
+                    "AlwaysAllow"
+                  ]
                 },
                 {
                   "type": "null"
@@ -1699,7 +1952,9 @@
               ]
             }
           },
-          "required": ["enabled"],
+          "required": [
+            "enabled"
+          ],
           "title": "pdb",
           "type": "object",
           "if": {
@@ -1708,15 +1963,24 @@
                 "const": true
               }
             },
-            "required": ["enabled"]
+            "required": [
+              "enabled"
+            ]
           },
           "then": {
             "not": {
               "properties": {
-                "minAvailable": { "type": "null" },
-                "maxUnavailable": { "type": "null" }
+                "minAvailable": {
+                  "type": "null"
+                },
+                "maxUnavailable": {
+                  "type": "null"
+                }
               },
-              "required": ["minAvailable", "maxUnavailable"]
+              "required": [
+                "minAvailable",
+                "maxUnavailable"
+              ]
             }
           }
         },
@@ -1789,12 +2053,17 @@
                   "type": "string"
                 }
               },
-              "required": ["path", "port"],
+              "required": [
+                "path",
+                "port"
+              ],
               "title": "httpGet",
               "type": "object"
             }
           },
-          "required": ["httpGet"],
+          "required": [
+            "httpGet"
+          ],
           "title": "livenessProbe",
           "type": "object"
         },
@@ -1818,12 +2087,17 @@
                   "type": "string"
                 }
               },
-              "required": ["path", "port"],
+              "required": [
+                "path",
+                "port"
+              ],
               "title": "httpGet",
               "type": "object"
             }
           },
-          "required": ["httpGet"],
+          "required": [
+            "httpGet"
+          ],
           "title": "readinessProbe",
           "type": "object"
         },
@@ -1882,7 +2156,10 @@
             },
             "accessMode": {
               "description": "Access mode for persistence",
-              "enum": ["ReadWriteOnce", "ReadWriteMany"],
+              "enum": [
+                "ReadWriteOnce",
+                "ReadWriteMany"
+              ],
               "required": [],
               "title": "accessMode",
               "type": "string"
@@ -1909,7 +2186,18 @@
               "type": "object"
             }
           },
-          "required": ["enabled", "volumeName", "existingClaim", "mountPath", "subPath", "storageClass", "accessMode", "size", "annotations", "labels"],
+          "required": [
+            "enabled",
+            "volumeName",
+            "existingClaim",
+            "mountPath",
+            "subPath",
+            "storageClass",
+            "accessMode",
+            "size",
+            "annotations",
+            "labels"
+          ],
           "title": "persistence",
           "type": "object"
         },
@@ -1985,7 +2273,10 @@
           "description": "Host aliases for the main pod. For more information checkout: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/#adding-additional-entries-with-hostaliases",
           "items": {
             "type": "object",
-            "required": ["ip", "hostnames"],
+            "required": [
+              "ip",
+              "hostnames"
+            ],
             "properties": {
               "ip": {
                 "type": "string",
@@ -2012,7 +2303,26 @@
           "type": "string"
         }
       },
-      "required": ["count", "editorBaseUrl", "resources", "livenessProbe", "readinessProbe", "forceToUseStatefulset", "persistence", "extraEnvVars", "extraEnv", "extraSecretNamesForEnvFrom", "volumes", "volumeMounts", "pdb", "initContainers", "extraContainers", "affinity", "hostAliases", "runtimeClassName"],
+      "required": [
+        "count",
+        "editorBaseUrl",
+        "resources",
+        "livenessProbe",
+        "readinessProbe",
+        "forceToUseStatefulset",
+        "persistence",
+        "extraEnvVars",
+        "extraEnv",
+        "extraSecretNamesForEnvFrom",
+        "volumes",
+        "volumeMounts",
+        "pdb",
+        "initContainers",
+        "extraContainers",
+        "affinity",
+        "hostAliases",
+        "runtimeClassName"
+      ],
       "title": "main",
       "type": "object"
     },
@@ -2079,7 +2389,10 @@
           "required": [],
           "title": "fsGroupChangePolicy",
           "type": "string",
-          "enum": ["OnRootMismatch", "Always"]
+          "enum": [
+            "OnRootMismatch",
+            "Always"
+          ]
         },
         "seccompProfile": {
           "additionalProperties": false,
@@ -2087,7 +2400,11 @@
           "properties": {
             "type": {
               "default": "RuntimeDefault",
-              "enum": ["Localhost", "RuntimeDefault", "Unconfined"],
+              "enum": [
+                "Localhost",
+                "RuntimeDefault",
+                "Unconfined"
+              ],
               "required": [],
               "title": "type",
               "type": "string"
@@ -2141,7 +2458,11 @@
               "type": "string"
             }
           },
-          "required": ["username", "password", "database"],
+          "required": [
+            "username",
+            "password",
+            "database"
+          ],
           "title": "auth",
           "type": "object"
         },
@@ -2171,7 +2492,10 @@
                   "type": "string"
                 }
               },
-              "required": ["enabled", "existingClaim"],
+              "required": [
+                "enabled",
+                "existingClaim"
+              ],
               "title": "persistence",
               "type": "object"
             },
@@ -2188,22 +2512,34 @@
                       "type": "integer"
                     }
                   },
-                  "required": ["postgresql"],
+                  "required": [
+                    "postgresql"
+                  ],
                   "title": "ports",
                   "type": "object"
                 }
               },
-              "required": ["ports"],
+              "required": [
+                "ports"
+              ],
               "title": "service",
               "type": "object"
             }
           },
-          "required": ["service", "persistence"],
+          "required": [
+            "service",
+            "persistence"
+          ],
           "title": "primary",
           "type": "object"
         }
       },
-      "required": ["enabled", "architecture", "primary", "auth"],
+      "required": [
+        "enabled",
+        "architecture",
+        "primary",
+        "auth"
+      ],
       "title": "postgresql",
       "type": "object"
     },
@@ -2227,7 +2563,10 @@
               "type": "string"
             }
           },
-          "required": ["path", "port"],
+          "required": [
+            "path",
+            "port"
+          ],
           "title": "httpGet",
           "type": "object"
         }
@@ -2266,17 +2605,25 @@
                   "type": "boolean"
                 }
               },
-              "required": ["enabled"],
+              "required": [
+                "enabled"
+              ],
               "title": "persistence",
               "type": "object"
             }
           },
-          "required": ["persistence"],
+          "required": [
+            "persistence"
+          ],
           "title": "master",
           "type": "object"
         }
       },
-      "required": ["enabled", "architecture", "master"],
+      "required": [
+        "enabled",
+        "architecture",
+        "master"
+      ],
       "title": "redis",
       "type": "object"
     },
@@ -2353,8 +2700,12 @@
           "required": [],
           "title": "restrictFileAccessTo",
           "oneOf": [
-            {"type": "string"},
-            {"type": "null"}
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "gitNodeDisableBareRepos": {
@@ -2365,7 +2716,11 @@
           "type": "boolean"
         }
       },
-      "required": ["enforceSettingsFilePermissions", "blockEnvAccessInNode", "gitNodeDisableBareRepos"],
+      "required": [
+        "enforceSettingsFilePermissions",
+        "blockEnvAccessInNode",
+        "gitNodeDisableBareRepos"
+      ],
       "title": "security",
       "type": "object"
     },
@@ -2530,7 +2885,14 @@
           "type": "string"
         }
       },
-      "required": ["enabled", "type", "port", "name", "annotations", "labels"],
+      "required": [
+        "enabled",
+        "type",
+        "port",
+        "name",
+        "annotations",
+        "labels"
+      ],
       "title": "service",
       "type": "object"
     },
@@ -2567,7 +2929,12 @@
           "type": "string"
         }
       },
-      "required": ["create", "automount", "annotations", "name"],
+      "required": [
+        "create",
+        "automount",
+        "annotations",
+        "name"
+      ],
       "title": "serviceAccount",
       "type": "object"
     },
@@ -2580,10 +2947,15 @@
           "required": [],
           "title": "type",
           "type": "string",
-          "enum": ["RollingUpdate", "Recreate"]
+          "enum": [
+            "RollingUpdate",
+            "Recreate"
+          ]
         }
       },
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "title": "strategy",
       "type": "object"
     },
@@ -2592,7 +2964,10 @@
       "description": "The number of old ReplicaSets to retain for rollback. More information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy",
       "minimum": 0,
       "title": "revisionHistoryLimit",
-      "type": ["integer", "null"]
+      "type": [
+        "integer",
+        "null"
+      ]
     },
     "timezone": {
       "default": "Europe/Berlin",
@@ -2636,7 +3011,11 @@
           "type": "string"
         }
       },
-      "required": ["enabled", "endpoint", "infoUrl"],
+      "required": [
+        "enabled",
+        "endpoint",
+        "infoUrl"
+      ],
       "title": "versionNotifications",
       "type": "object"
     },
@@ -2675,7 +3054,10 @@
           "required": [],
           "title": "mode",
           "type": "string",
-          "enum": ["regular", "queue"]
+          "enum": [
+            "regular",
+            "queue"
+          ]
         },
         "allNodes": {
           "default": false,
@@ -2752,13 +3134,19 @@
                   "additionalProperties": true,
                   "properties": {
                     "command": {
-                      "default": ["/bin/sh", "-c", "ps aux | grep '[n]8n'"],
+                      "default": [
+                        "/bin/sh",
+                        "-c",
+                        "ps aux | grep '[n]8n'"
+                      ],
                       "required": [],
                       "title": "command",
                       "type": "array"
                     }
                   },
-                  "required": ["command"],
+                  "required": [
+                    "command"
+                  ],
                   "title": "exec",
                   "type": "object"
                 },
@@ -2805,12 +3193,17 @@
                       "type": "string"
                     }
                   },
-                  "required": ["path", "port"],
+                  "required": [
+                    "path",
+                    "port"
+                  ],
                   "title": "httpGet",
                   "type": "object"
                 }
               },
-              "required": ["httpGet"],
+              "required": [
+                "httpGet"
+              ],
               "title": "livenessProbe",
               "type": "object"
             },
@@ -2834,12 +3227,17 @@
                       "type": "string"
                     }
                   },
-                  "required": ["path", "port"],
+                  "required": [
+                    "path",
+                    "port"
+                  ],
                   "title": "httpGet",
                   "type": "object"
                 }
               },
-              "required": ["httpGet"],
+              "required": [
+                "httpGet"
+              ],
               "title": "readinessProbe",
               "type": "object"
             },
@@ -2915,7 +3313,10 @@
               "description": "Host aliases for the mcp webhook pod. For more information checkout: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/#adding-additional-entries-with-hostaliases",
               "items": {
                 "type": "object",
-                "required": ["ip", "hostnames"],
+                "required": [
+                  "ip",
+                  "hostnames"
+                ],
                 "properties": {
                   "ip": {
                     "type": "string",
@@ -2936,7 +3337,22 @@
               "type": "array"
             }
           },
-          "required": ["enabled", "resources", "startupProbe", "livenessProbe", "readinessProbe", "extraEnvVars", "extraEnv", "extraSecretNamesForEnvFrom", "volumes", "volumeMounts", "initContainers", "extraContainers", "affinity", "hostAliases"],
+          "required": [
+            "enabled",
+            "resources",
+            "startupProbe",
+            "livenessProbe",
+            "readinessProbe",
+            "extraEnvVars",
+            "extraEnv",
+            "extraSecretNamesForEnvFrom",
+            "volumes",
+            "volumeMounts",
+            "initContainers",
+            "extraContainers",
+            "affinity",
+            "hostAliases"
+          ],
           "title": "mcp",
           "type": "object"
         },
@@ -2969,75 +3385,152 @@
               "minItems": 1,
               "items": {
                 "type": "object",
-                "required": ["type"],
+                "required": [
+                  "type"
+                ],
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["Resource", "Pods", "Object", "External"]
+                    "enum": [
+                      "Resource",
+                      "Pods",
+                      "Object",
+                      "External"
+                    ]
                   }
                 },
                 "oneOf": [
                   {
                     "properties": {
-                      "type": { "const": "Resource" },
+                      "type": {
+                        "const": "Resource"
+                      },
                       "resource": {
                         "type": "object",
-                        "required": ["name", "target"],
+                        "required": [
+                          "name",
+                          "target"
+                        ],
                         "properties": {
                           "name": {
                             "type": "string",
-                            "enum": ["cpu", "memory"]
+                            "enum": [
+                              "cpu",
+                              "memory"
+                            ]
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
                               "type": {
                                 "type": "string",
-                                "enum": ["Utilization", "AverageValue", "Value"]
+                                "enum": [
+                                  "Utilization",
+                                  "AverageValue",
+                                  "Value"
+                                ]
                               },
-                              "averageUtilization": { "type": "integer", "minimum": 0 },
-                              "averageValue": { "type": "string" },
-                              "value": { "type": "string" }
+                              "averageUtilization": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "Utilization" } } },
-                            "then": { "required": ["averageUtilization"] },
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "Utilization"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "averageUtilization"
+                              ]
+                            },
                             "else": {
-                              "if": { "properties": { "type": { "const": "AverageValue" } } },
-                              "then": { "required": ["averageValue"] },
-                              "else": { "required": ["value"] }
+                              "if": {
+                                "properties": {
+                                  "type": {
+                                    "const": "AverageValue"
+                                  }
+                                }
+                              },
+                              "then": {
+                                "required": [
+                                  "averageValue"
+                                ]
+                              },
+                              "else": {
+                                "required": [
+                                  "value"
+                                ]
+                              }
                             }
                           }
                         }
                       }
                     },
-                    "required": ["resource"]
+                    "required": [
+                      "resource"
+                    ]
                   },
                   {
                     "properties": {
-                      "type": { "const": "Pods" },
+                      "type": {
+                        "const": "Pods"
+                      },
                       "pods": {
                         "type": "object",
-                        "required": ["metric", "target"],
+                        "required": [
+                          "metric",
+                          "target"
+                        ],
                         "properties": {
                           "metric": {
                             "type": "object",
-                            "required": ["name"],
+                            "required": [
+                              "name"
+                            ],
                             "properties": {
-                              "name": { "type": "string" },
+                              "name": {
+                                "type": "string"
+                              },
                               "selector": {
                                 "type": "object",
                                 "properties": {
-                                  "matchLabels": { "type": "object" },
+                                  "matchLabels": {
+                                    "type": "object"
+                                  },
                                   "matchExpressions": {
                                     "type": "array",
                                     "items": {
                                       "type": "object",
-                                      "required": ["key", "operator"],
+                                      "required": [
+                                        "key",
+                                        "operator"
+                                      ],
                                       "properties": {
-                                        "key": { "type": "string" },
-                                        "operator": { "type": "string" },
-                                        "values": { "type": "array", "items": { "type": "string" } }
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
                                       }
                                     }
                                   }
@@ -3047,46 +3540,98 @@
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
-                              "type": { "type": "string", "enum": ["AverageValue", "Value"] },
-                              "averageValue": { "type": "string" },
-                              "value": { "type": "string" }
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "AverageValue",
+                                  "Value"
+                                ]
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "AverageValue" } } },
-                            "then": { "required": ["averageValue"] },
-                            "else": { "required": ["value"] }
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "AverageValue"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "averageValue"
+                              ]
+                            },
+                            "else": {
+                              "required": [
+                                "value"
+                              ]
+                            }
                           }
                         }
                       }
                     },
-                    "required": ["pods"]
+                    "required": [
+                      "pods"
+                    ]
                   },
                   {
                     "properties": {
-                      "type": { "const": "Object" },
+                      "type": {
+                        "const": "Object"
+                      },
                       "object": {
                         "type": "object",
-                        "required": ["metric", "describedObject", "target"],
+                        "required": [
+                          "metric",
+                          "describedObject",
+                          "target"
+                        ],
                         "properties": {
                           "metric": {
                             "type": "object",
-                            "required": ["name"],
+                            "required": [
+                              "name"
+                            ],
                             "properties": {
-                              "name": { "type": "string" },
+                              "name": {
+                                "type": "string"
+                              },
                               "selector": {
                                 "type": "object",
                                 "properties": {
-                                  "matchLabels": { "type": "object" },
+                                  "matchLabels": {
+                                    "type": "object"
+                                  },
                                   "matchExpressions": {
                                     "type": "array",
                                     "items": {
                                       "type": "object",
-                                      "required": ["key", "operator"],
+                                      "required": [
+                                        "key",
+                                        "operator"
+                                      ],
                                       "properties": {
-                                        "key": { "type": "string" },
-                                        "operator": { "type": "string" },
-                                        "values": { "type": "array", "items": { "type": "string" } }
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
                                       }
                                     }
                                   }
@@ -3096,55 +3641,116 @@
                           },
                           "describedObject": {
                             "type": "object",
-                            "required": ["apiVersion", "kind", "name"],
+                            "required": [
+                              "apiVersion",
+                              "kind",
+                              "name"
+                            ],
                             "properties": {
-                              "apiVersion": { "type": "string" },
-                              "kind": { "type": "string" },
-                              "name": { "type": "string" }
+                              "apiVersion": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
                             }
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
-                              "type": { "type": "string", "enum": ["Value", "AverageValue"] },
-                              "value": { "type": "string" },
-                              "averageValue": { "type": "string" }
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "Value",
+                                  "AverageValue"
+                                ]
+                              },
+                              "value": {
+                                "type": "string"
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "Value" } } },
-                            "then": { "required": ["value"] },
-                            "else": { "required": ["averageValue"] }
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "Value"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "value"
+                              ]
+                            },
+                            "else": {
+                              "required": [
+                                "averageValue"
+                              ]
+                            }
                           }
                         }
                       }
                     },
-                    "required": ["object"]
+                    "required": [
+                      "object"
+                    ]
                   },
                   {
                     "properties": {
-                      "type": { "const": "External" },
+                      "type": {
+                        "const": "External"
+                      },
                       "external": {
                         "type": "object",
-                        "required": ["metric", "target"],
+                        "required": [
+                          "metric",
+                          "target"
+                        ],
                         "properties": {
                           "metric": {
                             "type": "object",
-                            "required": ["name"],
+                            "required": [
+                              "name"
+                            ],
                             "properties": {
-                              "name": { "type": "string" },
+                              "name": {
+                                "type": "string"
+                              },
                               "selector": {
                                 "type": "object",
                                 "properties": {
-                                  "matchLabels": { "type": "object" },
+                                  "matchLabels": {
+                                    "type": "object"
+                                  },
                                   "matchExpressions": {
                                     "type": "array",
                                     "items": {
                                       "type": "object",
-                                      "required": ["key", "operator"],
+                                      "required": [
+                                        "key",
+                                        "operator"
+                                      ],
                                       "properties": {
-                                        "key": { "type": "string" },
-                                        "operator": { "type": "string" },
-                                        "values": { "type": "array", "items": { "type": "string" } }
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
                                       }
                                     }
                                   }
@@ -3154,20 +3760,48 @@
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
-                              "type": { "type": "string", "enum": ["Value", "AverageValue"] },
-                              "value": { "type": "string" },
-                              "averageValue": { "type": "string" }
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "Value",
+                                  "AverageValue"
+                                ]
+                              },
+                              "value": {
+                                "type": "string"
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "Value" } } },
-                            "then": { "required": ["value"] },
-                            "else": { "required": ["averageValue"] }
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "Value"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "value"
+                              ]
+                            },
+                            "else": {
+                              "required": [
+                                "averageValue"
+                              ]
+                            }
                           }
                         }
                       }
                     },
-                    "required": ["external"]
+                    "required": [
+                      "external"
+                    ]
                   }
                 ]
               }
@@ -3188,11 +3822,18 @@
                       "items": {
                         "type": "object",
                         "minItems": 1,
-                        "required": ["type", "value", "periodSeconds"],
+                        "required": [
+                          "type",
+                          "value",
+                          "periodSeconds"
+                        ],
                         "properties": {
                           "type": {
                             "type": "string",
-                            "enum": ["Pods", "Percent"],
+                            "enum": [
+                              "Pods",
+                              "Percent"
+                            ],
                             "description": "Type of scaling policy: Pods (fixed number) or Percent (percentage of current replicas)"
                           },
                           "value": {
@@ -3212,7 +3853,11 @@
                     },
                     "selectPolicy": {
                       "type": "string",
-                      "enum": ["Max", "Min", "Disabled"],
+                      "enum": [
+                        "Max",
+                        "Min",
+                        "Disabled"
+                      ],
                       "description": "Policy to select among multiple policies: Max (default), Min, or Disabled"
                     }
                   },
@@ -3231,11 +3876,18 @@
                       "items": {
                         "type": "object",
                         "minItems": 1,
-                        "required": ["type", "value", "periodSeconds"],
+                        "required": [
+                          "type",
+                          "value",
+                          "periodSeconds"
+                        ],
                         "properties": {
                           "type": {
                             "type": "string",
-                            "enum": ["Pods", "Percent"],
+                            "enum": [
+                              "Pods",
+                              "Percent"
+                            ],
                             "description": "Type of scaling policy: Pods (fixed number) or Percent (percentage of current replicas)"
                           },
                           "value": {
@@ -3255,7 +3907,11 @@
                     },
                     "selectPolicy": {
                       "type": "string",
-                      "enum": ["Max", "Min", "Disabled"],
+                      "enum": [
+                        "Max",
+                        "Min",
+                        "Disabled"
+                      ],
                       "description": "Policy to select among multiple policies: Max (default), Min, or Disabled"
                     }
                   },
@@ -3265,7 +3921,13 @@
               "additionalProperties": false
             }
           },
-          "required": ["enabled", "minReplicas", "maxReplicas", "metrics", "behavior"],
+          "required": [
+            "enabled",
+            "minReplicas",
+            "maxReplicas",
+            "metrics",
+            "behavior"
+          ],
           "title": "autoscaling",
           "type": "object"
         },
@@ -3326,7 +3988,10 @@
               "oneOf": [
                 {
                   "type": "string",
-                  "enum": ["IfHealthyBudget", "AlwaysAllow"]
+                  "enum": [
+                    "IfHealthyBudget",
+                    "AlwaysAllow"
+                  ]
                 },
                 {
                   "type": "null"
@@ -3334,7 +3999,9 @@
               ]
             }
           },
-          "required": ["enabled"],
+          "required": [
+            "enabled"
+          ],
           "title": "pdb",
           "type": "object",
           "if": {
@@ -3343,15 +4010,24 @@
                 "const": true
               }
             },
-            "required": ["enabled"]
+            "required": [
+              "enabled"
+            ]
           },
           "then": {
             "not": {
               "properties": {
-                "minAvailable": { "type": "null" },
-                "maxUnavailable": { "type": "null" }
+                "minAvailable": {
+                  "type": "null"
+                },
+                "maxUnavailable": {
+                  "type": "null"
+                }
               },
-              "required": ["minAvailable", "maxUnavailable"]
+              "required": [
+                "minAvailable",
+                "maxUnavailable"
+              ]
             }
           }
         },
@@ -3395,7 +4071,13 @@
               "type": "array"
             }
           },
-          "required": ["enabled", "overwriteSchema", "overwriteUrl", "healthCheckPath", "additionalParameters"],
+          "required": [
+            "enabled",
+            "overwriteSchema",
+            "overwriteUrl",
+            "healthCheckPath",
+            "additionalParameters"
+          ],
           "title": "waitMainNodeReady",
           "type": "object"
         },
@@ -3463,13 +4145,19 @@
               "additionalProperties": true,
               "properties": {
                 "command": {
-                  "default": ["/bin/sh", "-c", "ps aux | grep '[n]8n'"],
+                  "default": [
+                    "/bin/sh",
+                    "-c",
+                    "ps aux | grep '[n]8n'"
+                  ],
                   "required": [],
                   "title": "command",
                   "type": "array"
                 }
               },
-              "required": ["command"],
+              "required": [
+                "command"
+              ],
               "title": "exec",
               "type": "object"
             },
@@ -3516,12 +4204,17 @@
                   "type": "string"
                 }
               },
-              "required": ["path", "port"],
+              "required": [
+                "path",
+                "port"
+              ],
               "title": "httpGet",
               "type": "object"
             }
           },
-          "required": ["httpGet"],
+          "required": [
+            "httpGet"
+          ],
           "title": "livenessProbe",
           "type": "object"
         },
@@ -3545,12 +4238,17 @@
                   "type": "string"
                 }
               },
-              "required": ["path", "port"],
+              "required": [
+                "path",
+                "port"
+              ],
               "title": "httpGet",
               "type": "object"
             }
           },
-          "required": ["httpGet"],
+          "required": [
+            "httpGet"
+          ],
           "title": "readinessProbe",
           "type": "object"
         },
@@ -3626,7 +4324,10 @@
           "description": "Host aliases for the webhook pod. For more information checkout: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/#adding-additional-entries-with-hostaliases",
           "items": {
             "type": "object",
-            "required": ["ip", "hostnames"],
+            "required": [
+              "ip",
+              "hostnames"
+            ],
             "properties": {
               "ip": {
                 "type": "string",
@@ -3653,19 +4354,50 @@
           "type": "string"
         }
       },
-      "required": ["mode", "count", "url", "allNodes", "autoscaling", "resources", "startupProbe", "livenessProbe", "readinessProbe", "extraEnvVars", "extraEnv", "extraSecretNamesForEnvFrom", "volumes", "volumeMounts", "pdb", "waitMainNodeReady", "initContainers", "extraContainers", "affinity", "hostAliases", "mcp", "runtimeClassName"],
+      "required": [
+        "mode",
+        "count",
+        "url",
+        "allNodes",
+        "autoscaling",
+        "resources",
+        "startupProbe",
+        "livenessProbe",
+        "readinessProbe",
+        "extraEnvVars",
+        "extraEnv",
+        "extraSecretNamesForEnvFrom",
+        "volumes",
+        "volumeMounts",
+        "pdb",
+        "waitMainNodeReady",
+        "initContainers",
+        "extraContainers",
+        "affinity",
+        "hostAliases",
+        "mcp",
+        "runtimeClassName"
+      ],
       "allOf": [
         {
           "if": {
             "properties": {
-              "allNodes": { "const": true },
+              "allNodes": {
+                "const": true
+              },
               "autoscaling": {
-                "properties": { "enabled": { "const": true } }
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                }
               }
             }
           },
           "then": {
-            "not": { "type": "object" },
+            "not": {
+              "type": "object"
+            },
             "description": "allNodes and autoscaling.enabled cannot both be true"
           }
         }
@@ -3698,7 +4430,10 @@
           "required": [],
           "title": "mode",
           "type": "string",
-          "enum": ["regular", "queue"]
+          "enum": [
+            "regular",
+            "queue"
+          ]
         },
         "allNodes": {
           "default": false,
@@ -3736,75 +4471,152 @@
               "minItems": 1,
               "items": {
                 "type": "object",
-                "required": ["type"],
+                "required": [
+                  "type"
+                ],
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["Resource", "Pods", "Object", "External"]
+                    "enum": [
+                      "Resource",
+                      "Pods",
+                      "Object",
+                      "External"
+                    ]
                   }
                 },
                 "oneOf": [
                   {
                     "properties": {
-                      "type": { "const": "Resource" },
+                      "type": {
+                        "const": "Resource"
+                      },
                       "resource": {
                         "type": "object",
-                        "required": ["name", "target"],
+                        "required": [
+                          "name",
+                          "target"
+                        ],
                         "properties": {
                           "name": {
                             "type": "string",
-                            "enum": ["cpu", "memory"]
+                            "enum": [
+                              "cpu",
+                              "memory"
+                            ]
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
                               "type": {
                                 "type": "string",
-                                "enum": ["Utilization", "AverageValue", "Value"]
+                                "enum": [
+                                  "Utilization",
+                                  "AverageValue",
+                                  "Value"
+                                ]
                               },
-                              "averageUtilization": { "type": "integer", "minimum": 0 },
-                              "averageValue": { "type": "string" },
-                              "value": { "type": "string" }
+                              "averageUtilization": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "Utilization" } } },
-                            "then": { "required": ["averageUtilization"] },
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "Utilization"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "averageUtilization"
+                              ]
+                            },
                             "else": {
-                              "if": { "properties": { "type": { "const": "AverageValue" } } },
-                              "then": { "required": ["averageValue"] },
-                              "else": { "required": ["value"] }
+                              "if": {
+                                "properties": {
+                                  "type": {
+                                    "const": "AverageValue"
+                                  }
+                                }
+                              },
+                              "then": {
+                                "required": [
+                                  "averageValue"
+                                ]
+                              },
+                              "else": {
+                                "required": [
+                                  "value"
+                                ]
+                              }
                             }
                           }
                         }
                       }
                     },
-                    "required": ["resource"]
+                    "required": [
+                      "resource"
+                    ]
                   },
                   {
                     "properties": {
-                      "type": { "const": "Pods" },
+                      "type": {
+                        "const": "Pods"
+                      },
                       "pods": {
                         "type": "object",
-                        "required": ["metric", "target"],
+                        "required": [
+                          "metric",
+                          "target"
+                        ],
                         "properties": {
                           "metric": {
                             "type": "object",
-                            "required": ["name"],
+                            "required": [
+                              "name"
+                            ],
                             "properties": {
-                              "name": { "type": "string" },
+                              "name": {
+                                "type": "string"
+                              },
                               "selector": {
                                 "type": "object",
                                 "properties": {
-                                  "matchLabels": { "type": "object" },
+                                  "matchLabels": {
+                                    "type": "object"
+                                  },
                                   "matchExpressions": {
                                     "type": "array",
                                     "items": {
                                       "type": "object",
-                                      "required": ["key", "operator"],
+                                      "required": [
+                                        "key",
+                                        "operator"
+                                      ],
                                       "properties": {
-                                        "key": { "type": "string" },
-                                        "operator": { "type": "string" },
-                                        "values": { "type": "array", "items": { "type": "string" } }
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
                                       }
                                     }
                                   }
@@ -3814,46 +4626,98 @@
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
-                              "type": { "type": "string", "enum": ["AverageValue", "Value"] },
-                              "averageValue": { "type": "string" },
-                              "value": { "type": "string" }
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "AverageValue",
+                                  "Value"
+                                ]
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "AverageValue" } } },
-                            "then": { "required": ["averageValue"] },
-                            "else": { "required": ["value"] }
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "AverageValue"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "averageValue"
+                              ]
+                            },
+                            "else": {
+                              "required": [
+                                "value"
+                              ]
+                            }
                           }
                         }
                       }
                     },
-                    "required": ["pods"]
+                    "required": [
+                      "pods"
+                    ]
                   },
                   {
                     "properties": {
-                      "type": { "const": "Object" },
+                      "type": {
+                        "const": "Object"
+                      },
                       "object": {
                         "type": "object",
-                        "required": ["metric", "describedObject", "target"],
+                        "required": [
+                          "metric",
+                          "describedObject",
+                          "target"
+                        ],
                         "properties": {
                           "metric": {
                             "type": "object",
-                            "required": ["name"],
+                            "required": [
+                              "name"
+                            ],
                             "properties": {
-                              "name": { "type": "string" },
+                              "name": {
+                                "type": "string"
+                              },
                               "selector": {
                                 "type": "object",
                                 "properties": {
-                                  "matchLabels": { "type": "object" },
+                                  "matchLabels": {
+                                    "type": "object"
+                                  },
                                   "matchExpressions": {
                                     "type": "array",
                                     "items": {
                                       "type": "object",
-                                      "required": ["key", "operator"],
+                                      "required": [
+                                        "key",
+                                        "operator"
+                                      ],
                                       "properties": {
-                                        "key": { "type": "string" },
-                                        "operator": { "type": "string" },
-                                        "values": { "type": "array", "items": { "type": "string" } }
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
                                       }
                                     }
                                   }
@@ -3863,55 +4727,116 @@
                           },
                           "describedObject": {
                             "type": "object",
-                            "required": ["apiVersion", "kind", "name"],
+                            "required": [
+                              "apiVersion",
+                              "kind",
+                              "name"
+                            ],
                             "properties": {
-                              "apiVersion": { "type": "string" },
-                              "kind": { "type": "string" },
-                              "name": { "type": "string" }
+                              "apiVersion": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
                             }
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
-                              "type": { "type": "string", "enum": ["Value", "AverageValue"] },
-                              "value": { "type": "string" },
-                              "averageValue": { "type": "string" }
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "Value",
+                                  "AverageValue"
+                                ]
+                              },
+                              "value": {
+                                "type": "string"
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "Value" } } },
-                            "then": { "required": ["value"] },
-                            "else": { "required": ["averageValue"] }
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "Value"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "value"
+                              ]
+                            },
+                            "else": {
+                              "required": [
+                                "averageValue"
+                              ]
+                            }
                           }
                         }
                       }
                     },
-                    "required": ["object"]
+                    "required": [
+                      "object"
+                    ]
                   },
                   {
                     "properties": {
-                      "type": { "const": "External" },
+                      "type": {
+                        "const": "External"
+                      },
                       "external": {
                         "type": "object",
-                        "required": ["metric", "target"],
+                        "required": [
+                          "metric",
+                          "target"
+                        ],
                         "properties": {
                           "metric": {
                             "type": "object",
-                            "required": ["name"],
+                            "required": [
+                              "name"
+                            ],
                             "properties": {
-                              "name": { "type": "string" },
+                              "name": {
+                                "type": "string"
+                              },
                               "selector": {
                                 "type": "object",
                                 "properties": {
-                                  "matchLabels": { "type": "object" },
+                                  "matchLabels": {
+                                    "type": "object"
+                                  },
                                   "matchExpressions": {
                                     "type": "array",
                                     "items": {
                                       "type": "object",
-                                      "required": ["key", "operator"],
+                                      "required": [
+                                        "key",
+                                        "operator"
+                                      ],
                                       "properties": {
-                                        "key": { "type": "string" },
-                                        "operator": { "type": "string" },
-                                        "values": { "type": "array", "items": { "type": "string" } }
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
                                       }
                                     }
                                   }
@@ -3921,20 +4846,48 @@
                           },
                           "target": {
                             "type": "object",
-                            "required": ["type"],
+                            "required": [
+                              "type"
+                            ],
                             "properties": {
-                              "type": { "type": "string", "enum": ["Value", "AverageValue"] },
-                              "value": { "type": "string" },
-                              "averageValue": { "type": "string" }
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "Value",
+                                  "AverageValue"
+                                ]
+                              },
+                              "value": {
+                                "type": "string"
+                              },
+                              "averageValue": {
+                                "type": "string"
+                              }
                             },
-                            "if": { "properties": { "type": { "const": "Value" } } },
-                            "then": { "required": ["value"] },
-                            "else": { "required": ["averageValue"] }
+                            "if": {
+                              "properties": {
+                                "type": {
+                                  "const": "Value"
+                                }
+                              }
+                            },
+                            "then": {
+                              "required": [
+                                "value"
+                              ]
+                            },
+                            "else": {
+                              "required": [
+                                "averageValue"
+                              ]
+                            }
                           }
                         }
                       }
                     },
-                    "required": ["external"]
+                    "required": [
+                      "external"
+                    ]
                   }
                 ]
               }
@@ -3955,11 +4908,18 @@
                       "minItems": 1,
                       "items": {
                         "type": "object",
-                        "required": ["type", "value", "periodSeconds"],
+                        "required": [
+                          "type",
+                          "value",
+                          "periodSeconds"
+                        ],
                         "properties": {
                           "type": {
                             "type": "string",
-                            "enum": ["Pods", "Percent"],
+                            "enum": [
+                              "Pods",
+                              "Percent"
+                            ],
                             "description": "Type of scaling policy: Pods (fixed number) or Percent (percentage of current replicas)"
                           },
                           "value": {
@@ -3979,7 +4939,11 @@
                     },
                     "selectPolicy": {
                       "type": "string",
-                      "enum": ["Max", "Min", "Disabled"],
+                      "enum": [
+                        "Max",
+                        "Min",
+                        "Disabled"
+                      ],
                       "description": "Policy to select among multiple policies: Max (default), Min, or Disabled"
                     }
                   },
@@ -3998,11 +4962,18 @@
                       "minItems": 1,
                       "items": {
                         "type": "object",
-                        "required": ["type", "value", "periodSeconds"],
+                        "required": [
+                          "type",
+                          "value",
+                          "periodSeconds"
+                        ],
                         "properties": {
                           "type": {
                             "type": "string",
-                            "enum": ["Pods", "Percent"],
+                            "enum": [
+                              "Pods",
+                              "Percent"
+                            ],
                             "description": "Type of scaling policy: Pods (fixed number) or Percent (percentage of current replicas)"
                           },
                           "value": {
@@ -4022,7 +4993,11 @@
                     },
                     "selectPolicy": {
                       "type": "string",
-                      "enum": ["Max", "Min", "Disabled"],
+                      "enum": [
+                        "Max",
+                        "Min",
+                        "Disabled"
+                      ],
                       "description": "Policy to select among multiple policies: Max (default), Min, or Disabled"
                     }
                   },
@@ -4032,7 +5007,13 @@
               "additionalProperties": false
             }
           },
-          "required": ["enabled", "minReplicas", "maxReplicas", "metrics", "behavior"],
+          "required": [
+            "enabled",
+            "minReplicas",
+            "maxReplicas",
+            "metrics",
+            "behavior"
+          ],
           "title": "autoscaling",
           "type": "object"
         },
@@ -4093,7 +5074,10 @@
               "oneOf": [
                 {
                   "type": "string",
-                  "enum": ["IfHealthyBudget", "AlwaysAllow"]
+                  "enum": [
+                    "IfHealthyBudget",
+                    "AlwaysAllow"
+                  ]
                 },
                 {
                   "type": "null"
@@ -4101,7 +5085,9 @@
               ]
             }
           },
-          "required": ["enabled"],
+          "required": [
+            "enabled"
+          ],
           "title": "pdb",
           "type": "object",
           "if": {
@@ -4110,15 +5096,24 @@
                 "const": true
               }
             },
-            "required": ["enabled"]
+            "required": [
+              "enabled"
+            ]
           },
           "then": {
             "not": {
               "properties": {
-                "minAvailable": { "type": "null" },
-                "maxUnavailable": { "type": "null" }
+                "minAvailable": {
+                  "type": "null"
+                },
+                "maxUnavailable": {
+                  "type": "null"
+                }
               },
-              "required": ["minAvailable", "maxUnavailable"]
+              "required": [
+                "minAvailable",
+                "maxUnavailable"
+              ]
             }
           }
         },
@@ -4162,7 +5157,13 @@
               "type": "array"
             }
           },
-          "required": ["enabled", "overwriteSchema", "overwriteUrl", "healthCheckPath", "additionalParameters"],
+          "required": [
+            "enabled",
+            "overwriteSchema",
+            "overwriteUrl",
+            "healthCheckPath",
+            "additionalParameters"
+          ],
           "title": "waitMainNodeReady",
           "type": "object"
         },
@@ -4223,13 +5224,19 @@
               "additionalProperties": true,
               "properties": {
                 "command": {
-                  "default": ["/bin/sh", "-c", "ps aux | grep '[n]8n'"],
+                  "default": [
+                    "/bin/sh",
+                    "-c",
+                    "ps aux | grep '[n]8n'"
+                  ],
                   "required": [],
                   "title": "command",
                   "type": "array"
                 }
               },
-              "required": ["command"],
+              "required": [
+                "command"
+              ],
               "title": "exec",
               "type": "object"
             },
@@ -4276,12 +5283,17 @@
                   "type": "string"
                 }
               },
-              "required": ["path", "port"],
+              "required": [
+                "path",
+                "port"
+              ],
               "title": "httpGet",
               "type": "object"
             }
           },
-          "required": ["httpGet"],
+          "required": [
+            "httpGet"
+          ],
           "title": "livenessProbe",
           "type": "object"
         },
@@ -4305,12 +5317,17 @@
                   "type": "string"
                 }
               },
-              "required": ["path", "port"],
+              "required": [
+                "path",
+                "port"
+              ],
               "title": "httpGet",
               "type": "object"
             }
           },
-          "required": ["httpGet"],
+          "required": [
+            "httpGet"
+          ],
           "title": "readinessProbe",
           "type": "object"
         },
@@ -4369,7 +5386,10 @@
             },
             "accessMode": {
               "description": "Access mode for persistence",
-              "enum": ["ReadWriteOnce", "ReadWriteMany"],
+              "enum": [
+                "ReadWriteOnce",
+                "ReadWriteMany"
+              ],
               "required": [],
               "title": "accessMode",
               "type": "string"
@@ -4396,7 +5416,18 @@
               "type": "object"
             }
           },
-          "required": ["enabled", "volumeName", "existingClaim", "mountPath", "subPath", "storageClass", "accessMode", "size", "annotations", "labels"],
+          "required": [
+            "enabled",
+            "volumeName",
+            "existingClaim",
+            "mountPath",
+            "subPath",
+            "storageClass",
+            "accessMode",
+            "size",
+            "annotations",
+            "labels"
+          ],
           "title": "persistence",
           "type": "object"
         },
@@ -4472,7 +5503,10 @@
           "description": "Host aliases for the worker pod. For more information checkout: https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/#adding-additional-entries-with-hostaliases",
           "items": {
             "type": "object",
-            "required": ["ip", "hostnames"],
+            "required": [
+              "ip",
+              "hostnames"
+            ],
             "properties": {
               "ip": {
                 "type": "string",
@@ -4499,19 +5533,51 @@
           "type": "string"
         }
       },
-      "required": ["mode", "count", "concurrency", "allNodes", "autoscaling", "resources", "startupProbe", "livenessProbe", "readinessProbe", "forceToUseStatefulset", "persistence", "extraEnvVars", "extraEnv", "extraSecretNamesForEnvFrom", "volumes", "volumeMounts", "pdb", "waitMainNodeReady", "initContainers", "extraContainers", "affinity", "hostAliases", "runtimeClassName"],
+      "required": [
+        "mode",
+        "count",
+        "concurrency",
+        "allNodes",
+        "autoscaling",
+        "resources",
+        "startupProbe",
+        "livenessProbe",
+        "readinessProbe",
+        "forceToUseStatefulset",
+        "persistence",
+        "extraEnvVars",
+        "extraEnv",
+        "extraSecretNamesForEnvFrom",
+        "volumes",
+        "volumeMounts",
+        "pdb",
+        "waitMainNodeReady",
+        "initContainers",
+        "extraContainers",
+        "affinity",
+        "hostAliases",
+        "runtimeClassName"
+      ],
       "allOf": [
         {
           "if": {
             "properties": {
-              "allNodes": { "const": true },
+              "allNodes": {
+                "const": true
+              },
               "autoscaling": {
-                "properties": { "enabled": { "const": true } }
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                }
               }
             }
           },
           "then": {
-            "not": { "type": "object" },
+            "not": {
+              "type": "object"
+            },
             "description": "allNodes and autoscaling.enabled cannot both be true"
           }
         },
@@ -4519,13 +5585,21 @@
           "if": {
             "properties": {
               "autoscaling": {
-                "properties": { "enabled": { "const": true } }
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                }
               },
-              "forceToUseStatefulset": { "const": true }
+              "forceToUseStatefulset": {
+                "const": true
+              }
             }
           },
           "then": {
-            "not": { "type": "object" },
+            "not": {
+              "type": "object"
+            },
             "description": "worker.autoscaling.enabled and worker.forceToUseStatefulset cannot both be true"
           }
         },
@@ -4533,19 +5607,32 @@
           "if": {
             "properties": {
               "autoscaling": {
-                "properties": { "enabled": { "const": true } }
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                }
               },
               "persistence": {
                 "properties": {
-                  "enabled": { "const": true },
-                  "accessMode": { "const": "ReadWriteOnce" }
+                  "enabled": {
+                    "const": true
+                  },
+                  "accessMode": {
+                    "const": "ReadWriteOnce"
+                  }
                 },
-                "required": ["enabled", "accessMode"]
+                "required": [
+                  "enabled",
+                  "accessMode"
+                ]
               }
             }
           },
           "then": {
-            "not": { "type": "object" },
+            "not": {
+              "type": "object"
+            },
             "description": "worker.autoscaling.enabled cannot be true when worker.persistence.enabled=true and worker.persistence.accessMode=ReadWriteOnce"
           }
         }
@@ -4562,7 +5649,10 @@
           "required": [],
           "title": "mode",
           "type": "string",
-          "enum": ["internal", "external"]
+          "enum": [
+            "internal",
+            "external"
+          ]
         },
         "taskTimeout": {
           "default": 60,
@@ -4603,7 +5693,10 @@
               "type": "integer"
             }
           },
-          "required": ["address", "port"],
+          "required": [
+            "address",
+            "port"
+          ],
           "title": "broker",
           "type": "object"
         },
@@ -4665,7 +5758,11 @@
                   "required": [],
                   "title": "pullPolicy",
                   "type": "string",
-                  "enum": ["Always", "Never", "IfNotPresent"]
+                  "enum": [
+                    "Always",
+                    "Never",
+                    "IfNotPresent"
+                  ]
                 },
                 "tag": {
                   "default": "",
@@ -4675,7 +5772,11 @@
                   "type": "string"
                 }
               },
-              "required": ["repository", "pullPolicy", "tag"],
+              "required": [
+                "repository",
+                "pullPolicy",
+                "tag"
+              ],
               "title": "image",
               "type": "object"
             },
@@ -4692,7 +5793,10 @@
                       "type": "string"
                     }
                   },
-                  "required": ["cpu", "memory"],
+                  "required": [
+                    "cpu",
+                    "memory"
+                  ],
                   "title": "requests",
                   "type": "object"
                 },
@@ -4706,33 +5810,57 @@
                       "type": "string"
                     }
                   },
-                  "required": ["cpu", "memory"],
+                  "required": [
+                    "cpu",
+                    "memory"
+                  ],
                   "title": "limits",
                   "type": "object"
                 }
               },
-              "required": ["requests", "limits"],
+              "required": [
+                "requests",
+                "limits"
+              ],
               "title": "resources",
               "type": "object"
             }
           },
-          "required": ["autoShutdownTimeout", "port", "nodeOptions", "image", "resources"],
+          "required": [
+            "autoShutdownTimeout",
+            "port",
+            "nodeOptions",
+            "image",
+            "resources"
+          ],
           "title": "external",
           "type": "object"
         }
       },
-      "required": ["mode", "taskTimeout", "taskHeartbeatInterval", "maxConcurrency", "broker"],
+      "required": [
+        "mode",
+        "taskTimeout",
+        "taskHeartbeatInterval",
+        "maxConcurrency",
+        "broker"
+      ],
       "if": {
         "properties": {
-          "mode": { "const": "external" }
+          "mode": {
+            "const": "external"
+          }
         }
       },
       "then": {
-        "required": ["external"]
+        "required": [
+          "external"
+        ]
       },
       "else": {
         "properties": {
-          "external": { "type": "object" }
+          "external": {
+            "type": "object"
+          }
         }
       },
       "title": "taskRunners",
@@ -4757,7 +5885,10 @@
           "minimum": -1
         }
       },
-      "required": ["enabled", "pruneTime"],
+      "required": [
+        "enabled",
+        "pruneTime"
+      ],
       "title": "workflowHistory",
       "type": "object"
     },
@@ -4836,7 +5967,14 @@
               },
               "action": {
                 "type": "string",
-                "enum": ["replace", "keep", "drop", "labeldrop", "labelkeep", "hashmod"],
+                "enum": [
+                  "replace",
+                  "keep",
+                  "drop",
+                  "labeldrop",
+                  "labelkeep",
+                  "hashmod"
+                ],
                 "description": "The relabeling action to perform"
               },
               "separator": {
@@ -4854,7 +5992,9 @@
                 "description": "Replacement value for the 'replace' action"
               }
             },
-            "required": ["action"],
+            "required": [
+              "action"
+            ],
             "additionalProperties": true
           }
         },
@@ -4949,11 +6089,33 @@
               "type": "boolean"
             }
           },
-          "required": ["defaultMetrics", "cacheMetrics", "messageEventBusMetrics", "workflowIdLabel", "nodeTypeLabel", "credentialTypeLabel", "apiEndpoints", "apiPathLabel", "apiMethodLabel", "apiStatusCodeLabel", "queueMetrics"],
+          "required": [
+            "defaultMetrics",
+            "cacheMetrics",
+            "messageEventBusMetrics",
+            "workflowIdLabel",
+            "nodeTypeLabel",
+            "credentialTypeLabel",
+            "apiEndpoints",
+            "apiPathLabel",
+            "apiMethodLabel",
+            "apiStatusCodeLabel",
+            "queueMetrics"
+          ],
           "additionalProperties": false
         }
       },
-      "required": ["enabled", "namespace", "interval", "labels", "timeout", "targetLabels", "metricRelabelings", "metricsPrefix", "include"],
+      "required": [
+        "enabled",
+        "namespace",
+        "interval",
+        "labels",
+        "timeout",
+        "targetLabels",
+        "metricRelabelings",
+        "metricsPrefix",
+        "include"
+      ],
       "title": "serviceMonitor",
       "type": "object"
     },
@@ -4975,7 +6137,12 @@
               },
               "policy": {
                 "default": "none",
-                "enum": ["none", "download", "upload", "public"],
+                "enum": [
+                  "none",
+                  "download",
+                  "upload",
+                  "public"
+                ],
                 "description": "This is for setting up the bucket policy.",
                 "required": [],
                 "title": "policy",
@@ -5392,7 +6559,13 @@
       "default": "",
       "description": "For more information checkout: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy",
       "required": [],
-      "enum": ["", "ClusterFirst", "ClusterFirstWithHostNet", "Default", "None"],
+      "enum": [
+        "",
+        "ClusterFirst",
+        "ClusterFirstWithHostNet",
+        "Default",
+        "None"
+      ],
       "title": "dnsPolicy",
       "type": "string"
     },
@@ -5430,11 +6603,16 @@
                 "description": "Name of the DNS option."
               },
               "value": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Value of the DNS option (optional)."
               }
             },
-            "required": ["name"],
+            "required": [
+              "name"
+            ],
             "additionalProperties": false,
             "description": "A DNS option object."
           },
@@ -5443,6 +6621,1019 @@
         }
       },
       "additionalProperties": false
+    },
+    "operations": {
+      "additionalProperties": false,
+      "description": "Execution lifecycle and request-size limits, rendered into the operations ConfigMap consumed by every n8n container.",
+      "properties": {
+        "timeout": {
+          "default": -1,
+          "description": "Default workflow timeout in seconds (`EXECUTIONS_TIMEOUT`). -1 disables it.",
+          "required": []
+        },
+        "timeoutMax": {
+          "default": 3600,
+          "description": "Maximum timeout in seconds a user may set on a single workflow (`EXECUTIONS_TIMEOUT_MAX`).",
+          "minimum": 1,
+          "required": []
+        },
+        "saveDataOnError": {
+          "default": "all",
+          "description": "Save execution data on error (`EXECUTIONS_DATA_SAVE_ON_ERROR`).",
+          "enum": [
+            "all",
+            "none"
+          ],
+          "required": []
+        },
+        "saveDataOnSuccess": {
+          "default": "all",
+          "description": "Save execution data on success (`EXECUTIONS_DATA_SAVE_ON_SUCCESS`). Setting this to none removes the ability to inspect or retry successful runs.",
+          "enum": [
+            "all",
+            "none"
+          ],
+          "required": []
+        },
+        "saveDataOnProgress": {
+          "default": false,
+          "description": "Save progress for every executed node (`EXECUTIONS_DATA_SAVE_ON_PROGRESS`). Increases write volume substantially; only enable while debugging.",
+          "required": []
+        },
+        "saveDataManualExecutions": {
+          "default": true,
+          "description": "Save data for manually triggered executions (`EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS`).",
+          "required": []
+        },
+        "pruneData": {
+          "default": false,
+          "description": "Delete old execution data on a rolling basis (`EXECUTIONS_DATA_PRUNE`). Leaving it false lets the database grow without bound.",
+          "required": []
+        },
+        "pruneDataMaxAge": {
+          "default": 336,
+          "description": "Execution age in hours before deletion (`EXECUTIONS_DATA_MAX_AGE`). Only used when pruneData is true.",
+          "minimum": 1,
+          "required": []
+        },
+        "pruneDataMaxCount": {
+          "default": 10000,
+          "description": "Maximum number of executions to keep (`EXECUTIONS_DATA_PRUNE_MAX_COUNT`). 0 means no limit. Only used when pruneData is true.",
+          "minimum": 0,
+          "required": []
+        },
+        "pruneDataHardDeleteBuffer": {
+          "default": 1,
+          "description": "Age in hours after which finished execution data is hard-deleted (`EXECUTIONS_DATA_HARD_DELETE_BUFFER`).",
+          "minimum": 1,
+          "required": []
+        },
+        "payloadSizeMax": {
+          "default": 16,
+          "description": "Maximum request payload size in MB for webhooks and the REST API (`N8N_PAYLOAD_SIZE_MAX`).",
+          "minimum": 1,
+          "required": []
+        },
+        "formDataFileSizeMax": {
+          "default": 200,
+          "description": "Maximum uploaded file size in MB for form submissions (`N8N_FORMDATA_FILE_SIZE_MAX`).",
+          "minimum": 1,
+          "required": []
+        },
+        "maxDisplaySize": {
+          "default": 104857600,
+          "description": "Maximum size in bytes of execution data loaded when displaying an execution (`EXECUTIONS_DATA_MAX_DISPLAY_SIZE`). Larger executions are shown as too large to display. 0 disables the limit.",
+          "minimum": 0,
+          "required": []
+        }
+      },
+      "required": [
+        "timeout",
+        "timeoutMax",
+        "saveDataOnError",
+        "saveDataOnSuccess",
+        "saveDataOnProgress",
+        "saveDataManualExecutions",
+        "pruneData",
+        "pruneDataMaxAge",
+        "pruneDataMaxCount",
+        "pruneDataHardDeleteBuffer",
+        "payloadSizeMax",
+        "formDataFileSizeMax",
+        "maxDisplaySize"
+      ],
+      "title": "operations",
+      "type": "object"
+    },
+    "ssrfProtection": {
+      "additionalProperties": false,
+      "description": "SSRF protection for outbound requests from user-controllable nodes. Available from n8n 2.12; not license-gated. Application-level defence-in-depth; does not replace network policy.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Enable SSRF validation of outbound HTTP requests (`N8N_SSRF_PROTECTION_ENABLED`). Enabling it blocks RFC1918, loopback and link-local ranges by default, so internal services stop being reachable until allowlisted below.",
+          "required": []
+        },
+        "allowedHostnames": {
+          "description": "Hostname patterns allowed to bypass the blocklist (`N8N_SSRF_ALLOWED_HOSTNAMES`), supports wildcards such as *.n8n.internal. Takes precedence over the IP allowlist.",
+          "items": {
+            "type": "string",
+            "required": []
+          },
+          "required": [],
+          "type": "array"
+        },
+        "allowedIpRanges": {
+          "description": "CIDR ranges allowed to bypass the blocklist (`N8N_SSRF_ALLOWED_IP_RANGES`). Takes precedence over blockedIpRanges.",
+          "items": {
+            "type": "string",
+            "required": []
+          },
+          "required": [],
+          "type": "array"
+        },
+        "blockedIpRanges": {
+          "description": "Additional CIDR ranges to block on top of the upstream defaults (`N8N_SSRF_BLOCKED_IP_RANGES`). Include the literal string default to keep the upstream list alongside your own.",
+          "items": {
+            "type": "string",
+            "required": []
+          },
+          "required": [],
+          "type": "array"
+        },
+        "blockedHostnames": {
+          "description": "Hostnames that are always blocked (`N8N_SSRF_BLOCKED_HOSTNAMES`).",
+          "items": {
+            "type": "string",
+            "required": []
+          },
+          "required": [],
+          "type": "array"
+        },
+        "dnsCacheMaxSize": {
+          "default": 1048576,
+          "description": "Maximum DNS cache entries (`N8N_SSRF_DNS_CACHE_MAX_SIZE`).",
+          "minimum": 1,
+          "required": []
+        }
+      },
+      "required": [
+        "enabled",
+        "allowedHostnames",
+        "allowedIpRanges",
+        "blockedIpRanges",
+        "blockedHostnames",
+        "dnsCacheMaxSize"
+      ],
+      "title": "ssrfProtection",
+      "type": "object"
+    },
+    "durableScheduler": {
+      "additionalProperties": false,
+      "description": "Durable, database-backed scheduler for time-based workflows. Available from n8n 2.36 (Preview from 2.32). Runs on main instances.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Take over Schedule Trigger nodes (`N8N_SCHEDULER_ENABLED`). Setting this to true also enables the workflow publication service, which n8n requires for the scheduler to take effect; enabling one without the other is a silent no-op.",
+          "required": []
+        },
+        "pollTriggers": {
+          "default": false,
+          "description": "Also take over poll triggers such as Google Sheets Trigger (`N8N_SCHEDULER_POLL_TRIGGERS_ENABLED`). Upstream warns this is not yet fully stable; keep it off in production. Requires enabled.",
+          "required": []
+        },
+        "durableCursors": {
+          "default": false,
+          "description": "Store each poll's cursor transactionally so a crash mid-poll cannot drop or duplicate data (`N8N_POLLER_DURABLE_CURSORS_ENABLED`). Requires enabled and pollTriggers.",
+          "required": []
+        },
+        "allowSkip": {
+          "default": false,
+          "description": "Show a per-node Skip Durable Scheduler option to keep individual triggers on the in-memory scheduler (`N8N_ENV_FEAT_SKIP_DURABLE_SCHEDULER`). Temporary upstream escape hatch.",
+          "required": []
+        }
+      },
+      "required": [
+        "enabled",
+        "pollTriggers",
+        "durableCursors",
+        "allowSkip"
+      ],
+      "title": "durableScheduler",
+      "type": "object"
+    },
+    "smtp": {
+      "additionalProperties": false,
+      "description": "Outbound email via SMTP. Without this, n8n cannot send invitations, password resets or shared-workflow notifications.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Enable SMTP (`N8N_EMAIL_MODE`). Leave false to disable outbound email entirely.",
+          "required": []
+        },
+        "host": {
+          "default": "",
+          "description": "SMTP host (`N8N_SMTP_HOST`).",
+          "required": []
+        },
+        "port": {
+          "default": 465,
+          "description": "SMTP port (`N8N_SMTP_PORT`). 465 is implicit TLS, 587 is STARTTLS.",
+          "minimum": 1,
+          "required": []
+        },
+        "user": {
+          "default": "",
+          "description": "Username for SMTP auth (`N8N_SMTP_USER`).",
+          "required": []
+        },
+        "sender": {
+          "default": "",
+          "description": "Sender address (`N8N_SMTP_SENDER`).",
+          "required": []
+        },
+        "ssl": {
+          "default": true,
+          "description": "Use implicit TLS (`N8N_SMTP_SSL`). Keep true for port 465, set false with startTls true for 587.",
+          "required": []
+        },
+        "startTls": {
+          "default": true,
+          "description": "Upgrade to TLS with STARTTLS (`N8N_SMTP_STARTTLS`).",
+          "required": []
+        },
+        "existingSecret": {
+          "default": "",
+          "description": "Existing secret holding the SMTP password. The chart reads the key named in passwordKey and exposes it as N8N_SMTP_PASS. Takes precedence over password.",
+          "required": []
+        },
+        "passwordKey": {
+          "default": "password",
+          "description": "Key inside existingSecret that holds the password.",
+          "required": []
+        },
+        "password": {
+          "default": "",
+          "description": "SMTP password written into the chart-managed Secret. Ignored when existingSecret is set. Prefer existingSecret so the value stays out of your values file.",
+          "required": []
+        }
+      },
+      "required": [
+        "enabled",
+        "host",
+        "port",
+        "user",
+        "sender",
+        "ssl",
+        "startTls",
+        "existingSecret",
+        "passwordKey",
+        "password"
+      ],
+      "title": "smtp",
+      "type": "object"
+    },
+    "instanceOwner": {
+      "additionalProperties": false,
+      "description": "Bootstrap and pin the instance owner from the environment, for GitOps installations where nobody should have to complete a first-run form.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Manage the instance owner from environment variables (`N8N_INSTANCE_OWNER_MANAGED_BY_ENV`). While true n8n overwrites the owner details on every startup, locks those fields in the UI and rejects API writes.",
+          "required": []
+        },
+        "email": {
+          "default": "",
+          "description": "Owner email address (`N8N_INSTANCE_OWNER_EMAIL`). Must not already belong to another user on the instance.",
+          "required": []
+        },
+        "firstName": {
+          "default": "",
+          "description": "Owner first name (`N8N_INSTANCE_OWNER_FIRST_NAME`).",
+          "required": []
+        },
+        "lastName": {
+          "default": "",
+          "description": "Owner last name (`N8N_INSTANCE_OWNER_LAST_NAME`).",
+          "required": []
+        },
+        "passwordHash": {
+          "default": "",
+          "description": "Bcrypt hash of the owner password, written into the chart-managed Secret as N8N_INSTANCE_OWNER_PASSWORD_HASH. Ignored when existingSecret is set. Generate one with: npx bcrypt '<password>'. A plaintext value here breaks login and commits a credential.",
+          "required": [],
+          "type": "string"
+        },
+        "existingSecret": {
+          "default": "",
+          "description": "Existing secret holding a bcrypt hash of the owner password, exposed as N8N_INSTANCE_OWNER_PASSWORD_HASH. The value must be a bcrypt hash; a plaintext password breaks login.",
+          "required": []
+        },
+        "passwordHashKey": {
+          "default": "password-hash",
+          "description": "Key inside existingSecret that holds the bcrypt hash.",
+          "required": []
+        }
+      },
+      "required": [
+        "enabled",
+        "email",
+        "firstName",
+        "lastName",
+        "existingSecret",
+        "passwordHashKey"
+      ],
+      "title": "instanceOwner",
+      "type": "object"
+    },
+    "aiAssistant": {
+      "additionalProperties": false,
+      "description": "n8n Assistant and agents (instance-ai, agents). Preview feature; available on self-hosted Community, Registered Community and Business. Requires a sandbox.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Enable the AI module surface and render its ConfigMap. Does not by itself pick modules; see modules.",
+          "required": []
+        },
+        "modules": {
+          "description": "Modules to load via N8N_ENABLED_MODULES, for example [\"instance-ai\", \"agents\"]. agents can be run without instance-ai; keep both for AI-assisted agent building.",
+          "items": {
+            "type": "string",
+            "required": []
+          },
+          "required": [],
+          "type": "array"
+        },
+        "model": {
+          "default": "anthropic/claude-opus-4-8",
+          "description": "Model in provider/model form (`N8N_INSTANCE_AI_MODEL`). Supported providers: anthropic, openai, openrouter.",
+          "required": []
+        },
+        "modelUrl": {
+          "default": "",
+          "description": "OpenAI-compatible endpoint for a local or custom model server (`N8N_INSTANCE_AI_MODEL_URL`). Leave empty to use the provider's hosted API.",
+          "required": []
+        },
+        "existingModelApiKeySecret": {
+          "default": "",
+          "description": "Existing secret holding the model API key, exposed as N8N_INSTANCE_AI_MODEL_API_KEY. When empty, n8n falls back to the provider's own environment variable and to in-UI configuration.",
+          "required": []
+        },
+        "modelApiKeyKey": {
+          "default": "api-key",
+          "description": "Key inside existingModelApiKeySecret that holds the API key.",
+          "required": []
+        },
+        "modelApiKey": {
+          "default": "",
+          "description": "Model API key written into the chart-managed Secret as N8N_INSTANCE_AI_MODEL_API_KEY. Ignored when existingModelApiKeySecret is set. Prefer existingModelApiKeySecret so the key stays out of your values file.",
+          "required": [],
+          "type": "string"
+        },
+        "mcpServers": {
+          "default": "",
+          "description": "MCP servers the assistant may use (`N8N_INSTANCE_AI_MCP_SERVERS`), as a JSON string.",
+          "required": []
+        },
+        "sandbox": {
+          "additionalProperties": false,
+          "description": "Sandbox used to run AI-generated code. Required for n8n Assistant.",
+          "properties": {
+            "enabled": {
+              "default": false,
+              "description": "Point n8n at a sandbox service (`N8N_INSTANCE_AI_SANDBOX_ENABLED`).",
+              "required": []
+            },
+            "provider": {
+              "default": "n8n-sandbox",
+              "description": "Sandbox provider (`N8N_INSTANCE_AI_SANDBOX_PROVIDER`). The chart supports n8n-sandbox; use external when the service runs outside this cluster.",
+              "enum": [
+                "n8n-sandbox",
+                "external"
+              ],
+              "required": []
+            },
+            "serviceUrl": {
+              "default": "",
+              "description": "Sandbox API URL (`N8N_SANDBOX_SERVICE_URL`). Defaults to the in-cluster sandboxService URL when it is enabled; set it explicitly for an external service.",
+              "required": []
+            },
+            "existingApiKeySecret": {
+              "default": "",
+              "description": "Existing secret holding the sandbox API key, exposed as N8N_SANDBOX_SERVICE_API_KEY. Must match a value in the sandbox service's apiKeys. When empty and sandboxService.enabled is true, the chart reuses that service's configured key.",
+              "required": []
+            },
+            "apiKeyKey": {
+              "default": "api-key",
+              "description": "Key inside existingApiKeySecret that holds the API key.",
+              "required": []
+            }
+          },
+          "required": [
+            "enabled",
+            "provider",
+            "serviceUrl",
+            "existingApiKeySecret",
+            "apiKeyKey"
+          ],
+          "title": "sandbox",
+          "type": "object"
+        },
+        "searxng": {
+          "additionalProperties": false,
+          "description": "Web search backend for the assistant.",
+          "properties": {
+            "url": {
+              "default": "",
+              "description": "SearXNG base URL (`N8N_INSTANCE_AI_SEARXNG_URL`) of an externally managed SearXNG instance. Must include a scheme (http:// or https://).",
+              "required": []
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "title": "searxng",
+          "type": "object"
+        }
+      },
+      "required": [
+        "enabled",
+        "modules",
+        "model",
+        "modelUrl",
+        "existingModelApiKeySecret",
+        "modelApiKeyKey",
+        "mcpServers",
+        "sandbox",
+        "searxng"
+      ],
+      "title": "aiAssistant",
+      "type": "object"
+    },
+    "sandboxService": {
+      "additionalProperties": false,
+      "description": "The n8n Sandbox Service: a control-plane API plus an in-cluster runner that executes AI-generated code.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Deploy the sandbox API and runner pods. Treat the runner as root-equivalent on its node.",
+          "required": []
+        },
+        "replicas": {
+          "default": 1,
+          "description": "Number of API replicas. Keep 1 unless api.store is postgres; the default SQLite store cannot be shared between replicas.",
+          "minimum": 1,
+          "required": []
+        },
+        "image": {
+          "additionalProperties": false,
+          "description": "Sandbox service images.",
+          "properties": {
+            "repository": {
+              "default": "ghcr.io/n8n-io/n8n-sandbox-service-api",
+              "description": "Sandbox service API image repository.",
+              "required": []
+            },
+            "tag": {
+              "default": "",
+              "description": "Image tag. Defaults to the pinned version below when empty.",
+              "required": []
+            },
+            "version": {
+              "default": "1.3.4",
+              "description": "Overrides the pinned service version used as the default image tag. The API, runner and sandbox images are released together and must match.",
+              "required": []
+            },
+            "pullPolicy": {
+              "default": "IfNotPresent",
+              "description": "Image pull policy.",
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ],
+              "required": []
+            },
+            "runnerRepository": {
+              "default": "ghcr.io/n8n-io/n8n-sandbox-service-runner-dind",
+              "description": "Sandbox runner image repository (Docker-in-Docker build).",
+              "required": []
+            },
+            "sandboxRepository": {
+              "default": "ghcr.io/n8n-io/n8n-sandbox-service-sandbox",
+              "description": "Sandbox image used for the per-execution sandbox containers created by the runner.",
+              "required": []
+            }
+          },
+          "required": [
+            "repository",
+            "tag",
+            "version",
+            "pullPolicy",
+            "runnerRepository",
+            "sandboxRepository"
+          ],
+          "title": "image",
+          "type": "object"
+        },
+        "auth": {
+          "additionalProperties": false,
+          "description": "Authentication material. The API key handed to n8n must be one of apiKeys.",
+          "properties": {
+            "existingSecret": {
+              "default": "",
+              "description": "Existing secret supplying the sandbox credentials instead of generated ones. Expected keys are configurable below.",
+              "required": []
+            },
+            "apiKeys": {
+              "default": "",
+              "description": "Comma-separated admin API keys accepted by the API (`SANDBOX_API_KEYS`). Required unless existingSecret is set. Generate a long random value; do not commit a real key.",
+              "required": []
+            },
+            "runnerRegistrationToken": {
+              "default": "",
+              "description": "Shared secret runners use to register with the API (`SANDBOX_API_RUNNER_REGISTRATION_TOKEN`). Must match the runner. Required unless existingSecret is set.",
+              "required": []
+            },
+            "runnerApiKey": {
+              "default": "",
+              "description": "Key the API uses when calling the runner (`SANDBOX_API_RUNNER_API_KEY`). Required unless existingSecret is set.",
+              "required": []
+            },
+            "runnerApiKeys": {
+              "default": "",
+              "description": "Comma-separated keys the runner accepts from the API (`SANDBOX_RUNNER_API_KEYS`). Must include runnerApiKey. Required unless existingSecret is set.",
+              "required": []
+            },
+            "keys": {
+              "additionalProperties": false,
+              "description": "Key names inside the auth secret.",
+              "properties": {
+                "apiKeys": {
+                  "default": "api-keys",
+                  "description": "Key holding the apiKeys value in the auth secret.",
+                  "required": []
+                },
+                "runnerRegistrationToken": {
+                  "default": "runner-registration-token",
+                  "description": "Key holding the runnerRegistrationToken value in the auth secret.",
+                  "required": []
+                },
+                "runnerApiKey": {
+                  "default": "runner-api-key",
+                  "description": "Key holding the runnerApiKey value in the auth secret.",
+                  "required": []
+                },
+                "runnerApiKeys": {
+                  "default": "runner-api-keys",
+                  "description": "Key holding the runnerApiKeys value in the auth secret.",
+                  "required": []
+                }
+              },
+              "required": [
+                "apiKeys",
+                "runnerRegistrationToken",
+                "runnerApiKey",
+                "runnerApiKeys"
+              ],
+              "title": "keys",
+              "type": "object"
+            }
+          },
+          "required": [
+            "existingSecret",
+            "apiKeys",
+            "runnerRegistrationToken",
+            "runnerApiKey",
+            "runnerApiKeys",
+            "keys"
+          ],
+          "title": "auth",
+          "type": "object"
+        },
+        "tls": {
+          "additionalProperties": false,
+          "description": "Mutual TLS between the API and the runner. Both peers require certificates; the stack does not run without them.",
+          "properties": {
+            "mode": {
+              "default": "existingSecret",
+              "description": "How certificate Secrets are supplied: existingSecret (you provide them) or certManager (cert-manager issues them).",
+              "enum": [
+                "existingSecret",
+                "certManager"
+              ],
+              "required": []
+            },
+            "certManager": {
+              "additionalProperties": false,
+              "description": "cert-manager issuer used when mode is certManager.",
+              "properties": {
+                "issuerRef": {
+                  "additionalProperties": false,
+                  "description": "cert-manager issuer used when mode is certManager.",
+                  "properties": {
+                    "name": {
+                      "default": "",
+                      "description": "Issuer or ClusterIssuer name. Required when mode is certManager.",
+                      "required": []
+                    },
+                    "kind": {
+                      "default": "Issuer",
+                      "description": "Kind of the issuer reference.",
+                      "enum": [
+                        "Issuer",
+                        "ClusterIssuer"
+                      ],
+                      "required": []
+                    },
+                    "group": {
+                      "default": "cert-manager.io",
+                      "description": "API group of the issuer reference.",
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "kind",
+                    "group"
+                  ],
+                  "title": "issuerRef",
+                  "type": "object"
+                },
+                "duration": {
+                  "default": "2160h",
+                  "description": "Certificate lifetime, in Go duration format.",
+                  "required": []
+                },
+                "renewBefore": {
+                  "default": "360h",
+                  "description": "Certificate renewal lead time, in Go duration format.",
+                  "required": []
+                }
+              },
+              "required": [
+                "issuerRef",
+                "duration",
+                "renewBefore"
+              ],
+              "title": "certManager",
+              "type": "object"
+            },
+            "certificates": {
+              "additionalProperties": false,
+              "description": "The four certificates the stack needs. Each is a kubernetes.io/tls Secret containing tls.crt, tls.key and ca.crt.",
+              "properties": {
+                "apiRegistrationServer": {
+                  "additionalProperties": false,
+                  "description": "Server certificate presented by the API's registration gRPC listener. DNS names are generated from the API service name.",
+                  "properties": {
+                    "secretName": {
+                      "default": "",
+                      "description": "Name of the kubernetes.io/tls Secret holding tls.crt, tls.key and ca.crt. Empty derives a name from the release.",
+                      "required": []
+                    },
+                    "mountPath": {
+                      "default": "/tls/api-registration",
+                      "description": "Path the certificate is mounted at inside the container.",
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "secretName",
+                    "mountPath"
+                  ],
+                  "title": "certificate",
+                  "type": "object"
+                },
+                "apiControlClient": {
+                  "additionalProperties": false,
+                  "description": "Client certificate the API uses against the runner's control listener.",
+                  "properties": {
+                    "secretName": {
+                      "default": "",
+                      "description": "Name of the kubernetes.io/tls Secret holding tls.crt, tls.key and ca.crt. Empty derives a name from the release.",
+                      "required": []
+                    },
+                    "mountPath": {
+                      "default": "/tls/api-control-client",
+                      "description": "Path the certificate is mounted at inside the container.",
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "secretName",
+                    "mountPath"
+                  ],
+                  "title": "certificate",
+                  "type": "object"
+                },
+                "runnerRegistrationClient": {
+                  "additionalProperties": false,
+                  "description": "Client certificate the runner uses when registering with the API.",
+                  "properties": {
+                    "secretName": {
+                      "default": "",
+                      "description": "Name of the kubernetes.io/tls Secret holding tls.crt, tls.key and ca.crt. Empty derives a name from the release.",
+                      "required": []
+                    },
+                    "mountPath": {
+                      "default": "/tls/runner-registration",
+                      "description": "Path the certificate is mounted at inside the container.",
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "secretName",
+                    "mountPath"
+                  ],
+                  "title": "certificate",
+                  "type": "object"
+                },
+                "runnerControlServer": {
+                  "additionalProperties": false,
+                  "description": "Server certificate for the runner's control gRPC and HTTPS listeners. Its SANs must match the runner host in httpBaseUrl.",
+                  "properties": {
+                    "secretName": {
+                      "default": "",
+                      "description": "Name of the kubernetes.io/tls Secret holding tls.crt, tls.key and ca.crt. Empty derives a name from the release.",
+                      "required": []
+                    },
+                    "mountPath": {
+                      "default": "/tls/runner-control",
+                      "description": "Path the certificate is mounted at inside the container.",
+                      "required": []
+                    }
+                  },
+                  "required": [
+                    "secretName",
+                    "mountPath"
+                  ],
+                  "title": "certificate",
+                  "type": "object"
+                }
+              },
+              "required": [
+                "apiRegistrationServer",
+                "apiControlClient",
+                "runnerRegistrationClient",
+                "runnerControlServer"
+              ],
+              "title": "certificates",
+              "type": "object"
+            }
+          },
+          "required": [
+            "mode",
+            "certManager",
+            "certificates"
+          ],
+          "title": "tls",
+          "type": "object"
+        },
+        "api": {
+          "additionalProperties": false,
+          "description": "Sandbox control-plane API.",
+          "properties": {
+            "store": {
+              "default": "sqlite",
+              "description": "Store backend: sqlite for a single API pod, postgres when running more than one replica.",
+              "enum": [
+                "sqlite",
+                "postgres"
+              ],
+              "required": []
+            },
+            "defaultMaxSandboxes": {
+              "default": 50,
+              "description": "Default per-tenant sandbox quota (`SANDBOX_API_DEFAULT_MAX_SANDBOXES`). 0 means unlimited.",
+              "minimum": 0,
+              "required": []
+            },
+            "maxFileBytes": {
+              "default": 10485760,
+              "description": "Maximum file upload size in bytes accepted by the API (`SANDBOX_API_MAX_FILE_BYTES`).",
+              "minimum": 1,
+              "required": []
+            },
+            "runnerHeartbeatGrace": {
+              "default": "45s",
+              "description": "How long after the last heartbeat a runner still counts as eligible for placement (`SANDBOX_API_RUNNER_HEARTBEAT_GRACE`).",
+              "required": []
+            },
+            "persistence": {
+              "additionalProperties": false,
+              "description": "Persist the SQLite store so sandbox state survives API pod restarts.",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "description": "Persist the SQLite store so sandbox state survives API pod restarts. Ignored when store is postgres.",
+                  "required": []
+                },
+                "size": {
+                  "default": "1Gi",
+                  "description": "Size of the persistence volume claim.",
+                  "required": []
+                },
+                "accessModes": {
+                  "description": "Access modes for the persistence volume claim.",
+                  "items": {
+                    "type": "string",
+                    "required": []
+                  },
+                  "required": [],
+                  "type": "array"
+                },
+                "storageClassName": {
+                  "default": "",
+                  "description": "Storage class for the persistence volume claim. Empty uses the default class.",
+                  "required": []
+                }
+              },
+              "required": [
+                "enabled",
+                "size",
+                "accessModes",
+                "storageClassName"
+              ],
+              "title": "persistence",
+              "type": "object"
+            },
+            "resources": {
+              "additionalProperties": true,
+              "description": "Resources limits and requests for the container.",
+              "required": [],
+              "title": "resources",
+              "type": "object"
+            },
+            "nodeSelector": {
+              "additionalProperties": true,
+              "description": "Assign pods to nodes matching this selector.",
+              "required": [],
+              "title": "nodeSelector",
+              "type": "object"
+            },
+            "tolerations": {
+              "description": "For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+              "items": {
+                "required": []
+              },
+              "required": [],
+              "title": "tolerations",
+              "type": "array"
+            },
+            "affinity": {
+              "additionalProperties": true,
+              "description": "Pod affinity rules.",
+              "required": [],
+              "title": "affinity",
+              "type": "object"
+            }
+          },
+          "required": [
+            "store",
+            "defaultMaxSandboxes",
+            "maxFileBytes",
+            "runnerHeartbeatGrace",
+            "persistence",
+            "resources",
+            "nodeSelector",
+            "tolerations",
+            "affinity"
+          ],
+          "title": "api",
+          "type": "object"
+        },
+        "runner": {
+          "additionalProperties": false,
+          "description": "In-cluster sandbox runner.",
+          "properties": {
+            "isolation": {
+              "default": "privileged",
+              "description": "Isolation mode for the runner. privileged runs Docker-in-Docker with privileged: true; an escape reaches the node, so it must be acknowledged explicitly.",
+              "enum": [
+                "privileged"
+              ],
+              "required": []
+            },
+            "acknowledgePrivileged": {
+              "default": false,
+              "description": "Explicit acceptance of the privileged DinD security trade-off. Required when isolation is privileged. The namespace also needs Pod Security Admission level privileged.",
+              "required": []
+            },
+            "defaultMemoryMb": {
+              "default": 512,
+              "description": "Default memory limit in MB applied to sandboxes by the runner.",
+              "minimum": 16,
+              "required": []
+            },
+            "defaultCpuPercent": {
+              "default": 100,
+              "description": "Default CPU limit as a percentage of one core applied to sandboxes.",
+              "minimum": 1,
+              "required": []
+            },
+            "defaultPidsMax": {
+              "default": 256,
+              "description": "Default process limit applied to sandboxes.",
+              "minimum": 1,
+              "required": []
+            },
+            "capacityTotal": {
+              "default": 1000,
+              "description": "Reported capacity for placement (`SANDBOX_RUNNER_CAPACITY_TOTAL`). 0 means unlimited.",
+              "minimum": 0,
+              "required": []
+            },
+            "replicas": {
+              "default": 1,
+              "description": "Number of runner pods. Each registers itself with the API and sandboxes are placed on the least-loaded one.",
+              "minimum": 1,
+              "required": []
+            },
+            "httpPort": {
+              "default": 8080,
+              "description": "Port the runner serves HTTPS on; must match its certificate SANs via httpBaseUrl.",
+              "minimum": 1,
+              "required": []
+            },
+            "controlGrpcPort": {
+              "default": 9091,
+              "description": "Port for the control gRPC listener.",
+              "minimum": 1,
+              "required": []
+            },
+            "httpBaseUrl": {
+              "default": "",
+              "description": "Base URL the API uses to reach this runner (`SANDBOX_RUNNER_HTTP_BASE_URL`). Must be https. Defaults to the in-cluster headless service.",
+              "required": []
+            },
+            "resources": {
+              "additionalProperties": true,
+              "description": "Resources limits and requests for the container.",
+              "required": [],
+              "title": "resources",
+              "type": "object"
+            },
+            "nodeSelector": {
+              "additionalProperties": true,
+              "description": "Assign pods to nodes matching this selector.",
+              "required": [],
+              "title": "nodeSelector",
+              "type": "object"
+            },
+            "tolerations": {
+              "description": "For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+              "items": {
+                "required": []
+              },
+              "required": [],
+              "title": "tolerations",
+              "type": "array"
+            },
+            "affinity": {
+              "additionalProperties": true,
+              "description": "Pod affinity rules.",
+              "required": [],
+              "title": "affinity",
+              "type": "object"
+            },
+            "runtimeClassName": {
+              "default": "",
+              "description": "Runtime class for the runner pod, for example a Kata Containers class so privileged: true applies inside a guest VM.",
+              "required": []
+            }
+          },
+          "required": [
+            "isolation",
+            "acknowledgePrivileged",
+            "defaultMemoryMb",
+            "defaultCpuPercent",
+            "defaultPidsMax",
+            "capacityTotal",
+            "replicas",
+            "httpPort",
+            "controlGrpcPort",
+            "httpBaseUrl",
+            "resources",
+            "nodeSelector",
+            "tolerations",
+            "affinity",
+            "runtimeClassName"
+          ],
+          "title": "runner",
+          "type": "object"
+        }
+      },
+      "required": [
+        "enabled",
+        "replicas",
+        "image",
+        "auth",
+        "tls",
+        "api",
+        "runner"
+      ],
+      "title": "sandboxService",
+      "type": "object"
     }
   },
   "required": [
@@ -5491,7 +7682,14 @@
     "postgresql",
     "externalPostgresql",
     "serviceMonitor",
-    "minio"
+    "minio",
+    "operations",
+    "ssrfProtection",
+    "durableScheduler",
+    "smtp",
+    "instanceOwner",
+    "aiAssistant",
+    "sandboxService"
   ],
   "type": "object"
 }

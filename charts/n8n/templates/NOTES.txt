@@ -36,3 +36,33 @@
 {{- if .Values.encryptionKeyRotation.enabled }}
   {{ printf "\nWARNING: encryptionKeyRotation.enabled is on. This is a one-way migration: n8n rewrites all encrypted data in a new keyed format, and reverting to disabled makes that data permanently unreadable. Ensure every main and worker instance shares the same encryptionKey and that you have a recent database backup.\n" | trimAll " " }}
 {{- end }}
+{{- if .Values.durableScheduler.enabled }}
+
+WARNING: the durable scheduler is a Preview feature upstream. Keep poll triggers
+          (durableScheduler.pollTriggers) disabled in production until stable, and back up
+          the database before upgrades that change its schema.
+{{- end }}
+{{- if and .Values.smtp.enabled (eq .Values.smtp.password "") (eq .Values.smtp.existingSecret "") }}
+
+WARNING: SMTP is enabled but no password is configured (smtp.password or
+          smtp.existingSecret). Outbound mail will fail on providers that require
+          authentication.
+{{- end }}
+{{- if not .Values.ssrfProtection.enabled }}
+
+NOTE: SSRF protection (ssrfProtection) is disabled. It blocks only direct private-range
+       access at the application level; combine it with network policy for real isolation.
+{{- end }}
+{{- if .Values.aiAssistant.enabled }}
+
+NOTE: n8n Assistant is a Preview feature upstream: model behavior, module surface and
+      defaults can change without notice between n8n releases.
+{{- end }}
+{{- if .Values.sandboxService.enabled }}
+
+WARNING: the sandbox runner executes untrusted AI-generated code in Docker-in-Docker and
+          runs privileged on its node: anything that escapes the sandbox reaches the node.
+          Pin it with runner.nodeSelector, prefer runner.runtimeClassName (e.g. Kata
+          Containers) where possible, and keep an unprivileged Pod Security Admission
+          profile on every other namespace.
+{{- end }}
