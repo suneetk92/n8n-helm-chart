@@ -16,7 +16,6 @@ checks:
     - non-isolated-pod
 
   ignorePaths:
-    - "charts/kserve/**"
     - "**/crds/**"
     - "**/tests/**"
     - "**/unittests/**"

@@ -1,6 +1,6 @@
 name: 🐛 Bug Report
 description: Create a report to help us improve
-title: "[name of the chart e.g. mlflow] Issue Title"
+title: "[name of the chart e.g. n8n] Issue Title"
 labels: [bug]
 assignees: ["contributors"]
 body:

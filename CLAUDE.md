@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a community Helm chart repository hosting production-grade Kubernetes charts for: `actualbudget`, `cloudflared`, `drone`, `kserve`, `mlflow`, `n8n`, `outline`, and `pypiserver`. Charts are published to GitHub Pages via the `chart-releaser` action.
+This is a community Helm chart repository hosting the production-grade Kubernetes chart for `n8n`. Charts are published to GitHub Pages via the `chart-releaser` action.
 
-Chart-specific guidance (architecture, external docs, non-obvious patterns) lives in `charts/<name>/CLAUDE.md`. Read that file when working on a specific chart. Charts that currently have one: `actualbudget` (`charts/actualbudget/CLAUDE.md`), `mlflow` (`charts/mlflow/CLAUDE.md`), `n8n` (`charts/n8n/CLAUDE.md`), `outline` (`charts/outline/CLAUDE.md`).
+Chart-specific guidance (architecture, external docs, non-obvious patterns) lives in `charts/n8n/CLAUDE.md`. Read that file when working on the n8n chart.
 
 ## Common Commands
 
@@ -27,8 +27,7 @@ kube-linter lint charts/<chart-name> --config .kube-linter.yaml
 
 ```bash
 # Run unit tests for a single chart — last argument is the target chart folder
-helm unittest --strict --file 'unittests/**/*.yaml' charts/mlflow
-helm unittest --strict --file 'unittests/**/*.yaml' charts/outline
+helm unittest --strict --file 'unittests/**/*.yaml' charts/n8n
 
 # Run unit tests for all charts
 for chart in charts/*/; do helm unittest --strict --file 'unittests/**/*.yaml' "${chart%/}"; done
@@ -98,7 +97,7 @@ CLAUDE.md
 unittests/
 ```
 
-Do not apply `.helmignore` changes to deprecated charts (currently: `kserve`).
+Every chart's `.helmignore` must exclude files that are not needed in the packaged tarball. At minimum it must contain:
 
 ### Versioning Rules
 
@@ -126,7 +125,7 @@ Do not apply `.helmignore` changes to deprecated charts (currently: `kserve`).
 
 **`.github/workflows/security-scan.yml`** (runs on changes to `charts/**`):
 
-4. **security-scan**: Runs KubeLinter (all built-in checks, `kserve` excluded via `.kube-linter.yaml`) and Trivy misconfiguration/vulnerability scan (HIGH + CRITICAL severity) against chart templates. Both results are uploaded as SARIF to GitHub Security.
+4. **security-scan**: Runs KubeLinter (all built-in checks) and Trivy misconfiguration/vulnerability scan (HIGH + CRITICAL severity) against chart templates. Both results are uploaded as SARIF to GitHub Security.
 
 For **conditionally-rendered fields** (e.g. gated on `semverCompare`), suppress KubeLinter checks with a per-object annotation rather than a global `.kube-linter.yaml` exclusion:
 ```yaml
@@ -167,7 +166,7 @@ The repo uses three pre-commit hooks (`.pre-commit-config.yaml`). Run `pre-commi
 | Hook | Trigger | Behavior on failure |
 |---|---|---|
 | `helm-docs` | Any chart file change | Regenerates `README.md` in place; commit fails — re-stage and retry |
-| `kube-linter` | Files matching `charts/**` | Fails commit if Kubernetes best-practice violations found (config: `.kube-linter.yaml`; `kserve` is excluded) |
+| `kube-linter` | Files matching `charts/**` | Fails commit if Kubernetes best-practice violations found (config: `.kube-linter.yaml`) |
 | `trivyfs-docker` | Files matching `charts/**` | Fails commit if HIGH or CRITICAL misconfigurations/vulnerabilities are detected |
 
 **helm-docs re-stage workflow:** When `README.md` is modified by the hook, stage it and re-run:
