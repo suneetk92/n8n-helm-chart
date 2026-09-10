@@ -22,6 +22,12 @@ on:
       - 'charts/n8n/Chart.yaml'
       - 'charts/n8n/values.yaml'
 
+# Serialize releases. Two image bumps merging close together would otherwise race, and the second
+# push would fail as a non-fast-forward. Queue rather than cancel: every bump deserves its release.
+concurrency:
+  group: chart-release
+  cancel-in-progress: false
+
 env:
   HELM_VERSION: v3.18.3
   HELM_UNITTEST_VERSION: v0.8.2

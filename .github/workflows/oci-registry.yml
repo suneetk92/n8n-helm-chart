@@ -16,6 +16,10 @@ on:
         description: "Ref to publish (defaults to the current branch)"
         required: false
 
+concurrency:
+  group: chart-publish
+  cancel-in-progress: false
+
 env:
   HELM_VERSION: v3.18.3
 
