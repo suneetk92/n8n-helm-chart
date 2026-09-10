@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Renovate replaces Dependabot here. Dependabot cannot see these versions at all: appVersion is not a dependency manifest entry, and its docker ecosystem does not parse the repository/tag split used in Helm values.",
+  "description": [
+    "Renovate replaces Dependabot here. Dependabot cannot see these versions at all: appVersion is not a dependency manifest entry, and its docker ecosystem does not parse the repository/tag split used in Helm values.",
+    "This repository is still a GitHub fork of community-charts/helm-charts, and Mend-hosted Renovate skips forks unless the repo config opts in. Without this, every run ends with 'result: fork, status: disabled'."
+  ],
+  "forkProcessing": "enabled",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
