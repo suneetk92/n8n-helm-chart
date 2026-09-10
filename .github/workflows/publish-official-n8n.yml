@@ -24,6 +24,9 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
       - name: Pull official chart and push to GHCR
         run: |
           VERSION="${{ inputs.version }}"
