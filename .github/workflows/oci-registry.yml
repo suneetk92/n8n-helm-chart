@@ -29,19 +29,20 @@ jobs:
         uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
-
-      - name: Add dependency chart repos
-        run: |
-          helm repo add bitnami https://charts.bitnami.com/bitnami
-          helm repo add minio https://charts.min.io
-
       - name: Detect Changed Charts
         id: detect-changed
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             changed=$(git ls-tree --name-only HEAD charts/ | cut -d/ -f2)
           else
-            changed=$(git diff --name-only ${{ github.sha }}^ ${{ github.sha }} | grep '^charts/' | cut -d/ -f1-2 | sort -u)
+            # Diff against the pre-push ref tip so the ENTIRE pushed range is covered, not just the last commit
+            # (a workflow-only commit on top would otherwise hide the chart changes). --diff-filter=d drops charts
+            # that were deleted in the range, since their directories no longer exist on disk.
+            base="${{ github.event.before }}"
+            if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+              base="${{ github.sha }}^"
+            fi
+            changed=$(git diff --name-only --diff-filter=d "$base" "${{ github.sha }}" | grep '^charts/' | cut -d/ -f1-2 | sort -u)
           fi
           echo "Changed charts: '$changed'"
           charts=$(echo "$changed" | tr '\n' ' ' | xargs)
@@ -65,8 +66,6 @@ jobs:
             helm package "$chart" --destination ./dist
             # ghcr.io/<owner>/<chart>:<version> — the registry path is the owner, so charts stay flat
             helm push "dist/${name}-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}"
-            # convenience alias for `helm pull ...:latest`
-            helm push "dist/${name}-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}:${name}:latest"
             echo "::endgroup::"
           done
 
