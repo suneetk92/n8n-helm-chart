@@ -4,6 +4,18 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+## 3.3.1
+
+### Fixed
+
+- Sandbox container creation no longer fails with
+  `rpc error: code = Unauthenticated desc = invalid api key`. `auth.runnerApiKey` is the credential
+  the API presents to the runner and `auth.runnerApiKeys` is the list the runner accepts, but each
+  fell back to its own `generateRandomHex`, so on a default install the two were unrelated random
+  values and the runner rejected every request. `runnerApiKeys` is now derived from `runnerApiKey`
+  when it is not set explicitly, and the chart refuses to install if both are set and the presented
+  key is absent from the accepted list.
+
 ## 3.3.0
 
 ### Fixed

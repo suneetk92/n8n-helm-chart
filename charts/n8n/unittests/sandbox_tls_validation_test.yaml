@@ -56,3 +56,25 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: 'sandboxService\.tls\.certManager\.issuerRef\.name is required'
+
+  # The API presents auth.runnerApiKey to the runner; the runner only accepts keys listed in
+  # auth.runnerApiKeys. Each previously fell back to its own generateRandomHex, so on a default
+  # install they never matched and every sandbox creation failed with
+  # "rpc error: code = Unauthenticated desc = invalid api key".
+  - it: should fail when runnerApiKey is not listed in runnerApiKeys
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+        tls:
+          mode: certManager
+          certManager:
+            issuerRef:
+              name: ca-issuer
+        auth:
+          runnerApiKey: presented-key
+          runnerApiKeys: some-other-key
+    asserts:
+      - failedTemplate:
+          errorPattern: 'runnerApiKey must appear in sandboxService\.auth\.runnerApiKeys'

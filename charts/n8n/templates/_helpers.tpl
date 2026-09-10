@@ -800,6 +800,22 @@ leaving the pod stuck on FailedMount indefinitely. Refuse to install instead.
 {{- else -}}
 {{- fail "sandboxService.tls.mode must be either \"existingSecret\" or \"certManager\"." -}}
 {{- end -}}
+{{/*
+The API presents auth.runnerApiKey to the runner, which only accepts keys listed in
+auth.runnerApiKeys. When both are set explicitly they must agree, or every container creation fails
+with "rpc error: code = Unauthenticated desc = invalid api key". When runnerApiKeys is left unset the
+chart derives it from runnerApiKey, so there is nothing to check.
+*/}}
+{{- if and .Values.sandboxService.auth.runnerApiKey .Values.sandboxService.auth.runnerApiKeys -}}
+{{- $accepted := splitList "," .Values.sandboxService.auth.runnerApiKeys -}}
+{{- $trimmed := list -}}
+{{- range $accepted -}}
+{{- $trimmed = append $trimmed (trim .) -}}
+{{- end -}}
+{{- if not (has (trim $.Values.sandboxService.auth.runnerApiKey) $trimmed) -}}
+{{- fail "sandboxService.auth.runnerApiKey must appear in sandboxService.auth.runnerApiKeys. The API presents runnerApiKey to the runner and the runner only accepts keys listed in runnerApiKeys, so a mismatch makes every sandbox creation fail with \"invalid api key\". Leave runnerApiKeys unset to have the chart derive it from runnerApiKey." -}}
+{{- end -}}
+{{- end -}}
 {{- if and (not .Values.sandboxService.auth.existingSecret) (eq .Values.sandboxService.api.store "postgres") -}}
 {{- range $k, $v := dict "apiKeys" .Values.sandboxService.auth.apiKeys "runnerRegistrationToken" .Values.sandboxService.auth.runnerRegistrationToken "runnerApiKey" .Values.sandboxService.auth.runnerApiKey "runnerApiKeys" .Values.sandboxService.auth.runnerApiKeys -}}
 {{- if and $v (contains "changeme" $v) -}}
