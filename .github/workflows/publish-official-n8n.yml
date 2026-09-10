@@ -26,6 +26,8 @@ jobs:
 
       - name: Pull official chart and push to GHCR
         run: |
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then echo "::error::version input is empty"; exit 1; fi
           helm repo add community-charts https://community-charts.github.io/helm-charts/
           mkdir -p ./dist
           helm pull community-charts/n8n --version "$VERSION" --destination ./dist
