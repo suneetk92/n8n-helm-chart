@@ -24,6 +24,5 @@
 
 README.md.gotmpl
 values-kind.yaml
-values-local-test.yaml
 CLAUDE.md
 unittests/

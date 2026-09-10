@@ -4,32 +4,26 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 3.0.0](https://img.shields.io/badge/Version-3.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 3.1.0](https://img.shields.io/badge/Version-3.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
-For detailed usage instructions, configuration options, and additional information about the `n8n` Helm chart, refer to the [official documentation](https://community-charts.github.io/docs/charts/n8n/usage).
-
-## Get Helm Repository Info
-
-```console
-helm repo add community-charts https://community-charts.github.io/helm-charts
-helm repo update
-```
-
-_See [`helm repo`](https://helm.sh/docs/helm/helm_repo/) for command documentation._
+For upstream application documentation, refer to the [n8n docs](https://docs.n8n.io/). Chart
+architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 
 ## Installing the Chart
 
+This chart is published as an OCI artifact, so no `helm repo add` is required:
+
 ```console
-helm install [RELEASE_NAME] community-charts/n8n
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.1.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Search all available chart versions using `helm search repo community-charts -l`. Please don't forget to run `helm repo update` before the command.
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 3.1.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1543,7 +1537,7 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] community-charts/n8n
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.1.0
 ```
 
 ## Values
@@ -1906,11 +1900,11 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | ssrfProtection.dnsCacheMaxSize | int | `1048576` | Maximum DNS cache entries (`N8N_SSRF_DNS_CACHE_MAX_SIZE`). |
 | ssrfProtection.enabled | bool | `false` | Enable SSRF validation of outbound HTTP requests (`N8N_SSRF_PROTECTION_ENABLED`). Enabling it blocks RFC1918, loopback and link-local ranges by default, so internal services stop being reachable until allowlisted below. |
 | strategy | object | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}` | This will set the deployment strategy more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy |
-| taskRunners | object | `{"broker":{"address":"127.0.0.1","port":5679},"external":{"autoShutdownTimeout":15,"image":{"pullPolicy":"IfNotPresent","repository":"n8nio/runners","tag":""},"mainNodeAuthToken":"","nodeOptions":["--max-semi-space-size=16","--max-old-space-size=300"],"port":5680,"resources":{"limits":{"cpu":"2000m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"32Mi"}},"workerNodeAuthToken":""},"maxConcurrency":5,"mode":"internal","taskHeartbeatInterval":30,"taskTimeout":60}` | Task runners mode. Please follow the documentation for more information: https://docs.n8n.io/hosting/configuration/task-runners/ |
+| taskRunners | object | `{"broker":{"address":"127.0.0.1","port":5679},"external":{"autoShutdownTimeout":15,"image":{"pullPolicy":"IfNotPresent","repository":"n8nio/runners","tag":""},"mainNodeAuthToken":"","nodeOptions":["--max-semi-space-size=16","--max-old-space-size=300"],"port":5680,"pythonSitePackagesDir":"/opt/runners/task-runner-python/.venv/lib/python3.13/site-packages","resources":{"limits":{"cpu":"2000m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"32Mi"}},"workerNodeAuthToken":""},"maxConcurrency":5,"mode":"internal","taskHeartbeatInterval":30,"taskTimeout":60}` | Task runners mode. Please follow the documentation for more information: https://docs.n8n.io/hosting/configuration/task-runners/ |
 | taskRunners.broker | object | `{"address":"127.0.0.1","port":5679}` | The address for the broker of the external task runner |
 | taskRunners.broker.address | string | `"127.0.0.1"` | The address for the broker of the external task runner |
 | taskRunners.broker.port | int | `5679` | The port for the broker of the external task runner |
-| taskRunners.external | object | `{"autoShutdownTimeout":15,"image":{"pullPolicy":"IfNotPresent","repository":"n8nio/runners","tag":""},"mainNodeAuthToken":"","nodeOptions":["--max-semi-space-size=16","--max-old-space-size=300"],"port":5680,"resources":{"limits":{"cpu":"2000m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"32Mi"}},"workerNodeAuthToken":""}` | The configuration for the external task runner |
+| taskRunners.external | object | `{"autoShutdownTimeout":15,"image":{"pullPolicy":"IfNotPresent","repository":"n8nio/runners","tag":""},"mainNodeAuthToken":"","nodeOptions":["--max-semi-space-size=16","--max-old-space-size=300"],"port":5680,"pythonSitePackagesDir":"/opt/runners/task-runner-python/.venv/lib/python3.13/site-packages","resources":{"limits":{"cpu":"2000m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"32Mi"}},"workerNodeAuthToken":""}` | The configuration for the external task runner |
 | taskRunners.external.autoShutdownTimeout | int | `15` | The auto shutdown timeout for the external task runner in seconds |
 | taskRunners.external.image | object | `{"pullPolicy":"IfNotPresent","repository":"n8nio/runners","tag":""}` | The image for the external task runner sidecar. Tag must match the n8n appVersion. |
 | taskRunners.external.image.pullPolicy | string | `"IfNotPresent"` | This sets the pull policy for images. |
@@ -1919,6 +1913,7 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | taskRunners.external.mainNodeAuthToken | string | `""` | The auth token for the main node |
 | taskRunners.external.nodeOptions | list | `["--max-semi-space-size=16","--max-old-space-size=300"]` | The node options for the external task runner |
 | taskRunners.external.port | int | `5680` | The port for the external task runner |
+| taskRunners.external.pythonSitePackagesDir | string | `"/opt/runners/task-runner-python/.venv/lib/python3.13/site-packages"` | Path to the Python venv's site-packages directory inside the `n8nio/runners` image. Used to mount a `.pth` file that exposes packages installed by `nodes.python.external.packages` to the Python runner, which always runs with `-I` (isolated mode) and therefore ignores `PYTHONPATH`. Update this if the image's bundled Python minor version changes. |
 | taskRunners.external.resources | object | `{"limits":{"cpu":"2000m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"32Mi"}}` | The resources for the external task runner |
 | taskRunners.external.resources.limits | object | `{"cpu":"2000m","memory":"512Mi"}` | The limits for the external task runner |
 | taskRunners.external.resources.limits.cpu | string | `"2000m"` | The CPU limit for the external task runner |
@@ -2044,7 +2039,7 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 
 ## Source Code
 
-* <https://github.com/community-charts/helm-charts>
+* <https://github.com/suneetk92/n8n-helm-chart>
 * <https://github.com/n8n-io/n8n>
 
 ## Chart Development
@@ -2059,4 +2054,4 @@ helm unittest --strict --file 'unittests/**/*.yaml' charts/n8n
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| burakince | <burak.ince@linux.org.tr> | <https://www.burakince.com> |
+| suneetk92 |  | <https://github.com/suneetk92> |

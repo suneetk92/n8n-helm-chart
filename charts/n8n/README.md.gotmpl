@@ -8,28 +8,22 @@
 
 ## Official Documentation
 
-For detailed usage instructions, configuration options, and additional information about the `{{ template "chart.name" . }}` Helm chart, refer to the [official documentation](https://community-charts.github.io/docs/charts/{{ template "chart.name" . }}/usage).
-
-## Get Helm Repository Info
-
-```console
-helm repo add community-charts https://community-charts.github.io/helm-charts
-helm repo update
-```
-
-_See [`helm repo`](https://helm.sh/docs/helm/helm_repo/) for command documentation._
+For upstream application documentation, refer to the [n8n docs](https://docs.n8n.io/). Chart
+architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 
 ## Installing the Chart
 
+This chart is published as an OCI artifact, so no `helm repo add` is required:
+
 ```console
-helm install [RELEASE_NAME] community-charts/{{ template "chart.name" . }}
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Search all available chart versions using `helm search repo community-charts -l`. Please don't forget to run `helm repo update` before the command.
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1541,7 +1535,7 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] community-charts/{{ template "chart.name" . }}
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
 ```
 
 {{ template "chart.valuesSection" . }}

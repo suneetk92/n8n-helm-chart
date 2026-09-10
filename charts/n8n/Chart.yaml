@@ -14,7 +14,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 3.0.0
+version: 3.1.0
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
@@ -23,11 +23,10 @@ appVersion: "2.38.4"
 kubeVersion: ">=1.23.0-0"
 home: https://n8n.io
 maintainers:
-  - name: burakince
-    email: burak.ince@linux.org.tr
-    url: https://www.burakince.com
+  - name: suneetk92
+    url: https://github.com/suneetk92
 sources:
-  - https://github.com/community-charts/helm-charts
+  - https://github.com/suneetk92/n8n-helm-chart
   - https://github.com/n8n-io/n8n
 keywords:
   - n8n
@@ -38,89 +37,3 @@ keywords:
   - integration-framework
   - low-code-plattform
   - low-code
-annotations:
-  artifacthub.io/links: |
-    - name: Chart Source
-      url: https://github.com/community-charts/helm-charts
-    - name: Chart Usage Page
-      url: https://community-charts.github.io/docs/charts/n8n/usage
-    - name: Upstream Project
-      url: https://github.com/n8n-io/n8n
-    - name: Official Documentation
-      url: https://docs.n8n.io/
-  artifacthub.io/containsSecurityUpdates: "false"
-  artifacthub.io/changes: |-
-    - kind: removed
-      description: "The bundled `redis`, `postgresql` and `minio` subcharts are no longer shipped. Provide external services instead: an external PostgreSQL for `db.type: postgresdb`, an external Redis for queue mode, and an S3-compatible object store (`binaryData.s3.*`) for the `s3` binary data mode."
-    - kind: removed
-      description: "`N8N_AVAILABLE_BINARY_DATA_MODES` is no longer rendered. n8n 2.0 dropped the variable, so `binaryData.availableModes` had no effect; it is now accepted for one release and emits a NOTES warning."
-      links:
-        - name: Official Documentation
-          url: https://docs.n8n.io/changelog/v20-breaking-changes
-    - kind: removed
-      description: "`default` (in-memory) is no longer a valid `binaryData.mode`. Valid values are `filesystem`, `database` and `s3`; the chart default is now unset so n8n picks `filesystem` in regular mode and `database` in queue mode."
-      links:
-        - name: Official Documentation
-          url: https://docs.n8n.io/changelog/v20-breaking-changes
-    - kind: changed
-      description: "New `<release>-security-configmap`, consumed by every n8n container, carries the instance security settings that n8n 2.0 changed its defaults for: `security.enforceSettingsFilePermissions`, `security.blockEnvAccessInNode`, `security.gitNodeDisableBareRepos` and `security.restrictFileAccessTo`."
-      links:
-        - name: Official Documentation
-          url: https://docs.n8n.io/changelog/v20-breaking-changes
-    - kind: changed
-      description: "`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` moved out of the hardcoded container environment into the security ConfigMap and is now configurable."
-    - kind: changed
-      description: "`db.sqlite.poolSize` is now rendered as `DB_SQLITE_POOL_SIZE` and defaults to `3`. n8n 2.0 removed the legacy non-pool SQLite driver and rejects `0`, which the chart previously shipped as the default."
-      links:
-        - name: Official Documentation
-          url: https://docs.n8n.io/changelog/v20-breaking-changes
-    - kind: added
-      description: "`nodes.exclude` and `nodes.include` (`NODES_EXCLUDE` / `NODES_INCLUDE`). n8n 2.0 excludes `n8n-nodes-base.executeCommand` and `n8n-nodes-base.localFileTrigger` by default; set `nodes.exclude: []` to load every node."
-    - kind: added
-      description: "`nodes.compression.maxDecompressedSizeBytes` and `nodes.compression.maxZipEntries`, needed to restore the pre-3.0 limits after n8n 3.0 lowered them to 256 MiB / 1000 ZIP entries."
-      links:
-        - name: Official Documentation
-          url: https://docs.n8n.io/changelog/v30-breaking-changes
-    - kind: added
-      description: "`encryptionKeyRotation.enabled` (`N8N_ENV_FEAT_ENCRYPTION_KEY_ROTATION`). The chart keeps it `false` because the migration is one-way and irreversible; see the Upgrading section in the README before enabling it."
-      links:
-        - name: Official Documentation
-          url: https://docs.n8n.io/changelog/v30-breaking-changes
-    - kind: added
-      description: "`binaryData.databaseMaxFileSize` (`N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE`) for the `database` binary data mode."
-    - kind: added
-      description: "`operations` block (always rendered): execution lifecycle and request-size limits in a dedicated operations ConfigMap — `N8N_EXECUTIONS_TIMEOUT`, `N8N_EXECUTIONS_TIMEOUT_MAX`, the `EXECUTIONS_DATA_*` save/pruning knobs, and `N8N_PAYLOAD_SIZE_MAX` / `N8N_FORMDATA_FILE_SIZE_MAX`."
-    - kind: added
-      description: "`ssrfProtection` block (disabled by default): application-level SSRF protection for outbound requests from user-controllable nodes (`N8N_SSRF_PROTECTION_ENABLED` plus allowed/blocked host and IP-range lists). Defence-in-depth only; does not replace network policy."
-    - kind: added
-      description: "`durableScheduler` block (disabled by default): the durable, database-backed scheduler for time-based workflows (`N8N_SCHEDULER_ENABLED`, `N8N_USE_WORKFLOW_PUBLICATION_SERVICE`, `N8N_SCHEDULER_POLL_TRIGGERS_ENABLED`). Preview upstream."
-    - kind: added
-      description: "`smtp` block (disabled by default): outbound email configuration. The password is stored in a generated `<release>-smtp` Secret unless `existingSecret` is set."
-    - kind: added
-      description: "`instanceOwner` block (disabled by default): bootstrap and pin the instance owner from the environment using a bcrypt hash, for GitOps installs. Requires `passwordHash`; a plaintext password breaks login."
-    - kind: added
-      description: "`aiAssistant` block (disabled by default): n8n Assistant and agents (`N8N_ENABLED_MODULES: instance-ai,agents`) plus model settings. Preview upstream. `aiAssistant.searxng.url` points the Assistant at an externally managed SearXNG instance (`N8N_INSTANCE_AI_SEARXNG_URL`); the chart does not deploy SearXNG."
-    - kind: added
-      description: "`sandboxService` block (disabled by default): deploys the n8n Sandbox Service as separate pods — a control-plane API plus an in-cluster runner that executes AI-generated code via Docker-in-Docker. The runner defaults to `isolation: privileged`; set `runner.acknowledgePrivileged: true` to accept it."
-  artifacthub.io/images: |
-    - name: n8n
-      image: n8nio/n8n:2.38.4
-      platforms:
-        - linux/amd64
-        - linux/arm64
-    - name: n8n-runners
-      image: n8nio/runners:2.38.4
-      platforms:
-        - linux/amd64
-        - linux/arm64
-  artifacthub.io/license: Apache-2.0
-  artifacthub.io/maintainers: |
-    - name: burakince
-      email: burak.ince@linux.org.tr
-  artifacthub.io/operator: "false"
-  artifacthub.io/prerelease: "false"
-  artifacthub.io/screenshots: |-
-    []
-  artifacthub.io/signKey: |
-    fingerprint: 939B1A0ED8AAA8E722ACCDB3B6A012EE8A76426A
-    url: https://keybase.io/communitycharts/pgp_keys.asc
