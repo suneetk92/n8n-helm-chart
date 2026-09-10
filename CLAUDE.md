@@ -102,15 +102,24 @@ unittests/
 2. **lint-test**: `helm lint`, then `helm unittest`, then a real `helm install --wait` into a kind
    cluster using `values-kind.yaml`. Requires `check-helm-docs` to pass.
 
-**`.github/workflows/oci-registry.yml`**: triggers on a **successful `CI` run** via `workflow_run`
-(or manual dispatch), then packages the chart and pushes it to `ghcr.io/<owner>/n8n:<version>`. It
-skips a version that is already published, since OCI tags are immutable.
+**`.github/workflows/oci-registry.yml`**: publishes **only tagged versions**, so every artifact in
+the registry corresponds to a `v*` tag. Triggered by a `v*` tag push (or manual dispatch). For a
+human-pushed tag it first requires a successful `CI` run for that commit, since OCI tags are
+immutable.
 
 **`.github/workflows/chart-version.yml`** (on `main` pushes touching `Chart.yaml`/`values.yaml`):
-when an image version changed, bumps the chart patch version, adds a CHANGELOG entry, regenerates the
-README, validates, publishes, and tags — tagging **only** when `appVersion` changed. This is the
-bookkeeping Renovate cannot do, because its `bumpVersion` needs the `helmv3` manager and this chart
-has no `Chart.yaml` dependencies.
+cuts a release when Renovate lands an **n8n** bump. It bumps the chart patch version, writes the
+CHANGELOG entry, regenerates the README, validates, commits, tags, creates a GitHub Release, and
+dispatches the publish.
+
+Release model:
+
+- **Only an `appVersion` change cuts a release.** Sandbox and base-image bumps land on `main` without
+  a release and ride along in the next n8n release — so the chart version, the `v*` tag and the
+  registry stay 1:1.
+- Because of that, detection compares against the **last `v*` tag**, not the previous commit;
+  otherwise those earlier unreleased bumps would be missing from the changelog.
+- It skips if a human already moved the chart version since the last tag, so a manual release wins.
 
 `ci.yml` is gated on `paths: charts/**`, so a commit touching only `.github/` runs nothing.
 
@@ -122,9 +131,10 @@ has no `Chart.yaml` dependencies.
 `n8nio/runners` on purpose: it is the tag for both n8n images, so it must not move ahead of the
 runners image.
 
-**Note:** a push made with `GITHUB_TOKEN` does not trigger other workflows. That is why
-`chart-version.yml` validates inline and dispatches the publish itself rather than relying on CI
-firing for its own commit.
+**Note:** a push made with `GITHUB_TOKEN` does not trigger other workflows — neither CI for its
+commit nor the tag-driven publish for its tag. That is why `chart-version.yml` validates inline and
+dispatches the publish explicitly. Renovate's own PRs are unaffected: the Renovate App has its own
+identity, so its PRs do trigger CI and can automerge normally.
 
 ### Unit Test Convention
 

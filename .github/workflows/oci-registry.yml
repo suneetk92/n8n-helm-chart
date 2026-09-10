@@ -1,45 +1,60 @@
 name: Publish Chart (OCI)
 
-# Runs only after CI succeeds on main, so a chart that fails lint, unit tests or the kind install
-# can never reach the registry. Published OCI tags are immutable, so a bad publish cannot be undone
-# without burning a version.
+# Publishes only tagged versions, so every artifact in the registry corresponds to a `v*` tag.
+#
+# A tag pushed by GITHUB_TOKEN does not trigger workflows, so chart-version.yml dispatches this
+# workflow explicitly after it tags. Tags pushed by a human trigger it directly, and in that case we
+# verify CI passed for the tagged commit first — OCI tags are immutable, so a bad publish burns a
+# version.
 on:
-  workflow_run:
-    workflows: [ "CI" ]
-    types: [ completed ]
-    branches: [ main ]
+  push:
+    tags: [ 'v*' ]
 
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Ref to publish (defaults to the current branch)"
+        required: false
 
 env:
   HELM_VERSION: v3.18.3
 
 jobs:
   publish-oci:
-    # workflow_run fires for failures too, and for pull_request-triggered CI runs. Publish only for
-    # a successful push to main.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push')
-
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       packages: write
+      actions: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # workflow_run checks out the default branch by default; pin to the exact commit CI passed on.
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Install Helm
         uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
+
+      # Only for human-pushed tags. A dispatch from chart-version.yml has already run the same lint,
+      # unit tests and kind install, and its commit was pushed by GITHUB_TOKEN so CI never fired.
+      - name: Require a passing CI run for this commit
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          conclusion=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${sha}&status=completed" \
+            --jq '[.workflow_runs[] | select(.name == "CI")] | first | .conclusion // "none"')
+          echo "CI conclusion for ${sha}: ${conclusion}"
+          if [ "$conclusion" != "success" ]; then
+            echo "::error::No successful CI run for ${sha}. Push the commit to main, let CI pass, then tag it."
+            exit 1
+          fi
 
       - name: Resolve chart version
         id: chart

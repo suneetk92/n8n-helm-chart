@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate replaces Dependabot here. Dependabot cannot see these versions at all: appVersion is not a dependency manifest entry, and its docker ecosystem does not parse the repository/tag split used in Helm values.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -11,38 +12,37 @@
   "labels": [
     "dependencies"
   ],
-  "//": "Renovate replaces Dependabot here. Dependabot cannot see these versions at all: appVersion is not a dependency manifest entry, and its docker ecosystem does not parse the repository/tag split used in Helm values.",
   "helm-values": {
-    "managerFilePatterns": [
-      "/charts/n8n/values\\.yaml/"
+    "fileMatch": [
+      "charts/n8n/values\\.yaml"
     ]
   },
   "customManagers": [
     {
       "customType": "regex",
       "description": "Chart.yaml appVersion, tracked against n8nio/n8n. Note appVersion is also used as the tag for n8nio/runners, so if a release ever lands on n8nio/n8n before n8nio/runners, the task-runner sidecar will fail to pull until runners catches up.",
-      "managerFilePatterns": [
-        "/^charts/n8n/Chart\\.yaml$/"
-      ],
       "matchStrings": [
         "appVersion:\\s*\"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "n8nio/n8n",
-      "versioningTemplate": "semver"
+      "versioningTemplate": "semver",
+      "fileMatch": [
+        "^charts/n8n/Chart\\.yaml$"
+      ]
     },
     {
       "customType": "regex",
       "description": "sandboxService.image.version \u2014 one pinned version shared by all three n8n-sandbox-service-* images, which upstream releases together.",
-      "managerFilePatterns": [
-        "/^charts/n8n/values\\.yaml$/"
-      ],
       "matchStrings": [
         "version:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*\\n"
       ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "ghcr.io/n8n-io/n8n-sandbox-service-api",
-      "versioningTemplate": "semver"
+      "versioningTemplate": "semver",
+      "fileMatch": [
+        "^charts/n8n/values\\.yaml$"
+      ]
     }
   ],
   "packageRules": [
