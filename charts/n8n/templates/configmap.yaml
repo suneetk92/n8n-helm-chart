@@ -300,6 +300,26 @@ data:
   N8N_RUNNERS_EXTERNAL_ALLOW: {{ .Values.nodes.python.external.packages | join "," | quote }}
 {{- end }}
 {{- end }}
+---
+# -- Replaces the task-runner-launcher's default /etc/n8n-task-runners.json. The image's
+# built-in default hard-overrides NODE_FUNCTION_ALLOW_EXTERNAL/BUILTIN and
+# N8N_RUNNERS_STDLIB_ALLOW/EXTERNAL_ALLOW via its own env-overrides, ignoring the container
+# env vars this chart sets above - so without this file, nodes.external.packages,
+# nodes.builtin and nodes.python settings have no effect on the external task runner.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "n8n.taskRunners.launcherConfigName" . }}
+  labels:
+    app: {{ include "n8n.name" . }}
+    chart: {{ include "n8n.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  n8n-task-runners.json: |
+{{ include "n8n.taskRunners.launcherConfigJSON" . | indent 4 }}
+  n8n-extra-packages.pth: |
+    /home/node/.python-packages
 {{- end }}
 {{- if .Values.license.enabled }}
 ---

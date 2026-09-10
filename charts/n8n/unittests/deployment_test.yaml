@@ -1665,7 +1665,39 @@ tests:
           any: true
         template: deployment.yaml
 
-  - it: should use license configmap and secret when license.enabled is true
+  - it: should use license configmap and secret when license.enabled is true and an activation key is set
+    set:
+      license:
+        enabled: true
+        activationKey: dummy-activation-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
+          content:
+            configMapRef:
+              name: n8n-license-configmap
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
+          content:
+            secretRef:
+              name: n8n-license-activation-key
+        template: deployment.yaml
+
+  - it: should reference the license secret when only an existing activation key secret is set
+    set:
+      license:
+        enabled: true
+        existingActivationKeySecret: my-license-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
+          content:
+            secretRef:
+              name: my-license-secret
+        template: deployment.yaml
+
+  - it: should not reference any license secret when license.enabled is true but no activation key is provided
     set:
       license:
         enabled: true
@@ -1676,7 +1708,7 @@ tests:
             configMapRef:
               name: n8n-license-configmap
         template: deployment.yaml
-      - contains:
+      - notContains:
           path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
           content:
             secretRef:
@@ -2874,4 +2906,120 @@ tests:
               secretName: "n8n-pypi-registry-secret"
               optional: true
           any: true
+        template: deployment.yaml
+
+  # The smtp and instanceOwner Secrets were created by secret.yaml but never referenced by any
+  # container, so the password and the owner's bcrypt hash never reached n8n.
+  - it: should pass the smtp password from the chart-managed secret when smtp.enabled is true
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        password: s3cret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_SMTP_PASS
+            valueFrom:
+              secretKeyRef:
+                name: n8n-smtp
+                key: password
+        template: deployment.yaml
+
+  - it: should pass the smtp password from an existing secret and honour passwordKey
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+        existingSecret: my-smtp-secret
+        passwordKey: smtp-pw
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_SMTP_PASS
+            valueFrom:
+              secretKeyRef:
+                name: my-smtp-secret
+                key: smtp-pw
+        template: deployment.yaml
+
+  - it: should not pass an smtp password when smtp is enabled without any credential
+    set:
+      smtp:
+        enabled: true
+        host: smtp.example.com
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_SMTP_PASS
+          any: true
+        template: deployment.yaml
+
+  - it: should pass the instance owner password hash when instanceOwner.enabled is true
+    set:
+      instanceOwner:
+        enabled: true
+        email: owner@example.com
+        passwordHash: "$2b$10$abcdefghijklmnopqrstuv"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_INSTANCE_OWNER_PASSWORD_HASH
+            valueFrom:
+              secretKeyRef:
+                name: n8n-instance-owner
+                key: password-hash
+        template: deployment.yaml
+
+  - it: should pass the instance owner password hash from an existing secret and honour passwordHashKey
+    set:
+      instanceOwner:
+        enabled: true
+        email: owner@example.com
+        existingSecret: my-owner-secret
+        passwordHashKey: hash
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_INSTANCE_OWNER_PASSWORD_HASH
+            valueFrom:
+              secretKeyRef:
+                name: my-owner-secret
+                key: hash
+        template: deployment.yaml
+
+  # `or modelApiKey (not existingModelApiKeySecret)` was true when neither was set, pointing at a
+  # Secret the chart never creates, and false when only existingModelApiKeySecret was set.
+  - it: should not reference an ai model api key secret when aiAssistant is enabled without a key
+    set:
+      aiAssistant:
+        enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_INSTANCE_AI_MODEL_API_KEY
+          any: true
+        template: deployment.yaml
+
+  - it: should reference an existing ai model api key secret when only existingModelApiKeySecret is set
+    set:
+      aiAssistant:
+        enabled: true
+        existingModelApiKeySecret: my-ai-secret
+        modelApiKeyKey: token
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_INSTANCE_AI_MODEL_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-ai-secret
+                key: token
         template: deployment.yaml

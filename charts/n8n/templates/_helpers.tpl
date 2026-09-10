@@ -468,6 +468,90 @@ UV_CACHE_DIR=/tmp/.uv-cache UV_LINK_MODE=copy uv pip install --target /home/node
 {{- end -}}
 
 {{/*
+Credential environment variables shared by every n8n container (main, worker, webhook,
+MCP webhook). These deliver secret values that cannot travel through the plain ConfigMaps:
+the SMTP password and the instance owner's bcrypt password hash. The non-secret halves of
+both features live in the email ConfigMap.
+
+Emitted as a list fragment, so include it where env entries are expected:
+  {{- include "n8n.credentialEnv" . | nindent 12 }}
+*/}}
+{{- define "n8n.credentialEnv" -}}
+{{- if and .Values.smtp.enabled (or .Values.smtp.password .Values.smtp.existingSecret) }}
+- name: N8N_SMTP_PASS
+  valueFrom:
+    secretKeyRef:
+      name: {{ default (printf "%s-smtp" (include "n8n.fullname" .)) .Values.smtp.existingSecret }}
+      key: {{ ternary .Values.smtp.passwordKey "password" (ne .Values.smtp.existingSecret "") }}
+{{- end }}
+{{- if .Values.instanceOwner.enabled }}
+- name: N8N_INSTANCE_OWNER_PASSWORD_HASH
+  valueFrom:
+    secretKeyRef:
+      name: {{ default (printf "%s-instance-owner" (include "n8n.fullname" .)) .Values.instanceOwner.existingSecret }}
+      key: {{ ternary .Values.instanceOwner.passwordHashKey "password-hash" (ne .Values.instanceOwner.existingSecret "") }}
+{{- end }}
+{{- end -}}
+
+{{/*
+n8n task runners launcher config name
+*/}}
+{{- define "n8n.taskRunners.launcherConfigName" -}}
+{{- printf "%s-launcher-config" (include "n8n.taskRunners.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+n8n task runners launcher config file (/etc/n8n-task-runners.json).
+
+The task-runner-launcher image ships its own default of this file, whose
+env-overrides hard-code NODE_FUNCTION_ALLOW_EXTERNAL=moment,
+NODE_FUNCTION_ALLOW_BUILTIN=crypto and blank N8N_RUNNERS_STDLIB_ALLOW /
+N8N_RUNNERS_EXTERNAL_ALLOW. Those overrides win over whatever this chart sets
+as plain container env vars (NODE_FUNCTION_ALLOW_EXTERNAL etc. below), which
+is why setting only the container env var has no effect. This chart mounts a
+replacement file, generated from the same values that already drive the
+container env vars, so both stay consistent.
+*/}}
+{{- define "n8n.taskRunners.launcherConfigJSON" -}}
+{{- $jsOverrides := dict "N8N_RUNNERS_HEALTH_CHECK_SERVER_HOST" "0.0.0.0" -}}
+{{- if .Values.nodes.builtin.enabled -}}
+  {{- $_ := set $jsOverrides "NODE_FUNCTION_ALLOW_BUILTIN" (ternary (join "," .Values.nodes.builtin.modules) "*" (gt (len .Values.nodes.builtin.modules) 0)) -}}
+{{- end -}}
+{{- if .Values.nodes.external.allowAll -}}
+  {{- $_ := set $jsOverrides "NODE_FUNCTION_ALLOW_EXTERNAL" "*" -}}
+{{- else if .Values.nodes.external.packages -}}
+  {{- $_ := set $jsOverrides "NODE_FUNCTION_ALLOW_EXTERNAL" (include "n8n.packageNames" .Values.nodes.external.packages) -}}
+{{- end -}}
+{{- $pyOverrides := dict "N8N_RUNNERS_STDLIB_ALLOW" (join "," .Values.nodes.python.builtin.modules) -}}
+{{- if .Values.nodes.python.external.allowAll -}}
+  {{- $_ := set $pyOverrides "N8N_RUNNERS_EXTERNAL_ALLOW" "*" -}}
+{{- else -}}
+  {{- $_ := set $pyOverrides "N8N_RUNNERS_EXTERNAL_ALLOW" (join "," .Values.nodes.python.external.packages) -}}
+{{- end -}}
+{{- $config := dict "task-runners" (list
+  (dict
+    "runner-type" "javascript"
+    "workdir" "/home/runner"
+    "command" "/usr/local/bin/node"
+    "args" (list "--disallow-code-generation-from-strings" "--disable-proto=delete" "/opt/runners/task-runner-javascript/dist/start.js")
+    "health-check-server-port" "5681"
+    "allowed-env" (list "PATH" "GENERIC_TIMEZONE" "NODE_OPTIONS" "NODE_PATH" "N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT" "N8N_RUNNERS_TASK_TIMEOUT" "N8N_RUNNERS_MAX_CONCURRENCY" "N8N_SENTRY_DSN" "N8N_VERSION" "ENVIRONMENT" "DEPLOYMENT_NAME" "HOME")
+    "env-overrides" $jsOverrides
+  )
+  (dict
+    "runner-type" "python"
+    "workdir" "/home/runner"
+    "command" "/opt/runners/task-runner-python/.venv/bin/python"
+    "args" (list "-I" "-B" "-X" "disable_remote_debug" "-m" "src.main")
+    "health-check-server-port" "5682"
+    "allowed-env" (list "PATH" "N8N_RUNNERS_LAUNCHER_LOG_LEVEL" "N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT" "N8N_RUNNERS_TASK_TIMEOUT" "N8N_RUNNERS_MAX_CONCURRENCY" "N8N_SENTRY_DSN" "N8N_VERSION" "ENVIRONMENT" "DEPLOYMENT_NAME")
+    "env-overrides" $pyOverrides
+  )
+) -}}
+{{- $config | toPrettyJson -}}
+{{- end -}}
+
+{{/*
 n8n npm install script logic
 */}}
 {{- define "n8n.npmInstallScript" -}}

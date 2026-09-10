@@ -5654,6 +5654,13 @@
               ],
               "title": "resources",
               "type": "object"
+            },
+            "pythonSitePackagesDir": {
+              "default": "/opt/runners/task-runner-python/.venv/lib/python3.13/site-packages",
+              "description": "Path to the Python venv's site-packages directory inside the `n8nio/runners` image",
+              "required": [],
+              "title": "pythonSitePackagesDir",
+              "type": "string"
             }
           },
           "required": [
@@ -5661,7 +5668,8 @@
             "port",
             "nodeOptions",
             "image",
-            "resources"
+            "resources",
+            "pythonSitePackagesDir"
           ],
           "title": "external",
           "type": "object"

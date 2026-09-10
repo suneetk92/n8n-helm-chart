@@ -251,6 +251,8 @@ should match snapshot of default values:
                   value: Europe/Berlin
                 - name: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
                   value: "30"
+                - name: NPM_CONFIG_CACHE
+                  value: /home/node/.cache/npm
                 - name: N8N_DISABLE_UI
                   value: "true"
                 - name: QUEUE_HEALTH_CHECK_ACTIVE
@@ -342,6 +344,8 @@ should match snapshot of default values:
                   name: tmp
                 - mountPath: /home/node/.cache
                   name: cache
+                - mountPath: /home/node/.npm
+                  name: npm-home
                 - mountPath: /home/node/.n8n
                   name: node-modules
                   readOnly: false
@@ -662,6 +666,8 @@ should match snapshot of postgres ssl certificate values:
                   value: Europe/Berlin
                 - name: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
                   value: "30"
+                - name: NPM_CONFIG_CACHE
+                  value: /home/node/.cache/npm
                 - name: N8N_DISABLE_UI
                   value: "true"
                 - name: QUEUE_HEALTH_CHECK_ACTIVE
@@ -753,6 +759,8 @@ should match snapshot of postgres ssl certificate values:
                   name: tmp
                 - mountPath: /home/node/.cache
                   name: cache
+                - mountPath: /home/node/.npm
+                  name: npm-home
                 - mountPath: /home/node/.n8n
                   name: node-modules
                   readOnly: false
@@ -1099,6 +1107,8 @@ should match snapshot of worker persistence:
                   value: Europe/Berlin
                 - name: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
                   value: "30"
+                - name: NPM_CONFIG_CACHE
+                  value: /home/node/.cache/npm
                 - name: N8N_DISABLE_UI
                   value: "true"
                 - name: QUEUE_HEALTH_CHECK_ACTIVE
@@ -1190,6 +1200,8 @@ should match snapshot of worker persistence:
                   name: tmp
                 - mountPath: /home/node/.cache
                   name: cache
+                - mountPath: /home/node/.npm
+                  name: npm-home
                 - mountPath: /home/node/.n8n
                   name: node-modules
                   readOnly: false

@@ -129,7 +129,7 @@ spec:
             - name: N8N_HIRING_BANNER_ENABLED
               value: "false"
           {{- if .Values.aiAssistant.enabled }}
-          {{- if or .Values.aiAssistant.modelApiKey (not .Values.aiAssistant.existingModelApiKeySecret) }}
+          {{- if or .Values.aiAssistant.modelApiKey .Values.aiAssistant.existingModelApiKeySecret }}
             - name: N8N_INSTANCE_AI_MODEL_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -144,6 +144,7 @@ spec:
                   key: {{ include "n8n.sandbox.apiKeyKeyName" . }}
           {{- end }}
           {{- end }}
+          {{- include "n8n.credentialEnv" . | nindent 12 }}
             - name: NODE_ENV
               value: production
             - name: N8N_PORT
@@ -156,6 +157,16 @@ spec:
               value: {{ .Values.gracefulShutdownTimeout | quote }}
             - name: NPM_CONFIG_CACHE
               value: /home/node/.cache/npm
+          {{- if .Values.main.editorBaseUrl }}
+            - name: N8N_EDITOR_BASE_URL
+              value: {{ .Values.main.editorBaseUrl | quote }}
+          {{- else if and .Values.ingress.enabled (gt (len .Values.ingress.hosts) 0) }}
+            {{- $schema := ternary "http" "https" (empty .Values.ingress.tls) }}
+            {{- with (first .Values.ingress.hosts) }}
+            - name: N8N_EDITOR_BASE_URL
+              value: {{ printf "%s://%s" $schema .host | quote }}
+            {{- end }}
+          {{- end }}
           {{- if eq .Values.db.type "postgresdb" }}
             - name: DB_POSTGRESDB_USER
               value: {{ include "n8n.postgresql.username" . }}
@@ -257,8 +268,10 @@ spec:
           {{- if .Values.license.enabled }}
             - configMapRef:
                 name: {{ template "n8n.fullname" . }}-license-configmap
+            {{- if or .Values.license.activationKey .Values.license.existingActivationKeySecret }}
             - secretRef:
                 name: {{ default (printf "%s-license-activation-key" (include "n8n.fullname" .)) .Values.license.existingActivationKeySecret }}
+            {{- end }}
           {{- end }}
             - secretRef:
                 name: {{ default (printf "%s-encryption-key-secret-v2" (include "n8n.fullname" .)) .Values.existingEncryptionKeySecret }}
@@ -376,6 +389,10 @@ spec:
             - name: NODE_FUNCTION_ALLOW_EXTERNAL
               value: {{ include "n8n.packageNames" .Values.nodes.external.packages | quote }}
           {{- end }}
+          {{- if or .Values.nodes.external.allowAll .Values.nodes.external.packages }}
+            - name: NODE_PATH
+              value: {{ printf "%s/node_modules" .Values.main.persistence.mountPath | quote }}
+          {{- end }}
           {{- if .Values.nodes.external.reinstallMissingPackages }}
             - name: N8N_REINSTALL_MISSING_PACKAGES
               value: "true"
@@ -399,6 +416,16 @@ spec:
               mountPath: /home/node/.cache
             - name: python-packages
               mountPath: /home/node/.python-packages
+            - name: task-runners-launcher-config
+              mountPath: /etc/n8n-task-runners.json
+              subPath: n8n-task-runners.json
+              readOnly: true
+          {{- if and .Values.nodes.python.enabled (or .Values.nodes.python.external.allowAll .Values.nodes.python.external.packages) }}
+            - name: task-runners-launcher-config
+              mountPath: {{ printf "%s/n8n-extra-packages.pth" .Values.taskRunners.external.pythonSitePackagesDir }}
+              subPath: n8n-extra-packages.pth
+              readOnly: true
+          {{- end }}
           {{- if and .Values.pypiRegistry.enabled (or .Values.pypiRegistry.secretName .Values.pypiRegistry.customUvConfig) }}
             - name: uv-config
               mountPath: /home/node/.uv-config
@@ -435,6 +462,9 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "n8n-python.packages.fullname" . }}
         {{- end }}
+        - name: task-runners-launcher-config
+          configMap:
+            name: {{ template "n8n.taskRunners.launcherConfigName" . }}
       {{- end }}
       {{- if and .Values.nodes.external.packages (not (eq (include "n8n.main.coversCommunityNodes" .) "true")) }}
         {{- if not .Values.nodes.external.persistence.enabled }}

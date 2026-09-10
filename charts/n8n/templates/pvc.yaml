@@ -1,4 +1,10 @@
-{{- if and .Values.main.persistence.enabled (not .Values.main.persistence.existingClaim) (not .Values.main.forceToUseStatefulset) (or (and (eq (int .Values.main.count) 1) (eq .Values.main.persistence.accessMode "ReadWriteOnce")) (and (gt (int .Values.main.count) 1) (eq .Values.main.persistence.accessMode "ReadWriteMany"))) }}
+{{/*
+Mirrors the gate on deployment.yaml: whenever the Deployment path is taken with persistence
+enabled it mounts this claim, so the claim must exist for exactly that set of values. Testing
+accessMode per count (as this once did) left `count == 1` + `ReadWriteMany` rendering a
+Deployment that referenced a PVC the chart never created.
+*/}}
+{{- if and .Values.main.persistence.enabled (not .Values.main.persistence.existingClaim) (not .Values.main.forceToUseStatefulset) (or (eq (int .Values.main.count) 1) (eq .Values.main.persistence.accessMode "ReadWriteMany")) }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

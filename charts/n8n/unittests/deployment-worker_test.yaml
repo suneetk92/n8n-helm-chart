@@ -1491,7 +1491,39 @@ tests:
           any: true
         template: deployment-worker.yaml
 
-  - it: should use license configmap and secret when license.enabled is true
+  - it: should use license configmap and secret when license.enabled is true and an activation key is set
+    set:
+      license:
+        enabled: true
+        activationKey: dummy-activation-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-worker")].envFrom
+          content:
+            configMapRef:
+              name: n8n-license-configmap
+        template: deployment-worker.yaml
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-worker")].envFrom
+          content:
+            secretRef:
+              name: n8n-license-activation-key
+        template: deployment-worker.yaml
+
+  - it: should reference the license secret when only an existing activation key secret is set
+    set:
+      license:
+        enabled: true
+        existingActivationKeySecret: my-license-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-worker")].envFrom
+          content:
+            secretRef:
+              name: my-license-secret
+        template: deployment-worker.yaml
+
+  - it: should not reference any license secret when license.enabled is true but no activation key is provided
     set:
       license:
         enabled: true
@@ -1502,7 +1534,7 @@ tests:
             configMapRef:
               name: n8n-license-configmap
         template: deployment-worker.yaml
-      - contains:
+      - notContains:
           path: spec.template.spec.containers[?(@.name == "n8n-worker")].envFrom
           content:
             secretRef:

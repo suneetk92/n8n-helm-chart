@@ -1541,7 +1541,39 @@ tests:
           any: true
         template: statefulset.yaml
 
-  - it: should use license configmap and secret when license.enabled is true
+  - it: should use license configmap and secret when license.enabled is true and an activation key is set
+    set:
+      license:
+        enabled: true
+        activationKey: dummy-activation-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
+          content:
+            configMapRef:
+              name: n8n-license-configmap
+        template: statefulset.yaml
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
+          content:
+            secretRef:
+              name: n8n-license-activation-key
+        template: statefulset.yaml
+
+  - it: should reference the license secret when only an existing activation key secret is set
+    set:
+      license:
+        enabled: true
+        existingActivationKeySecret: my-license-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
+          content:
+            secretRef:
+              name: my-license-secret
+        template: statefulset.yaml
+
+  - it: should not reference any license secret when license.enabled is true but no activation key is provided
     set:
       license:
         enabled: true
@@ -1552,7 +1584,7 @@ tests:
             configMapRef:
               name: n8n-license-configmap
         template: statefulset.yaml
-      - contains:
+      - notContains:
           path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
           content:
             secretRef:
@@ -2608,4 +2640,72 @@ tests:
           content:
             name: community-node-modules
             emptyDir: {}
+        template: statefulset.yaml
+
+  # deployment.yaml sets N8N_EDITOR_BASE_URL but the statefulset (multi-main) path did not, so
+  # main.editorBaseUrl was silently a no-op there, breaking OAuth callbacks and email links.
+  - it: should set editor base url from main.editorBaseUrl
+    set:
+      main:
+        count: 3
+        editorBaseUrl: https://n8n.example.com
+        persistence:
+          enabled: true
+          accessMode: ReadWriteOnce
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EDITOR_BASE_URL
+            value: https://n8n.example.com
+        template: statefulset.yaml
+
+  - it: should derive editor base url from the first ingress host when main.editorBaseUrl is unset
+    set:
+      main:
+        count: 3
+        editorBaseUrl: ""
+        persistence:
+          enabled: true
+          accessMode: ReadWriteOnce
+      ingress:
+        enabled: true
+        hosts:
+          - host: n8n.example.com
+            paths:
+              - path: /
+                pathType: Prefix
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EDITOR_BASE_URL
+            value: http://n8n.example.com
+        template: statefulset.yaml
+
+  - it: should derive an https editor base url when ingress tls is configured
+    set:
+      main:
+        count: 3
+        editorBaseUrl: ""
+        persistence:
+          enabled: true
+          accessMode: ReadWriteOnce
+      ingress:
+        enabled: true
+        hosts:
+          - host: n8n.example.com
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: n8n-tls
+            hosts:
+              - n8n.example.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EDITOR_BASE_URL
+            value: https://n8n.example.com
         template: statefulset.yaml

@@ -110,14 +110,13 @@ tests:
           path: spec.ports[0].protocol
           value: TCP
 
-  - it: should create headless service when worker.forceToUseStatefulset is true and db type is postgresdb and webhook.mode is queue
+  - it: should create headless service when worker.forceToUseStatefulset is true and db type is postgresdb and worker.mode is queue
     set:
       worker:
         forceToUseStatefulset: true
+        mode: queue
       db:
         type: postgresdb
-      webhook:
-        mode: queue
     documentSelector:
       path: metadata.name
       value: n8n-worker-headless
@@ -143,6 +142,46 @@ tests:
       - equal:
           path: spec.ports[0].protocol
           value: TCP
+
+  # The worker headless service must track the worker StatefulSet's own gate. It was previously
+  # nested inside the webhook service's `webhook.mode == queue` block, so a queue-mode worker with
+  # a regular-mode webhook got a StatefulSet whose serviceName pointed at a Service that did not
+  # exist.
+  - it: should create the worker headless service even when webhook.mode is regular
+    set:
+      worker:
+        forceToUseStatefulset: true
+        mode: queue
+      db:
+        type: postgresdb
+      webhook:
+        mode: regular
+    documentSelector:
+      path: metadata.name
+      value: n8n-worker-headless
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: worker
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: worker
+
+  - it: should not create the worker headless service when worker.mode is regular
+    set:
+      worker:
+        forceToUseStatefulset: true
+        mode: regular
+      db:
+        type: postgresdb
+      webhook:
+        mode: queue
+    asserts:
+      - hasDocuments:
+          count: 3
 
   - it: should match snapshot of default values
     set:
@@ -170,6 +209,7 @@ tests:
         forceToUseStatefulset: true
       worker:
         forceToUseStatefulset: true
+        mode: queue
       db:
         type: postgresdb
       webhook:

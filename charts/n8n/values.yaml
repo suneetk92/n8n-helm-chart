@@ -996,6 +996,9 @@ taskRunners:
         # -- The memory limit for the external task runner
         memory: 512Mi
 
+    # -- Path to the Python venv's site-packages directory inside the `n8nio/runners` image. Used to mount a `.pth` file that exposes packages installed by `nodes.python.external.packages` to the Python runner, which always runs with `-I` (isolated mode) and therefore ignores `PYTHONPATH`. Update this if the image's bundled Python minor version changes.
+    pythonSitePackagesDir: /opt/runners/task-runner-python/.venv/lib/python3.13/site-packages
+
 # -- The workflow history configuration
 workflowHistory:
   # -- Whether to save workflow history versions

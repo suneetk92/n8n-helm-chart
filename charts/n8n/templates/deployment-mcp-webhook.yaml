@@ -105,7 +105,7 @@ spec:
             - name: N8N_HIRING_BANNER_ENABLED
               value: "false"
           {{- if .Values.aiAssistant.enabled }}
-          {{- if or .Values.aiAssistant.modelApiKey (not .Values.aiAssistant.existingModelApiKeySecret) }}
+          {{- if or .Values.aiAssistant.modelApiKey .Values.aiAssistant.existingModelApiKeySecret }}
             - name: N8N_INSTANCE_AI_MODEL_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -120,6 +120,7 @@ spec:
                   key: {{ include "n8n.sandbox.apiKeyKeyName" . }}
           {{- end }}
           {{- end }}
+          {{- include "n8n.credentialEnv" . | nindent 12 }}
             - name: NODE_ENV
               value: production
             - name: N8N_PORT
@@ -191,8 +192,10 @@ spec:
           {{- if .Values.license.enabled }}
             - configMapRef:
                 name: {{ template "n8n.fullname" . }}-license-configmap
+            {{- if or .Values.license.activationKey .Values.license.existingActivationKeySecret }}
             - secretRef:
                 name: {{ default (printf "%s-license-activation-key" (include "n8n.fullname" .)) .Values.license.existingActivationKeySecret }}
+            {{- end }}
           {{- end }}
             - secretRef:
                 name: {{ default (printf "%s-encryption-key-secret-v2" (include "n8n.fullname" .)) .Values.existingEncryptionKeySecret }}

@@ -483,3 +483,59 @@ tests:
       - hasDocuments:
           count: 0
 
+
+  # deployment.yaml renders for `count == 1` regardless of accessMode, and mounts this claim.
+  # The condition here previously tested accessMode per count, so `count == 1` + ReadWriteMany
+  # produced a Deployment referencing a PVC that was never created.
+  - it: should create pvc resource for main node when main.count is 1 and accessMode is ReadWriteMany
+    set:
+      main:
+        count: 1
+        persistence:
+          enabled: true
+          existingClaim: ""
+          accessMode: ReadWriteMany
+      worker:
+        persistence:
+          enabled: false
+    documentSelector:
+      path: metadata.name
+      value: n8n-main-persistence
+    asserts:
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteMany
+
+  - it: should create pvc resource for main node when main.count is bigger than 1 and accessMode is ReadWriteMany
+    set:
+      main:
+        count: 3
+        persistence:
+          enabled: true
+          existingClaim: ""
+          accessMode: ReadWriteMany
+      worker:
+        persistence:
+          enabled: false
+    documentSelector:
+      path: metadata.name
+      value: n8n-main-persistence
+    asserts:
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteMany
+
+  - it: should not create pvc resource for main node when main.count is bigger than 1 and accessMode is ReadWriteOnce
+    set:
+      main:
+        count: 3
+        persistence:
+          enabled: true
+          existingClaim: ""
+          accessMode: ReadWriteOnce
+      worker:
+        persistence:
+          enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
