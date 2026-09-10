@@ -246,8 +246,6 @@ npmRegistry:
 
 # -- Configuration for binary data storage
 binaryData:
-  # -- @deprecated Use `binaryData.mode` instead. n8n 2.0 removed `N8N_AVAILABLE_BINARY_DATA_MODES`, so this field is ignored and will be removed in a future release.
-  availableModes: []
   # -- The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
   mode: ~
   # -- Path for binary data storage in `filesystem` mode. If not set, n8n uses `<N8N_USER_FOLDER>/binaryData`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
@@ -382,12 +380,6 @@ license:
   activationKey: ""
   # -- The name of an existing secret with license activation key. The secret must contain a key with the name N8N_LICENSE_ACTIVATION_KEY.
   existingActivationKeySecret: ""
-  # -- @deprecated Use license.autoRenew fields instead.
-  autoNenew:
-    # -- @deprecated Use license.autoRenew.enabled field instead.
-    enabled: ~
-    # -- @deprecated Use license.autoRenew.offsetInHours field instead.
-    offsetInHours: ~
   # -- The auto new license configuration
   autoRenew:
     # -- Enables (true) or disables (false) autorenewal for licenses. If disabled, you need to manually renew the license every 10 days by navigating to Settings > Usage and plan, and pressing F5. Failure to renew the license will disable Enterprise features.
@@ -1115,48 +1107,11 @@ serviceMonitor:
     # -- Whether to include queue metrics
     queueMetrics: false
 
-# -- @deprecated Use main, worker, and webhook blocks extraEnvVars fields instead. This field will be removed in a future release.
-extraEnvVars: {}
 
-# -- @deprecated Use main, worker, webhook, and webhook.mcp blocks extraEnv fields instead. This field will be removed in a future release.
-extraEnv: []
-# - name: MY_ENV
-#   valueFrom:
-#     secretKeyRef:
-#       name: my-secret
-#       key: my-key
 
-# -- @deprecated Use main, worker, and webhook blocks extraSecretNamesForEnvFrom fields instead. This field will be removed in a future release.
-extraSecretNamesForEnvFrom: []
 
-# -- @deprecated Use main, worker, and webhook blocks resources fields instead. This field will be removed in a future release.
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # limits:
-  #   cpu: 2000m
-  #   memory: 1Gi
 
-# -- @deprecated Use main, worker, and webhook blocks livenessProbe field instead. This field will be removed in a future release.
-livenessProbe: {}
 
-# -- @deprecated Use main, worker, and webhook blocks readinessProbe field instead. This field will be removed in a future release.
-readinessProbe: {}
-
-# -- @deprecated Use main, worker, and webhook blocks volumes fields instead. This field will be removed in a future release.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
-
-# -- @deprecated Use main, worker, and webhook blocks volumeMounts fields instead. This field will be removed in a future release.
-volumeMounts: []
 # - name: foo
 #   mountPath: "/etc/foo"
 #   readOnly: true
@@ -1167,8 +1122,6 @@ nodeSelector: {}
 # -- For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 tolerations: []
 
-# -- @deprecated Use main, worker, and webhook blocks volumes fields instead. This field will be removed in a future release.
-affinity: {}
 
 # -- For more information checkout: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
 dnsPolicy: ""

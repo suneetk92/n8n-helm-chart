@@ -107,15 +107,11 @@ spec:
           startupProbe:
             {{- toYaml .Values.webhook.startupProbe | nindent 12 }}
           livenessProbe:
-            {{- $rootLiveness := .Values.livenessProbe | default dict }}
-            {{- $webhookLiveness := .Values.webhook.livenessProbe | default dict }}
-            {{- toYaml (merge $webhookLiveness $rootLiveness) | nindent 12 }}
+            {{- toYaml .Values.webhook.livenessProbe | nindent 12 }}
           readinessProbe:
-            {{- $rootReadiness := .Values.readinessProbe | default dict }}
-            {{- $webhookReadiness := .Values.webhook.readinessProbe | default dict }}
-            {{- toYaml (merge $webhookReadiness $rootReadiness) | nindent 12 }}
+            {{- toYaml .Values.webhook.readinessProbe | nindent 12 }}
           resources:
-            {{- toYaml (default .Values.resources .Values.webhook.resources) | nindent 12 }}
+            {{- toYaml .Values.webhook.resources | nindent 12 }}
           env:
             - name: N8N_HIRING_BANNER_ENABLED
               value: "false"
@@ -182,11 +178,11 @@ spec:
               value: {{ .Values.taskRunners.taskHeartbeatInterval | quote }}
             - name: N8N_RUNNERS_MAX_CONCURRENCY
               value: {{ .Values.taskRunners.maxConcurrency | quote }}
-          {{- range $key, $value := (default .Values.extraEnvVars .Values.webhook.extraEnvVars) }}
+          {{- range $key, $value := .Values.webhook.extraEnvVars }}
             - name: {{ upper $key }}
               value: {{ $value | quote }}
           {{- end }}
-          {{- with (default .Values.extraEnv .Values.webhook.extraEnv) }}
+          {{- with .Values.webhook.extraEnv }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           envFrom:
@@ -228,7 +224,7 @@ spec:
             - configMapRef:
                 name: {{ template "n8n.fullname" . }}-ai-configmap
           {{- end }}
-          {{- range (default .Values.extraSecretNamesForEnvFrom .Values.webhook.extraSecretNamesForEnvFrom) }}
+          {{- range .Values.webhook.extraSecretNamesForEnvFrom }}
             - secretRef:
                 name: {{ . }}
           {{- end }}
@@ -257,7 +253,7 @@ spec:
               subPath: cert.key
               readOnly: true
           {{- end }}
-          {{- with (default .Values.volumeMounts .Values.webhook.volumeMounts) }}
+          {{- with .Values.webhook.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
       {{- with .Values.webhook.extraContainers }}
@@ -294,14 +290,14 @@ spec:
               - key: {{ default "cert.key" .Values.db.postgresdb.ssl.existingPrivateKeyFileSecret.key }}
                 path: cert.key
       {{- end }}
-      {{- with (default .Values.volumes .Values.webhook.volumes) }}
+      {{- with .Values.webhook.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with (default .Values.affinity .Values.webhook.affinity) }}
+      {{- with .Values.webhook.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

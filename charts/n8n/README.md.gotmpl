@@ -1304,7 +1304,7 @@ Chart version 2.0.0 aligns the chart with the breaking changes introduced by n8n
 
 ##### Breaking Changes
 
-- `binaryData.availableModes` is **no longer rendered**. n8n 2.0 dropped the `N8N_AVAILABLE_BINARY_DATA_MODES` environment variable - the field has no env binding in n8n's own config any more - so the value had no effect. The chart keeps accepting it for one release and prints a `NOTES.txt` warning; delete it from your values.
+- `binaryData.availableModes` is **no longer rendered**. n8n 2.0 dropped the `N8N_AVAILABLE_BINARY_DATA_MODES` environment variable - the field has no env binding in n8n's own config any more - so the value had no effect. The field was removed in 4.0.0 and is now rejected by the values schema; use `binaryData.mode`.
 - `binaryData.mode` no longer accepts `default`. In-memory binary data is gone: n8n 2.x defaults to `filesystem` in regular mode and `database` in queue mode, and n8n 3.0 removes the `default` mode outright. The chart default is now unset (`~`), which lets n8n choose per deployment mode. Set `binaryData.mode` explicitly to `filesystem`, `database` or `s3`.
 - Switching from the old `default` mode means binary data now lands on disk or in the database. Give the chosen storage enough capacity and, for `filesystem`, make sure the path is on a persistent writable volume, and include it in backups. In-memory binary data itself cannot be migrated and is lost on restart either way.
 - `N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` moved out of the hardcoded container environment into the new `<release>-security-configmap` and is configurable through `security.enforceSettingsFilePermissions`.
@@ -1536,6 +1536,59 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 
 ```console
 helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
+```
+
+### To 4.0.0
+
+Eleven deprecated values were removed. They are now **rejected** by `values.schema.json`, so an
+upgrade that still sets any of them fails with a validation error naming the key — it will not
+silently drop your setting. Migrate them first.
+
+**Nine root-level values move into the per-component block that already replaced them.** Set them
+under `main`, `worker`, `webhook` and/or `webhook.mcp` — each component takes its own value, so
+repeat it for every component that needs it:
+
+| Removed | Replacement |
+|---|---|
+| `extraEnvVars` | `main.extraEnvVars`, `worker.extraEnvVars`, `webhook.extraEnvVars`, `webhook.mcp.extraEnvVars` |
+| `extraEnv` | `<component>.extraEnv` |
+| `extraSecretNamesForEnvFrom` | `<component>.extraSecretNamesForEnvFrom` |
+| `resources` | `<component>.resources` |
+| `livenessProbe` | `<component>.livenessProbe` |
+| `readinessProbe` | `<component>.readinessProbe` |
+| `volumes` | `<component>.volumes` |
+| `volumeMounts` | `<component>.volumeMounts` |
+| `affinity` | `<component>.affinity` |
+
+```yaml
+# before
+resources:
+  limits: {cpu: 500m, memory: 512Mi}
+
+# after
+main:
+  resources:
+    limits: {cpu: 500m, memory: 512Mi}
+worker:
+  resources:
+    limits: {cpu: 500m, memory: 512Mi}
+```
+
+Note that `livenessProbe` and `readinessProbe` were previously *deep-merged* with the component
+value, so if you relied on setting part of a probe at the root and the rest per component, the
+component block must now carry the whole probe.
+
+**Two others:**
+
+| Removed | Replacement |
+|---|---|
+| `license.autoNenew.enabled` / `.offsetInHours` | `license.autoRenew.enabled` / `.offsetInHours` (`autoNenew` was a misspelling) |
+| `binaryData.availableModes` | `binaryData.mode` — the old key had been ignored since 3.0.0, because n8n 2.0 removed `N8N_AVAILABLE_BINARY_DATA_MODES` |
+
+To find what you need to change before upgrading:
+
+```console
+helm get values <release> -n <namespace>
 ```
 
 ### To 3.3.0

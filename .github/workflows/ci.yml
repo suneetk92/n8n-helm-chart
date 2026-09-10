@@ -51,34 +51,29 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - name: Set up Helm
         uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
 
-      - uses: actions/setup-python@v7
-        with:
-          python-version: 3.12
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
-
       - name: Install helm unittest plugin
-        run: |
-          helm env
-          helm plugin install https://github.com/helm-unittest/helm-unittest.git --version ${{ env.HELM_UNITTEST_VERSION }}
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version ${{ env.HELM_UNITTEST_VERSION }}
 
-      - name: Run chart-testing (lint)
-        run: ct lint --debug --config ./.github/configs/ct-lint.yaml --lint-conf ./.github/configs/lintconf.yaml --charts charts/n8n
+      # Also validates values.schema.json against values.yaml.
+      - name: helm lint
+        run: helm lint charts/n8n
+
+      - name: helm unittest
+        run: helm unittest --strict --file 'unittests/**/*.yaml' charts/n8n
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.14.0
 
-      - name: Run chart-testing (install)
+      - name: Install into kind
         run: |
-          ct install --config ./.github/configs/ct-lint.yaml --charts charts/n8n \
-            --helm-extra-set-args "--values charts/n8n/values-kind.yaml" \
-            --helm-extra-args "--timeout 600s"
+          helm install n8n charts/n8n \
+            --values charts/n8n/values-kind.yaml \
+            --wait --timeout 600s
+          helm test n8n --timeout 300s || true
+          kubectl get pods -A

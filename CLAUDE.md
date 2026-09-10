@@ -17,14 +17,8 @@ in `charts/n8n/CLAUDE.md`. **Read that file when working on the chart.**
 ### Linting
 
 ```bash
-# chart-testing lint (also runs helm unittest via additional-commands)
-ct lint --debug --config ./.github/configs/ct-lint.yaml --lint-conf ./.github/configs/lintconf.yaml --charts charts/n8n
-
-# Plain helm lint (also validates values.schema.json)
+# Validates templates and values.schema.json against values.yaml
 helm lint charts/n8n
-
-# KubeLinter
-kube-linter lint charts/n8n --config .kube-linter.yaml
 ```
 
 ### Unit Tests
@@ -46,9 +40,7 @@ change to `values.yaml` doc comments or `README.md.gotmpl`.
 ### Kind Install Testing
 
 ```bash
-ct install --config ./.github/configs/ct-lint.yaml --charts charts/n8n \
-  --helm-extra-set-args "--values charts/n8n/values-kind.yaml" \
-  --helm-extra-args "--timeout 600s"
+helm install n8n charts/n8n --values charts/n8n/values-kind.yaml --wait --timeout 600s
 ```
 
 ## Architecture
@@ -107,23 +99,14 @@ unittests/
 1. **check-helm-docs**: Runs `helm-docs` and fails if `charts/n8n/README.md` differs from what is
    committed — catches PRs that changed `values.yaml` doc comments or `README.md.gotmpl` without
    regenerating the README.
-2. **lint-test**: Runs `ct lint` (which also invokes `helm unittest`) then `ct install` against a
-   kind cluster using `values-kind.yaml`. Requires `check-helm-docs` to pass.
+2. **lint-test**: `helm lint`, then `helm unittest`, then a real `helm install --wait` into a kind
+   cluster using `values-kind.yaml`. Requires `check-helm-docs` to pass.
 
 **`.github/workflows/oci-registry.yml`** (on pushes to `main` touching `charts/n8n/**`, or manual
 dispatch): packages the chart and pushes it to `ghcr.io/<owner>/n8n:<version>`.
 
-**`.github/workflows/security-scan.yml`** (on changes to `charts/**`): KubeLinter (all built-in
-checks) plus a Trivy misconfiguration scan (HIGH + CRITICAL). Both upload SARIF to GitHub Security.
-
-For **conditionally-rendered fields** (e.g. gated on `semverCompare`), suppress KubeLinter checks
-with a per-object annotation rather than a global `.kube-linter.yaml` exclusion:
-
-```yaml
-metadata:
-  annotations:
-    ignore-check.kube-linter.io/<check-name>: "reason"
-```
+Note every workflow is gated on `paths: charts/**`, so a commit touching only `.github/` triggers
+nothing.
 
 ### Unit Test Convention
 
@@ -155,26 +138,12 @@ Use `@deprecated` (not `DEPRECATED:`) in `values.yaml` doc comments:
 oldField: ~
 ```
 
-This matches existing deprecated fields and renders as plain text in the helm-docs README. The
-`values.schema.json` description strings may use `DEPRECATED:` since helm-docs doesn't render them.
-
-### Pre-commit Hooks
-
-`.pre-commit-config.yaml` configures a single hook. Run `pre-commit install` to activate locally.
-
-| Hook | Trigger | Behavior on failure |
-|---|---|---|
-| `helm-docs` | Any chart file change | Regenerates `README.md` in place; commit fails — re-stage and retry |
-
-**helm-docs re-stage workflow:** when the hook rewrites `README.md`, stage it and commit again:
-
-```bash
-git add charts/n8n/README.md
-git commit
-```
+It renders as plain text in the helm-docs README. The `values.schema.json` description strings may
+use `DEPRECATED:` since helm-docs doesn't render them. The chart currently carries no deprecated
+fields — 4.0.0 removed the last of them, so a new deprecation should also get a removal target.
 
 ## Conventions
 
-- YAML must follow `.github/configs/lintconf.yaml`: 2-space indent, no trailing spaces, LF line
-  endings, newline at EOF.
+- YAML style: 2-space indent, no trailing spaces, LF line endings, newline at EOF (enforced for
+  editors by `.editorconfig`).
 - Never add a `Co-Authored-By` trailer to commits.

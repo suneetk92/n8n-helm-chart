@@ -156,47 +156,6 @@ tests:
           value: TCP
         template: statefulset.yaml
 
-  - it: should set liveness probe when livenessProbe is set
-    set:
-      livenessProbe:
-        httpGet:
-          path: /healthz
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
-        successThreshold: 1
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.httpGet.path
-          value: /healthz
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.httpGet.port
-          value: http
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.initialDelaySeconds
-          value: 10
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.periodSeconds
-          value: 10
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.timeoutSeconds
-          value: 5
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.failureThreshold
-          value: 3
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.successThreshold
-          value: 1
-        template: statefulset.yaml
-
   - it: should set liveness probe when main.livenessProbe is set
     set:
       main:
@@ -236,47 +195,6 @@ tests:
         template: statefulset.yaml
       - equal:
           path: spec.template.spec.containers[?(@.name == "n8n-main")].livenessProbe.successThreshold
-          value: 1
-        template: statefulset.yaml
-
-  - it: should set readiness probe when readinessProbe is set
-    set:
-      readinessProbe:
-        httpGet:
-          path: /healthz/readiness
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
-        successThreshold: 1
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.httpGet.path
-          value: /healthz/readiness
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.httpGet.port
-          value: http
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.initialDelaySeconds
-          value: 10
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.periodSeconds
-          value: 10
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.timeoutSeconds
-          value: 5
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.failureThreshold
-          value: 3
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.successThreshold
           value: 1
         template: statefulset.yaml
 
@@ -320,33 +238,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "n8n-main")].readinessProbe.successThreshold
           value: 1
-        template: statefulset.yaml
-
-  - it: should set resources when resources are set
-    set:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 100Mi
-        limits:
-          cpu: 200m
-          memory: 200Mi
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].resources.requests.cpu
-          value: 100m
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].resources.requests.memory
-          value: 100Mi
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].resources.limits.cpu
-          value: 200m
-        template: statefulset.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].resources.limits.memory
-          value: 200Mi
         template: statefulset.yaml
 
   - it: should set resources when main.resources are set
@@ -654,18 +545,6 @@ tests:
             value: https://example.com
         template: statefulset.yaml
 
-  - it: should set extra environment variables when extraEnvVars is set
-    set:
-      extraEnvVars:
-        N8N_EXTRA_ENV_VAR: n8nextraenvvar
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
-          content:
-            name: N8N_EXTRA_ENV_VAR
-            value: n8nextraenvvar
-        template: statefulset.yaml
-
   - it: should set extra environment variables when main.extraEnvVars is set
     set:
       main:
@@ -677,25 +556,6 @@ tests:
           content:
             name: N8N_EXTRA_ENV_VAR
             value: n8nextraenvvar
-        template: statefulset.yaml
-
-  - it: should set valueFrom environment variables when extraEnv is set
-    set:
-      extraEnv:
-        - name: N8N_VALUE_FROM_VAR
-          valueFrom:
-            secretKeyRef:
-              name: my-secret
-              key: my-key
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
-          content:
-            name: N8N_VALUE_FROM_VAR
-            valueFrom:
-              secretKeyRef:
-                name: my-secret
-                key: my-key
         template: statefulset.yaml
 
   - it: should set valueFrom environment variables when main.extraEnv is set
@@ -827,25 +687,6 @@ tests:
               name: n8n-queue-configmap
         template: statefulset.yaml
 
-  - it: should set extra secret names for envFrom when extraSecretNamesForEnvFrom is set
-    set:
-      extraSecretNamesForEnvFrom:
-        - secret1
-        - secret2
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
-          content:
-            secretRef:
-              name: secret1
-        template: statefulset.yaml
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].envFrom
-          content:
-            secretRef:
-              name: secret2
-        template: statefulset.yaml
-
   - it: should set extra secret names for envFrom when main.extraSecretNamesForEnvFrom is set
     set:
       main:
@@ -866,21 +707,6 @@ tests:
               name: secret2
         template: statefulset.yaml
 
-  - it: should set extra volume mounts when volumeMounts is set
-    set:
-      volumeMounts:
-        - name: fake-volume
-          mountPath: /fake-path
-          readOnly: true
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-main")].volumeMounts
-          content:
-            name: fake-volume
-            mountPath: /fake-path
-            readOnly: true
-        template: statefulset.yaml
-
   - it: should set extra volume mounts when main.volumeMounts is set
     set:
       main:
@@ -895,23 +721,6 @@ tests:
             name: fake-volume
             mountPath: /fake-path
             readOnly: true
-        template: statefulset.yaml
-
-  - it: should set extra volumes when volumes is set
-    set:
-      volumes:
-        - name: foo
-          secret:
-            secretName: mysecret
-            optional: false
-    asserts:
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: foo
-            secret:
-              secretName: mysecret
-              optional: false
         template: statefulset.yaml
 
   - it: should set extra volumes when main.volumes is set
@@ -1144,31 +953,6 @@ tests:
       - equal:
           path: spec.template.spec.nodeSelector.disktype
           value: ssd
-        template: statefulset.yaml
-
-  - it: should set affinity when affinity is set
-    set:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                  - key: disktype
-                    operator: In
-                    values:
-                      - ssd
-    asserts:
-      - contains:
-          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution
-          content:
-            weight: 1
-            preference:
-              matchExpressions:
-                - key: disktype
-                  operator: In
-                  values:
-                    - ssd
         template: statefulset.yaml
 
   - it: should set affinity when main.affinity is set

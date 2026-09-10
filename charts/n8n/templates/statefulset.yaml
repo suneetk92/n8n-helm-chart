@@ -116,15 +116,11 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
-            {{- $rootLiveness := .Values.livenessProbe | default dict }}
-            {{- $mainLiveness := .Values.main.livenessProbe | default dict }}
-            {{- toYaml (merge $mainLiveness $rootLiveness) | nindent 12 }}
+            {{- toYaml .Values.main.livenessProbe | nindent 12 }}
           readinessProbe:
-            {{- $rootReadiness := .Values.readinessProbe | default dict }}
-            {{- $mainReadiness := .Values.main.readinessProbe | default dict }}
-            {{- toYaml (merge $mainReadiness $rootReadiness) | nindent 12 }}
+            {{- toYaml .Values.main.readinessProbe | nindent 12 }}
           resources:
-            {{- toYaml (default .Values.resources .Values.main.resources) | nindent 12 }}
+            {{- toYaml .Values.main.resources | nindent 12 }}
           env:
             - name: N8N_HIRING_BANNER_ENABLED
               value: "false"
@@ -233,11 +229,11 @@ spec:
             - name: N8N_REINSTALL_MISSING_PACKAGES
               value: "true"
           {{- end }}
-          {{- range $key, $value := (default .Values.extraEnvVars .Values.main.extraEnvVars) }}
+          {{- range $key, $value := .Values.main.extraEnvVars }}
             - name: {{ upper $key }}
               value: {{ $value | quote }}
           {{- end }}
-          {{- with (default .Values.extraEnv .Values.main.extraEnv) }}
+          {{- with .Values.main.extraEnv }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           envFrom:
@@ -289,7 +285,7 @@ spec:
             - configMapRef:
                 name: {{ template "n8n.fullname" . }}-ai-configmap
           {{- end }}
-          {{- range (default .Values.extraSecretNamesForEnvFrom .Values.main.extraSecretNamesForEnvFrom) }}
+          {{- range .Values.main.extraSecretNamesForEnvFrom }}
             - secretRef:
                 name: {{ . }}
           {{- end }}
@@ -329,7 +325,7 @@ spec:
               subPath: cert.key
               readOnly: true
           {{- end }}
-          {{- with (default .Values.volumeMounts .Values.main.volumeMounts) }}
+          {{- with .Values.main.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
       {{- if and (eq .Values.taskRunners.mode "external") (ne .Values.worker.mode "queue") }}
@@ -512,14 +508,14 @@ spec:
               - key: {{ default "cert.key" .Values.db.postgresdb.ssl.existingPrivateKeyFileSecret.key }}
                 path: cert.key
       {{- end }}
-      {{- with (default .Values.volumes .Values.main.volumes) }}
+      {{- with .Values.main.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with (default .Values.affinity .Values.main.affinity) }}
+      {{- with .Values.main.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

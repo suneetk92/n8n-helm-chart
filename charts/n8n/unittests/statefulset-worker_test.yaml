@@ -251,47 +251,6 @@ tests:
           value: 1
         template: statefulset-worker.yaml
 
-  - it: should set liveness probe when livenessProbe is set
-    set:
-      livenessProbe:
-        httpGet:
-          path: /healthz
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
-        successThreshold: 1
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.httpGet.path
-          value: /healthz
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.httpGet.port
-          value: http
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.initialDelaySeconds
-          value: 10
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.periodSeconds
-          value: 10
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.timeoutSeconds
-          value: 5
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.failureThreshold
-          value: 3
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.successThreshold
-          value: 1
-        template: statefulset-worker.yaml
-
   - it: should set liveness probe when worker.livenessProbe is set
     set:
       worker:
@@ -331,47 +290,6 @@ tests:
         template: statefulset-worker.yaml
       - equal:
           path: spec.template.spec.containers[?(@.name == "n8n-worker")].livenessProbe.successThreshold
-          value: 1
-        template: statefulset-worker.yaml
-
-  - it: should set readiness probe when readinessProbe is set
-    set:
-      readinessProbe:
-        httpGet:
-          path: /healthz/readiness
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
-        successThreshold: 1
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.httpGet.path
-          value: /healthz/readiness
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.httpGet.port
-          value: http
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.initialDelaySeconds
-          value: 10
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.periodSeconds
-          value: 10
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.timeoutSeconds
-          value: 5
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.failureThreshold
-          value: 3
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.successThreshold
           value: 1
         template: statefulset-worker.yaml
 
@@ -415,33 +333,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "n8n-worker")].readinessProbe.successThreshold
           value: 1
-        template: statefulset-worker.yaml
-
-  - it: should set resources when resources are set
-    set:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 100Mi
-        limits:
-          cpu: 200m
-          memory: 200Mi
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].resources.requests.cpu
-          value: 100m
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].resources.requests.memory
-          value: 100Mi
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].resources.limits.cpu
-          value: 200m
-        template: statefulset-worker.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].resources.limits.memory
-          value: 200Mi
         template: statefulset-worker.yaml
 
   - it: should set resources when worker.resources are set
@@ -733,18 +624,6 @@ tests:
                 optional: true
         template: statefulset-worker.yaml
 
-  - it: should set extra environment variables when extraEnvVars is set
-    set:
-      extraEnvVars:
-        N8N_EXTRA_ENV_VAR: n8nextraenvvar
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].env
-          content:
-            name: N8N_EXTRA_ENV_VAR
-            value: n8nextraenvvar
-        template: statefulset-worker.yaml
-
   - it: should set extra environment variables when worker.extraEnvVars is set
     set:
       worker:
@@ -756,25 +635,6 @@ tests:
           content:
             name: N8N_EXTRA_ENV_VAR
             value: n8nextraenvvar
-        template: statefulset-worker.yaml
-
-  - it: should set valueFrom environment variables when extraEnv is set
-    set:
-      extraEnv:
-        - name: N8N_VALUE_FROM_VAR
-          valueFrom:
-            secretKeyRef:
-              name: my-secret
-              key: my-key
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].env
-          content:
-            name: N8N_VALUE_FROM_VAR
-            valueFrom:
-              secretKeyRef:
-                name: my-secret
-                key: my-key
         template: statefulset-worker.yaml
 
   - it: should set valueFrom environment variables when worker.extraEnv is set
@@ -878,25 +738,6 @@ tests:
               name: n8n-encryption-key-secret-v2
         template: statefulset-worker.yaml
 
-  - it: should set extra secret names for envFrom when extraSecretNamesForEnvFrom is set
-    set:
-      extraSecretNamesForEnvFrom:
-        - secret1
-        - secret2
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].envFrom
-          content:
-            secretRef:
-              name: secret1
-        template: statefulset-worker.yaml
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].envFrom
-          content:
-            secretRef:
-              name: secret2
-        template: statefulset-worker.yaml
-
   - it: should set extra secret names for envFrom when worker.extraSecretNamesForEnvFrom is set
     set:
       worker:
@@ -917,21 +758,6 @@ tests:
               name: secret2
         template: statefulset-worker.yaml
 
-  - it: should set extra volume mounts when volumeMounts is set
-    set:
-      volumeMounts:
-        - name: fake-volume
-          mountPath: /fake-path
-          readOnly: true
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-worker")].volumeMounts
-          content:
-            name: fake-volume
-            mountPath: /fake-path
-            readOnly: true
-        template: statefulset-worker.yaml
-
   - it: should set extra volume mounts when worker.volumeMounts is set
     set:
       worker:
@@ -946,23 +772,6 @@ tests:
             name: fake-volume
             mountPath: /fake-path
             readOnly: true
-        template: statefulset-worker.yaml
-
-  - it: should set extra volumes when volumes is set
-    set:
-      volumes:
-        - name: foo
-          secret:
-            secretName: mysecret
-            optional: false
-    asserts:
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: foo
-            secret:
-              secretName: mysecret
-              optional: false
         template: statefulset-worker.yaml
 
   - it: should set extra volumes when worker.volumes is set
@@ -1195,31 +1004,6 @@ tests:
       - equal:
           path: spec.template.spec.nodeSelector.disktype
           value: ssd
-        template: statefulset-worker.yaml
-
-  - it: should set affinity when affinity is set
-    set:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                  - key: disktype
-                    operator: In
-                    values:
-                      - ssd
-    asserts:
-      - contains:
-          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution
-          content:
-            weight: 1
-            preference:
-              matchExpressions:
-                - key: disktype
-                  operator: In
-                  values:
-                    - ssd
         template: statefulset-worker.yaml
 
   - it: should set affinity when worker.affinity is set

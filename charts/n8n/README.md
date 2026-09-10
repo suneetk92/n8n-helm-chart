@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 3.3.1](https://img.shields.io/badge/Version-3.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 4.0.0](https://img.shields.io/badge/Version-4.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -16,14 +16,14 @@ architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 This chart is published as an OCI artifact, so no `helm repo add` is required:
 
 ```console
-helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.3.1
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.0.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 3.3.1`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 4.0.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1304,7 +1304,7 @@ Chart version 2.0.0 aligns the chart with the breaking changes introduced by n8n
 
 ##### Breaking Changes
 
-- `binaryData.availableModes` is **no longer rendered**. n8n 2.0 dropped the `N8N_AVAILABLE_BINARY_DATA_MODES` environment variable - the field has no env binding in n8n's own config any more - so the value had no effect. The chart keeps accepting it for one release and prints a `NOTES.txt` warning; delete it from your values.
+- `binaryData.availableModes` is **no longer rendered**. n8n 2.0 dropped the `N8N_AVAILABLE_BINARY_DATA_MODES` environment variable - the field has no env binding in n8n's own config any more - so the value had no effect. The field was removed in 4.0.0 and is now rejected by the values schema; use `binaryData.mode`.
 - `binaryData.mode` no longer accepts `default`. In-memory binary data is gone: n8n 2.x defaults to `filesystem` in regular mode and `database` in queue mode, and n8n 3.0 removes the `default` mode outright. The chart default is now unset (`~`), which lets n8n choose per deployment mode. Set `binaryData.mode` explicitly to `filesystem`, `database` or `s3`.
 - Switching from the old `default` mode means binary data now lands on disk or in the database. Give the chosen storage enough capacity and, for `filesystem`, make sure the path is on a persistent writable volume, and include it in backups. In-memory binary data itself cannot be migrated and is lost on restart either way.
 - `N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` moved out of the hardcoded container environment into the new `<release>-security-configmap` and is configurable through `security.enforceSettingsFilePermissions`.
@@ -1537,7 +1537,60 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.3.1
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.0.0
+```
+
+### To 4.0.0
+
+Eleven deprecated values were removed. They are now **rejected** by `values.schema.json`, so an
+upgrade that still sets any of them fails with a validation error naming the key — it will not
+silently drop your setting. Migrate them first.
+
+**Nine root-level values move into the per-component block that already replaced them.** Set them
+under `main`, `worker`, `webhook` and/or `webhook.mcp` — each component takes its own value, so
+repeat it for every component that needs it:
+
+| Removed | Replacement |
+|---|---|
+| `extraEnvVars` | `main.extraEnvVars`, `worker.extraEnvVars`, `webhook.extraEnvVars`, `webhook.mcp.extraEnvVars` |
+| `extraEnv` | `<component>.extraEnv` |
+| `extraSecretNamesForEnvFrom` | `<component>.extraSecretNamesForEnvFrom` |
+| `resources` | `<component>.resources` |
+| `livenessProbe` | `<component>.livenessProbe` |
+| `readinessProbe` | `<component>.readinessProbe` |
+| `volumes` | `<component>.volumes` |
+| `volumeMounts` | `<component>.volumeMounts` |
+| `affinity` | `<component>.affinity` |
+
+```yaml
+# before
+resources:
+  limits: {cpu: 500m, memory: 512Mi}
+
+# after
+main:
+  resources:
+    limits: {cpu: 500m, memory: 512Mi}
+worker:
+  resources:
+    limits: {cpu: 500m, memory: 512Mi}
+```
+
+Note that `livenessProbe` and `readinessProbe` were previously *deep-merged* with the component
+value, so if you relied on setting part of a probe at the root and the rest per component, the
+component block must now carry the whole probe.
+
+**Two others:**
+
+| Removed | Replacement |
+|---|---|
+| `license.autoNenew.enabled` / `.offsetInHours` | `license.autoRenew.enabled` / `.offsetInHours` (`autoNenew` was a misspelling) |
+| `binaryData.availableModes` | `binaryData.mode` — the old key had been ignored since 3.0.0, because n8n 2.0 removed `N8N_AVAILABLE_BINARY_DATA_MODES` |
+
+To find what you need to change before upgrading:
+
+```console
+helm get values <release> -n <namespace>
 ```
 
 ### To 3.3.0
@@ -1556,7 +1609,7 @@ workloads before upgrading**, otherwise Helm fails with a "field is immutable" e
 ```console
 kubectl delete deployment <release>-sandbox-api -n <namespace>
 kubectl delete statefulset <release>-sandbox-runner -n <namespace>
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.3.1
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.0.0
 ```
 
 Deleting them is safe: sandboxes are ephemeral, the API's state lives on its PVC, and the certificate
@@ -1611,7 +1664,6 @@ before upgrading — it will now actually be applied.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` | @deprecated Use main, worker, and webhook blocks volumes fields instead. This field will be removed in a future release. |
 | aiAssistant | object | `{"enabled":false,"existingModelApiKeySecret":"","mcpServers":"","model":"anthropic/claude-opus-4-8","modelApiKey":"","modelApiKeyKey":"api-key","modelUrl":"","modules":["instance-ai"],"sandbox":{"apiKeyKey":"api-key","enabled":false,"existingApiKeySecret":"","provider":"n8n-sandbox","serviceUrl":""},"searxng":{"url":""}}` | n8n Assistant and agents (`instance-ai`, `agents`). Preview feature; available on self-hosted Community, Registered Community and Business, not self-hosted Enterprise. Requires a sandbox; see `sandboxService`. |
 | aiAssistant.enabled | bool | `false` | Enable the AI module surface and render its ConfigMap. Does not by itself pick modules; see `modules`. |
 | aiAssistant.existingModelApiKeySecret | string | `""` | Existing secret holding the model API key, exposed as `N8N_INSTANCE_AI_MODEL_API_KEY`. When empty, n8n falls back to the provider's own environment variable and to in-UI configuration. |
@@ -1632,8 +1684,7 @@ before upgrading — it will now actually be applied.
 | api.enabled | bool | `true` | Whether to enable the Public API |
 | api.path | string | `"api"` | Path segment for the Public API |
 | api.swagger | object | `{"enabled":true}` | Whether to enable the Swagger UI for the Public API |
-| binaryData | object | `{"availableModes":[],"databaseMaxFileSize":512,"localStoragePath":"","mode":null,"s3":{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}}` | Configuration for binary data storage |
-| binaryData.availableModes | list | `[]` | @deprecated Use `binaryData.mode` instead. n8n 2.0 removed `N8N_AVAILABLE_BINARY_DATA_MODES`, so this field is ignored and will be removed in a future release. |
+| binaryData | object | `{"databaseMaxFileSize":512,"localStoragePath":"","mode":null,"s3":{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}}` | Configuration for binary data storage |
 | binaryData.databaseMaxFileSize | int | `512` | Maximum size (in MiB) of a single file n8n stores when `binaryData.mode` is `database`. Cannot exceed `1024`, which is the database column limit; storing a larger file fails. Only rendered when `binaryData.mode` is `database`. |
 | binaryData.localStoragePath | string | `""` | Path for binary data storage in `filesystem` mode. If not set, n8n uses `<N8N_USER_FOLDER>/binaryData`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
 | binaryData.mode | string | `nil` | The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
@@ -1710,10 +1761,7 @@ before upgrading — it will now actually be applied.
 | externalRedis.tls | object | `{"enabled":false}` | Placeholder for future Redis TLS certificates |
 | externalRedis.tls.enabled | bool | `false` | Enable TLS on Redis connections. |
 | externalRedis.username | string | `""` | External Redis username |
-| extraEnv | list | `[]` | @deprecated Use main, worker, webhook, and webhook.mcp blocks extraEnv fields instead. This field will be removed in a future release. |
-| extraEnvVars | object | `{}` | @deprecated Use main, worker, and webhook blocks extraEnvVars fields instead. This field will be removed in a future release. |
 | extraManifests | list | `[]` | List of extra Kubernetes manifests (objects or YAML strings) to deploy alongside n8n. Chart labels are automatically merged into each manifest's metadata. |
-| extraSecretNamesForEnvFrom | list | `[]` | @deprecated Use main, worker, and webhook blocks extraSecretNamesForEnvFrom fields instead. This field will be removed in a future release. |
 | extraTemplateManifests | list | `[]` | List of extra Kubernetes manifests as Helm template strings to deploy alongside n8n. Chart labels are automatically merged into each manifest's metadata. |
 | fullnameOverride | string | `""` |  |
 | gracefulShutdownTimeout | int | `30` | graceful shutdown timeout in seconds |
@@ -1730,11 +1778,8 @@ before upgrading — it will now actually be applied.
 | instanceOwner.lastName | string | `""` | Owner last name (`N8N_INSTANCE_OWNER_LAST_NAME`). |
 | instanceOwner.passwordHash | string | `""` | Bcrypt hash of the owner password, written into the chart-managed Secret as `N8N_INSTANCE_OWNER_PASSWORD_HASH`. Ignored when `existingSecret` is set. Generate one with `npx bcrypt '<password>'`; a plaintext value here breaks login and commits a credential. |
 | instanceOwner.passwordHashKey | string | `"password-hash"` | Key inside `existingSecret` that holds the bcrypt hash. |
-| license | object | `{"activationKey":"","autoNenew":{"enabled":null,"offsetInHours":null},"autoRenew":{"enabled":true,"offsetInHours":72},"enabled":false,"existingActivationKeySecret":"","serverUrl":"https://license.n8n.io/v1","tenantId":1}` | n8n enterprise license configurations |
+| license | object | `{"activationKey":"","autoRenew":{"enabled":true,"offsetInHours":72},"enabled":false,"existingActivationKeySecret":"","serverUrl":"https://license.n8n.io/v1","tenantId":1}` | n8n enterprise license configurations |
 | license.activationKey | string | `""` | Activation key to initialize license. Not applicable if the n8n instance was already activated. For more information please refer to the following link: https://docs.n8n.io/enterprise-key/ |
-| license.autoNenew | object | `{"enabled":null,"offsetInHours":null}` | @deprecated Use license.autoRenew fields instead. |
-| license.autoNenew.enabled | string | `nil` | @deprecated Use license.autoRenew.enabled field instead. |
-| license.autoNenew.offsetInHours | string | `nil` | @deprecated Use license.autoRenew.offsetInHours field instead. |
 | license.autoRenew | object | `{"enabled":true,"offsetInHours":72}` | The auto new license configuration |
 | license.autoRenew.enabled | bool | `true` | Enables (true) or disables (false) autorenewal for licenses. If disabled, you need to manually renew the license every 10 days by navigating to Settings > Usage and plan, and pressing F5. Failure to renew the license will disable Enterprise features. |
 | license.autoRenew.offsetInHours | int | `72` | Time in hours before expiry a license should automatically renew. |
@@ -1742,7 +1787,6 @@ before upgrading — it will now actually be applied.
 | license.existingActivationKeySecret | string | `""` | The name of an existing secret with license activation key. The secret must contain a key with the name N8N_LICENSE_ACTIVATION_KEY. |
 | license.serverUrl | string | `"https://license.n8n.io/v1"` | Server URL to retrieve license. |
 | license.tenantId | int | `1` | Tenant ID associated with the license. Only set this variable if explicitly instructed by n8n. |
-| livenessProbe | object | `{}` | @deprecated Use main, worker, and webhook blocks livenessProbe field instead. This field will be removed in a future release. |
 | log | object | `{"file":{"location":"/home/node/.n8n/logs/n8n.log","maxcount":"100","maxsize":16},"format":"text","level":"info","output":["console"],"scopes":[]}` | n8n log configurations |
 | log.file.location | string | `"/home/node/.n8n/logs/n8n.log"` | Absolute path for the log file. Must be inside a writable volume (e.g. the n8n data volume at `/home/node/.n8n`). Only for `file` log output. |
 | log.file.maxcount | string | `"100"` | Max number of log files to keep, or max number of days to keep logs for. Once the limit is reached, the oldest log files will be rotated out. If using days, append a `d` suffix. Only for `file` log output. |
@@ -1855,8 +1899,6 @@ before upgrading — it will now actually be applied.
 | pypiRegistry.secretKey | string | `"uv.toml"` | Key within the secret that holds the uv.toml content. |
 | pypiRegistry.secretName | string | `""` | Name of an existing Kubernetes secret whose data contains a uv.toml config file. When set, the file is mounted into the runner sidecar and UV_CONFIG_FILE is set. |
 | pypiRegistry.url | string | `""` | URL of the private PyPI index (e.g. https://my.jfrog.io/artifactory/api/pypi/pypi/simple/). Used when no config file is provided; sets UV_DEFAULT_INDEX in the sidecar. For authenticated registries embed credentials inline or use customUvConfig/secretName instead. |
-| readinessProbe | object | `{}` | @deprecated Use main, worker, and webhook blocks readinessProbe field instead. This field will be removed in a future release. |
-| resources | object | `{}` | @deprecated Use main, worker, and webhook blocks resources fields instead. This field will be removed in a future release. |
 | revisionHistoryLimit | string | `nil` | The number of old ReplicaSets to retain for rollback. More information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy |
 | sandboxService | object | `{"api":{"affinity":{},"defaultMaxSandboxes":50,"maxFileBytes":10485760,"nodeSelector":{},"persistence":{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClassName":""},"resources":{},"runnerHeartbeatGrace":"45s","store":"sqlite","tolerations":[]},"auth":{"apiKeys":"","existingSecret":"","keys":{"apiKeys":"api-keys","runnerApiKey":"runner-api-key","runnerApiKeys":"runner-api-keys","runnerRegistrationToken":"runner-registration-token"},"runnerApiKey":"","runnerApiKeys":"","runnerRegistrationToken":""},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/n8n-io/n8n-sandbox-service-api","runnerRepository":"ghcr.io/n8n-io/n8n-sandbox-service-runner-dind","sandboxRepository":"ghcr.io/n8n-io/n8n-sandbox-service-sandbox","tag":"","version":"1.3.4"},"replicas":1,"runner":{"acknowledgePrivileged":false,"affinity":{},"capacityTotal":1000,"controlGrpcPort":9091,"defaultCpuPercent":100,"defaultMemoryMb":512,"defaultPidsMax":256,"httpBaseUrl":"","httpPort":8080,"isolation":"privileged","nodeSelector":{},"replicas":1,"resources":{},"runtimeClassName":"","tolerations":[]},"tls":{"certManager":{"duration":"2160h","issuerRef":{"group":"cert-manager.io","kind":"Issuer","name":""},"renewBefore":"360h"},"certificates":{"apiControlClient":{"mountPath":"/tls/api-control-client","secretName":""},"apiRegistrationServer":{"mountPath":"/tls/api-registration","secretName":""},"runnerControlServer":{"mountPath":"/tls/runner-control","secretName":""},"runnerRegistrationClient":{"mountPath":"/tls/runner-registration","secretName":""}},"mode":"existingSecret"}}` | The n8n Sandbox Service: a control-plane API plus an in-cluster runner that executes AI-generated code. Deployed only when `sandboxService.enabled`. Treat the runner as root-equivalent on its node. |
 | sandboxService.api.defaultMaxSandboxes | int | `50` | Default per-tenant sandbox quota (`SANDBOX_API_DEFAULT_MAX_SANDBOXES`). `0` means unlimited. |
@@ -1998,8 +2040,6 @@ before upgrading — it will now actually be applied.
 | versionNotifications.enabled | bool | `false` | Whether to request notifications about new n8n versions |
 | versionNotifications.endpoint | string | `"https://api.n8n.io/api/versions/"` | Endpoint to retrieve n8n version information from |
 | versionNotifications.infoUrl | string | `"https://docs.n8n.io/hosting/installation/updating/"` | URL for versions panel to page instructing user on how to update n8n instance |
-| volumeMounts | list | `[]` | @deprecated Use main, worker, and webhook blocks volumeMounts fields instead. This field will be removed in a future release. |
-| volumes | list | `[]` | @deprecated Use main, worker, and webhook blocks volumes fields instead. This field will be removed in a future release. |
 | waitContainerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000}` | Security Context for the wait-for-main busybox init containers. |
 | webhook | object | `{"affinity":{},"allNodes":false,"autoscaling":{"behavior":{},"enabled":false,"maxReplicas":10,"metrics":[{"resource":{"name":"cpu","target":{"averageUtilization":80,"type":"Utilization"}},"type":"Resource"}],"minReplicas":2},"count":2,"extraContainers":[],"extraEnv":[],"extraEnvVars":{},"extraSecretNamesForEnvFrom":[],"hostAliases":[],"initContainers":[],"livenessProbe":{"httpGet":{"path":"/healthz","port":"http"}},"mcp":{"affinity":{},"enabled":true,"extraContainers":[],"extraEnv":[],"extraEnvVars":{},"extraSecretNamesForEnvFrom":[],"hostAliases":[],"initContainers":[],"livenessProbe":{"httpGet":{"path":"/healthz","port":"http"}},"readinessProbe":{"httpGet":{"path":"/healthz/readiness","port":"http"}},"resources":{},"startupProbe":{"exec":{"command":["/bin/sh","-c","ps aux | grep '[n]8n'"]},"failureThreshold":30,"initialDelaySeconds":10,"periodSeconds":5},"volumeMounts":[],"volumes":[]},"mode":"regular","pdb":{"enabled":true,"maxUnavailable":1,"minAvailable":null,"unhealthyPodEvictionPolicy":"AlwaysAllow"},"readinessProbe":{"httpGet":{"path":"/healthz/readiness","port":"http"}},"resources":{},"runtimeClassName":"","startupProbe":{"exec":{"command":["/bin/sh","-c","ps aux | grep '[n]8n'"]},"failureThreshold":30,"initialDelaySeconds":10,"periodSeconds":5},"url":"","volumeMounts":[],"volumes":[],"waitMainNodeReady":{"additionalParameters":[],"enabled":false,"healthCheckPath":"/healthz","overwriteSchema":"","overwriteUrl":""}}` | Webhook node configurations |
 | webhook.affinity | object | `{}` | Webhook node affinity. For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |

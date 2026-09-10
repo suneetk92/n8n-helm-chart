@@ -2,13 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
-    "affinity": {
-      "additionalProperties": true,
-      "description": "DEPRECATED: Use main, worker, and webhook blocks affinity fields instead. This field will be removed in a future release.",
-      "required": [],
-      "title": "affinity",
-      "type": "object"
-    },
     "api": {
       "additionalProperties": false,
       "properties": {
@@ -56,20 +49,6 @@
       "additionalProperties": false,
       "description": "Configuration for binary data storage",
       "properties": {
-        "availableModes": {
-          "default": [],
-          "description": "DEPRECATED: Use binaryData.mode instead. n8n 2.0 removed N8N_AVAILABLE_BINARY_DATA_MODES, so this field is ignored and will be removed in a future release.",
-          "required": [],
-          "title": "availableModes",
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "filesystem",
-              "s3"
-            ]
-          }
-        },
         "mode": {
           "default": null,
           "description": "The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (null) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/",
@@ -887,31 +866,6 @@
       "default": [],
       "title": "extraTemplateManifests"
     },
-    "extraEnvVars": {
-      "additionalProperties": true,
-      "description": "DEPRECATED: Use main, worker, and webhook blocks extraEnvVars fields instead. This field will be removed in a future release.",
-      "required": [],
-      "title": "extraEnvVars",
-      "type": "object"
-    },
-    "extraEnv": {
-      "description": "DEPRECATED: Use main, worker, webhook, and webhook.mcp blocks extraEnv fields instead. This field will be removed in a future release.",
-      "items": {
-        "required": []
-      },
-      "required": [],
-      "title": "extraEnv",
-      "type": "array"
-    },
-    "extraSecretNamesForEnvFrom": {
-      "description": "DEPRECATED: Use main, worker, and webhook blocks extraSecretNamesForEnvFrom fields instead. This field will be removed in a future release.",
-      "items": {
-        "required": []
-      },
-      "required": [],
-      "title": "extraSecretNamesForEnvFrom",
-      "type": "array"
-    },
     "fullnameOverride": {
       "default": "",
       "required": [],
@@ -1072,38 +1026,6 @@
         "tls"
       ],
       "title": "ingress",
-      "type": "object"
-    },
-    "livenessProbe": {
-      "additionalProperties": true,
-      "description": "DEPRECATED: Use main, worker, and webhook blocks livenessProbe field instead. This field will be removed in a future release.",
-      "properties": {
-        "httpGet": {
-          "additionalProperties": true,
-          "properties": {
-            "path": {
-              "default": "/healthz",
-              "required": [],
-              "title": "path",
-              "type": "string"
-            },
-            "port": {
-              "default": "http",
-              "required": [],
-              "title": "port",
-              "type": "string"
-            }
-          },
-          "required": [
-            "path",
-            "port"
-          ],
-          "title": "httpGet",
-          "type": "object"
-        }
-      },
-      "required": [],
-      "title": "livenessProbe",
       "type": "object"
     },
     "log": {
@@ -1780,42 +1702,6 @@
           "title": "existingActivationKeySecret",
           "type": "string"
         },
-        "autoNenew": {
-          "description": "DEPRECATED: Use license.autoRenew fields instead.",
-          "properties": {
-            "enabled": {
-              "default": true,
-              "description": "DEPRECATED: Use license.autoRenew.enabled field instead.",
-              "required": [],
-              "title": "enabled",
-              "oneOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "offsetInHours": {
-              "default": 72,
-              "description": "DEPRECATED: Use license.autoRenew.offsetInHours field instead.",
-              "required": [],
-              "title": "offsetInHours",
-              "oneOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          },
-          "required": [],
-          "title": "autoNenew",
-          "type": "object"
-        },
         "autoRenew": {
           "description": "The auto new license configuration",
           "properties": {
@@ -2425,87 +2311,6 @@
       "title": "podSecurityContext",
       "type": "object"
     },
-    "readinessProbe": {
-      "additionalProperties": true,
-      "description": "DEPRECATED: Use main, worker, and webhook blocks readinessProbe field instead. This field will be removed in a future release.",
-      "properties": {
-        "httpGet": {
-          "additionalProperties": true,
-          "properties": {
-            "path": {
-              "default": "/healthz/readiness",
-              "required": [],
-              "title": "path",
-              "type": "string"
-            },
-            "port": {
-              "default": "http",
-              "required": [],
-              "title": "port",
-              "type": "string"
-            }
-          },
-          "required": [
-            "path",
-            "port"
-          ],
-          "title": "httpGet",
-          "type": "object"
-        }
-      },
-      "required": [],
-      "title": "readinessProbe",
-      "type": "object"
-    },
-    "resources": {
-      "additionalProperties": true,
-      "description": "DEPRECATED: Use main, worker, and webhook blocks resources fields instead. This field will be removed in a future release.",
-      "properties": {
-        "limits": {
-          "additionalProperties": true,
-          "properties": {
-            "cpu": {
-              "default": "2000m",
-              "required": [],
-              "title": "cpu",
-              "type": "string"
-            },
-            "memory": {
-              "default": "2Gi",
-              "required": [],
-              "title": "memory",
-              "type": "string"
-            }
-          },
-          "required": [],
-          "title": "limits",
-          "type": "object"
-        },
-        "requests": {
-          "additionalProperties": true,
-          "properties": {
-            "cpu": {
-              "default": "100m",
-              "required": [],
-              "title": "cpu",
-              "type": "string"
-            },
-            "memory": {
-              "default": "128Mi",
-              "required": [],
-              "title": "memory",
-              "type": "string"
-            }
-          },
-          "required": [],
-          "title": "requests",
-          "type": "object"
-        }
-      },
-      "required": [],
-      "title": "resources",
-      "type": "object"
-    },
     "security": {
       "additionalProperties": false,
       "description": "Instance security defaults introduced by n8n 2.0, rendered into a ConfigMap consumed by every n8n container.",
@@ -2897,24 +2702,6 @@
       ],
       "title": "versionNotifications",
       "type": "object"
-    },
-    "volumeMounts": {
-      "description": "DEPRECATED: Use main, worker, and webhook blocks volumeMounts fields instead. This field will be removed in a future release.",
-      "items": {
-        "required": []
-      },
-      "required": [],
-      "title": "volumeMounts",
-      "type": "array"
-    },
-    "volumes": {
-      "description": "DEPRECATED: Use main, worker, and webhook blocks volumes fields instead. This field will be removed in a future release.",
-      "items": {
-        "required": []
-      },
-      "required": [],
-      "title": "volumes",
-      "type": "array"
     },
     "webhook": {
       "additionalProperties": false,
@@ -7125,7 +6912,6 @@
     "main",
     "nodeSelector",
     "tolerations",
-    "affinity",
     "dnsPolicy",
     "dnsConfig",
     "externalRedis",

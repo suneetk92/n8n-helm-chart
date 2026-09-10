@@ -273,47 +273,6 @@ tests:
           value: 1
         template: deployment-mcp-webhook.yaml
 
-  - it: should set liveness probe when livenessProbe is set
-    set:
-      livenessProbe:
-        httpGet:
-          path: /healthz
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
-        successThreshold: 1
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.httpGet.path
-          value: /healthz
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.httpGet.port
-          value: http
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.initialDelaySeconds
-          value: 10
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.periodSeconds
-          value: 10
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.timeoutSeconds
-          value: 5
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.failureThreshold
-          value: 3
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.successThreshold
-          value: 1
-        template: deployment-mcp-webhook.yaml
-
   - it: should set liveness probe when webhook.livenessProbe is set
     set:
       webhook:
@@ -354,47 +313,6 @@ tests:
         template: deployment-mcp-webhook.yaml
       - equal:
           path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].livenessProbe.successThreshold
-          value: 1
-        template: deployment-mcp-webhook.yaml
-
-  - it: should set readiness probe when readinessProbe is set
-    set:
-      readinessProbe:
-        httpGet:
-          path: /healthz/readiness
-          port: http
-        initialDelaySeconds: 10
-        periodSeconds: 10
-        timeoutSeconds: 5
-        failureThreshold: 3
-        successThreshold: 1
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.httpGet.path
-          value: /healthz/readiness
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.httpGet.port
-          value: http
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.initialDelaySeconds
-          value: 10
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.periodSeconds
-          value: 10
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.timeoutSeconds
-          value: 5
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.failureThreshold
-          value: 3
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.successThreshold
           value: 1
         template: deployment-mcp-webhook.yaml
 
@@ -439,33 +357,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].readinessProbe.successThreshold
           value: 1
-        template: deployment-mcp-webhook.yaml
-
-  - it: should set resources when resources are set
-    set:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 100Mi
-        limits:
-          cpu: 200m
-          memory: 200Mi
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].resources.requests.cpu
-          value: 100m
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].resources.requests.memory
-          value: 100Mi
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].resources.limits.cpu
-          value: 200m
-        template: deployment-mcp-webhook.yaml
-      - equal:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].resources.limits.memory
-          value: 200Mi
         template: deployment-mcp-webhook.yaml
 
   - it: should set resources when webhook.resources are set
@@ -770,18 +661,6 @@ tests:
                 optional: true
         template: deployment-mcp-webhook.yaml
 
-  - it: should set extra environment variables when extraEnvVars is set
-    set:
-      extraEnvVars:
-        N8N_EXTRA_ENV_VAR: n8nextraenvvar
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].env
-          content:
-            name: N8N_EXTRA_ENV_VAR
-            value: n8nextraenvvar
-        template: deployment-mcp-webhook.yaml
-
   - it: should set extra environment variables when webhook.extraEnvVars is set
     set:
       webhook:
@@ -794,25 +673,6 @@ tests:
           content:
             name: N8N_EXTRA_ENV_VAR
             value: n8nextraenvvar
-        template: deployment-mcp-webhook.yaml
-
-  - it: should set valueFrom environment variables when extraEnv is set
-    set:
-      extraEnv:
-        - name: N8N_VALUE_FROM_VAR
-          valueFrom:
-            secretKeyRef:
-              name: my-secret
-              key: my-key
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].env
-          content:
-            name: N8N_VALUE_FROM_VAR
-            valueFrom:
-              secretKeyRef:
-                name: my-secret
-                key: my-key
         template: deployment-mcp-webhook.yaml
 
   - it: should set valueFrom environment variables when webhook.mcp.extraEnv is set
@@ -917,25 +777,6 @@ tests:
               name: n8n-encryption-key-secret-v2
         template: deployment-mcp-webhook.yaml
 
-  - it: should set extra secret names for envFrom when extraSecretNamesForEnvFrom is set
-    set:
-      extraSecretNamesForEnvFrom:
-        - secret1
-        - secret2
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].envFrom
-          content:
-            secretRef:
-              name: secret1
-        template: deployment-mcp-webhook.yaml
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].envFrom
-          content:
-            secretRef:
-              name: secret2
-        template: deployment-mcp-webhook.yaml
-
   - it: should set extra secret names for envFrom when webhook.extraSecretNamesForEnvFrom is set
     set:
       webhook:
@@ -957,21 +798,6 @@ tests:
               name: secret2
         template: deployment-mcp-webhook.yaml
 
-  - it: should set extra volume mounts when volumeMounts is set
-    set:
-      volumeMounts:
-        - name: fake-volume
-          mountPath: /fake-path
-          readOnly: true
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].volumeMounts
-          content:
-            name: fake-volume
-            mountPath: /fake-path
-            readOnly: true
-        template: deployment-mcp-webhook.yaml
-
   - it: should set extra volume mounts when webhook.volumeMounts is set
     set:
       webhook:
@@ -987,23 +813,6 @@ tests:
             name: fake-volume
             mountPath: /fake-path
             readOnly: true
-        template: deployment-mcp-webhook.yaml
-
-  - it: should set extra volumes when volumes is set
-    set:
-      volumes:
-        - name: foo
-          secret:
-            secretName: mysecret
-            optional: false
-    asserts:
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: foo
-            secret:
-              secretName: mysecret
-              optional: false
         template: deployment-mcp-webhook.yaml
 
   - it: should set extra volumes when wevhook.volumes is set
@@ -1219,31 +1028,6 @@ tests:
       - equal:
           path: spec.template.spec.nodeSelector.disktype
           value: ssd
-        template: deployment-mcp-webhook.yaml
-
-  - it: should set affinity when affinity is set
-    set:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                  - key: disktype
-                    operator: In
-                    values:
-                      - ssd
-    asserts:
-      - contains:
-          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution
-          content:
-            weight: 1
-            preference:
-              matchExpressions:
-                - key: disktype
-                  operator: In
-                  values:
-                    - ssd
         template: deployment-mcp-webhook.yaml
 
   - it: should set affinity when webhook.affinity is set

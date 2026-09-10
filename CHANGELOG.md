@@ -4,6 +4,36 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+## 4.0.0
+
+### Removed
+
+- **The nine deprecated root-level values are gone.** Move each to the per-component block that
+  replaces it — `main`, `worker`, `webhook`, `webhook.mcp`:
+  `extraEnvVars`, `extraEnv`, `extraSecretNamesForEnvFrom`, `resources`, `livenessProbe`,
+  `readinessProbe`, `volumes`, `volumeMounts`, `affinity`. They had been deprecated with a NOTES
+  warning, and each was resolved through a `default .Values.<x> .Values.<component>.<x>` fallback
+  at 42 sites plus 12 probe merges across the six pod templates. Removing them deletes that
+  duplication, which is the same per-template divergence that produced several of the bugs fixed in
+  3.1.0 and 3.3.0.
+- **`license.autoNenew`** (and its `enabled` / `offsetInHours`), a misspelled alias kept for
+  back-compat. Use `license.autoRenew`.
+- **`binaryData.availableModes`**, ignored since 3.0.0 because n8n 2.0 removed
+  `N8N_AVAILABLE_BINARY_DATA_MODES`. Use `binaryData.mode`.
+
+All three are now rejected by `values.schema.json` rather than silently ignored, so an upgrade that
+still sets them fails with a clear validation error instead of quietly dropping the setting. See the
+chart README's "To 4.0.0" section.
+
+### Changed
+
+- CI dropped `chart-testing` in favour of calling `helm lint`, `helm unittest` and a plain
+  `helm install --wait` into kind directly, removing `.github/configs/ct-lint.yaml` and
+  `lintconf.yaml`. `helm lint` still validates `values.schema.json`.
+- Removed the KubeLinter/Trivy `security-scan` workflow, `.kube-linter.yaml`, the three now-dead
+  `ignore-check.kube-linter.io` annotations in `pdb.yaml`, and the inert `.pre-commit-config.yaml`
+  (its single `helm-docs` hook duplicates the CI drift check).
+
 ## 3.3.1
 
 ### Fixed
