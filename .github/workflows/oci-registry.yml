@@ -1,0 +1,76 @@
+name: Publish OCI Charts
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'charts/**'
+
+  workflow_dispatch:
+
+env:
+  HELM_VERSION: v3.18.3
+
+jobs:
+  publish-oci:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Add dependency chart repos
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add minio https://charts.min.io
+
+      - name: Detect Changed Charts
+        id: detect-changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            changed=$(git ls-tree --name-only HEAD charts/ | cut -d/ -f2)
+          else
+            changed=$(git diff --name-only ${{ github.sha }}^ ${{ github.sha }} | grep '^charts/' | cut -d/ -f1-2 | sort -u)
+          fi
+          echo "Changed charts: '$changed'"
+          charts=$(echo "$changed" | tr '\n' ' ' | xargs)
+          if [[ -n "$changed" ]]; then
+            echo "changed_charts=$charts" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Login to GitHub Container Registry
+        if: steps.detect-changed.outputs.changed_charts != ''
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Resolve dependencies, package and push changed charts
+        if: steps.detect-changed.outputs.changed_charts != ''
+        run: |
+          for chart in ${{ steps.detect-changed.outputs.changed_charts }}; do
+            name=$(basename "$chart")
+            version=$(yq eval '.version' "$chart/Chart.yaml")
+            echo "::group::Publishing ${name}:${version}"
+            (cd "$chart" && helm dependency update)
+            helm package "$chart" --destination ./dist
+            # ghcr.io/<owner>/<chart>:<version> — the registry path is the owner, so charts stay flat
+            helm push "dist/${name}-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}"
+            # convenience alias for `helm pull ...:latest`
+            helm push "dist/${name}-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}:${name}:latest"
+            echo "::endgroup::"
+          done
+
+      - name: Remove published artifacts
+        if: steps.detect-changed.outputs.changed_charts != ''
+        run: |
+          rm -f dist/*.tgz
