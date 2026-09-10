@@ -1,0 +1,175 @@
+name: Chart Version
+
+# Renovate bumps the upstream image versions but cannot bump the chart's own `version`: its
+# `bumpVersion` option only works with the helmv3 manager, which needs Chart.yaml `dependencies`,
+# and this chart has none. So when an image version lands on main, this workflow does the release
+# bookkeeping Renovate can't: chart patch bump, CHANGELOG entry, regenerated README, then publish.
+#
+# It validates before committing and dispatches the publish workflow itself, because a push made
+# with GITHUB_TOKEN does not trigger other workflows — so CI would never fire for this commit.
+#
+# It cannot loop: its own commit changes only the chart version, never an image version.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'charts/n8n/Chart.yaml'
+      - 'charts/n8n/values.yaml'
+
+env:
+  HELM_VERSION: v3.18.3
+  HELM_UNITTEST_VERSION: v0.8.2
+  HELM_DOCS_VERSION: v1.14.2
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect image version changes
+        id: detect
+        run: |
+          set -euo pipefail
+          read_at() { git show "$1:$2" 2>/dev/null | yq eval "$3" - 2>/dev/null || echo ""; }
+
+          APP_NEW=$(yq eval '.appVersion' charts/n8n/Chart.yaml)
+          APP_OLD=$(read_at HEAD~1 charts/n8n/Chart.yaml '.appVersion')
+          SBX_NEW=$(yq eval '.sandboxService.image.version' charts/n8n/values.yaml)
+          SBX_OLD=$(read_at HEAD~1 charts/n8n/values.yaml '.sandboxService.image.version')
+          NODE_NEW=$(yq eval '.nodes.initContainer.image.tag' charts/n8n/values.yaml)
+          NODE_OLD=$(read_at HEAD~1 charts/n8n/values.yaml '.nodes.initContainer.image.tag')
+          BB_NEW=$(yq eval '.waitContainer.image.tag' charts/n8n/values.yaml)
+          BB_OLD=$(read_at HEAD~1 charts/n8n/values.yaml '.waitContainer.image.tag')
+
+          CHART_NEW=$(yq eval '.version' charts/n8n/Chart.yaml)
+          CHART_OLD=$(read_at HEAD~1 charts/n8n/Chart.yaml '.version')
+
+          notes=""
+          [ "$APP_NEW"  != "$APP_OLD"  ] && notes="${notes}- n8n \`${APP_OLD}\` -> \`${APP_NEW}\` (\`appVersion\`, the tag for both \`n8nio/n8n\` and \`n8nio/runners\`).\n"
+          [ "$SBX_NEW"  != "$SBX_OLD"  ] && notes="${notes}- Sandbox service \`${SBX_OLD}\` -> \`${SBX_NEW}\` (all three \`n8n-sandbox-service-*\` images).\n"
+          [ "$NODE_NEW" != "$NODE_OLD" ] && notes="${notes}- npm-install init container \`node:${NODE_OLD}\` -> \`node:${NODE_NEW}\`.\n"
+          [ "$BB_NEW"   != "$BB_OLD"   ] && notes="${notes}- wait-for-main init container \`busybox:${BB_OLD}\` -> \`busybox:${BB_NEW}\`.\n"
+
+          if [ -z "$notes" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No image version change in this commit; nothing to do."
+            exit 0
+          fi
+
+          # If the same commit already bumped the chart version (a manual release), leave it alone.
+          if [ "$CHART_NEW" != "$CHART_OLD" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Chart version already bumped to $CHART_NEW in this commit; nothing to do."
+            exit 0
+          fi
+
+          NEXT=$(echo "$CHART_NEW" | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')
+          {
+            echo "changed=true"
+            echo "next=$NEXT"
+            echo "app_changed=$([ "$APP_NEW" != "$APP_OLD" ] && echo true || echo false)"
+            echo "notes<<NOTES_EOF"
+            printf '%b' "$notes"
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Helm
+        if: steps.detect.outputs.changed == 'true'
+        uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Apply chart version bump
+        if: steps.detect.outputs.changed == 'true'
+        env:
+          NEXT: ${{ steps.detect.outputs.next }}
+          NOTES: ${{ steps.detect.outputs.notes }}
+        run: |
+          set -euo pipefail
+          yq eval -i ".version = \"${NEXT}\"" charts/n8n/Chart.yaml
+          python3 - <<'EOF'
+          import os, pathlib
+          ver, notes = os.environ["NEXT"], os.environ["NOTES"].rstrip()
+          p = pathlib.Path("CHANGELOG.md"); t = p.read_text()
+          marker = 'accompanied by upgrade steps in the chart README\'s "Upgrading" section.\n\n'
+          p.write_text(t.replace(marker, f"{marker}## {ver}\n\n### Changed\n\n{notes}\n\n", 1))
+          EOF
+
+          V="${{ env.HELM_DOCS_VERSION }}"
+          wget -q -O /tmp/hd.tar.gz \
+            "https://github.com/norwoodj/helm-docs/releases/download/${V}/helm-docs_${V#v}_Linux_x86_64.tar.gz"
+          tar -xzf /tmp/hd.tar.gz -C /tmp helm-docs && sudo mv /tmp/helm-docs /usr/local/bin/helm-docs
+          helm-docs --chart-search-root=charts --template-files=README.md.gotmpl
+
+      - name: Verify the runners image exists for appVersion
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          # appVersion is the tag for BOTH n8nio/n8n and n8nio/runners. Renovate tracks it against
+          # n8nio/n8n, so a release that lands there first would leave anyone running
+          # taskRunners.mode=external unable to pull the sidecar. Fail closed on a definitive 404;
+          # only warn on other failures so a registry outage cannot block a release.
+          APP=$(yq eval '.appVersion' charts/n8n/Chart.yaml)
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://hub.docker.com/v2/repositories/n8nio/runners/tags/${APP}" || echo 000)
+          if [ "$code" = "404" ]; then
+            echo "::error::n8nio/runners:${APP} does not exist. appVersion is the tag for both n8n images, so this chart would break every install using taskRunners.mode=external. Wait for the runners image to publish ${APP}."
+            exit 1
+          elif [ "$code" != "200" ]; then
+            echo "::warning::Could not verify n8nio/runners:${APP} (HTTP ${code}); proceeding."
+          else
+            echo "n8nio/runners:${APP} exists."
+          fi
+
+      - name: Validate
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          helm plugin install https://github.com/helm-unittest/helm-unittest.git --version ${{ env.HELM_UNITTEST_VERSION }}
+          helm lint charts/n8n
+          helm unittest --strict --file 'unittests/**/*.yaml' charts/n8n
+
+      - name: Create kind cluster
+        if: steps.detect.outputs.changed == 'true'
+        uses: helm/kind-action@v1.14.0
+
+      - name: Install into kind
+        if: steps.detect.outputs.changed == 'true'
+        run: helm install n8n charts/n8n --values charts/n8n/values-kind.yaml --wait --timeout 600s
+
+      - name: Commit, tag and publish
+        if: steps.detect.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT: ${{ steps.detect.outputs.next }}
+          NOTES: ${{ steps.detect.outputs.notes }}
+          APP_CHANGED: ${{ steps.detect.outputs.app_changed }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A charts/n8n CHANGELOG.md
+          git commit -m "[n8n] Release ${NEXT}" -m "$NOTES"
+          git push origin HEAD:main
+
+          # Only n8n's own version earns a git tag; base-image and sandbox bumps just publish.
+          if [ "$APP_CHANGED" = "true" ]; then
+            git tag -a "v${NEXT}" -m "n8n chart ${NEXT}" -m "$NOTES"
+            git push origin "v${NEXT}"
+            echo "Tagged v${NEXT}"
+          else
+            echo "appVersion unchanged; publishing ${NEXT} without a tag"
+          fi
+
+          # A GITHUB_TOKEN push does not trigger workflows, so CI (and therefore the CI-gated
+          # publish) will not fire for the commit above. Dispatch the publish directly; this job has
+          # already run the same lint, unit tests and kind install that CI would.
+          gh workflow run "Publish Chart (OCI)" --ref main

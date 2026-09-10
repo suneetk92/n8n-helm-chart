@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 4.0.0](https://img.shields.io/badge/Version-4.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 4.1.0](https://img.shields.io/badge/Version-4.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -16,14 +16,14 @@ architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 This chart is published as an OCI artifact, so no `helm repo add` is required:
 
 ```console
-helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.0.0
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.1.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 4.0.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 4.1.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1537,7 +1537,7 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.0.0
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.1.0
 ```
 
 ### To 4.0.0
@@ -1609,7 +1609,7 @@ workloads before upgrading**, otherwise Helm fails with a "field is immutable" e
 ```console
 kubectl delete deployment <release>-sandbox-api -n <namespace>
 kubectl delete statefulset <release>-sandbox-runner -n <namespace>
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.0.0
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.1.0
 ```
 
 Deleting them is safe: sandboxes are ephemeral, the API's state lives on its PVC, and the certificate
@@ -2040,6 +2040,10 @@ before upgrading — it will now actually be applied.
 | versionNotifications.enabled | bool | `false` | Whether to request notifications about new n8n versions |
 | versionNotifications.endpoint | string | `"https://api.n8n.io/api/versions/"` | Endpoint to retrieve n8n version information from |
 | versionNotifications.infoUrl | string | `"https://docs.n8n.io/hosting/installation/updating/"` | URL for versions panel to page instructing user on how to update n8n instance |
+| waitContainer | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"1.36"}}` | Image for the `wait-for-main` init containers that block worker, webhook and MCP webhook pods    until the main node is ready. The default tag floats within the busybox 1.36 line, so patch    updates are picked up without a chart change. |
+| waitContainer.image.pullPolicy | string | `"IfNotPresent"` | Pull policy for the wait-for-main init container. |
+| waitContainer.image.repository | string | `"busybox"` | Repository for the wait-for-main init container. |
+| waitContainer.image.tag | string | `"1.36"` | Tag for the wait-for-main init container. |
 | waitContainerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000}` | Security Context for the wait-for-main busybox init containers. |
 | webhook | object | `{"affinity":{},"allNodes":false,"autoscaling":{"behavior":{},"enabled":false,"maxReplicas":10,"metrics":[{"resource":{"name":"cpu","target":{"averageUtilization":80,"type":"Utilization"}},"type":"Resource"}],"minReplicas":2},"count":2,"extraContainers":[],"extraEnv":[],"extraEnvVars":{},"extraSecretNamesForEnvFrom":[],"hostAliases":[],"initContainers":[],"livenessProbe":{"httpGet":{"path":"/healthz","port":"http"}},"mcp":{"affinity":{},"enabled":true,"extraContainers":[],"extraEnv":[],"extraEnvVars":{},"extraSecretNamesForEnvFrom":[],"hostAliases":[],"initContainers":[],"livenessProbe":{"httpGet":{"path":"/healthz","port":"http"}},"readinessProbe":{"httpGet":{"path":"/healthz/readiness","port":"http"}},"resources":{},"startupProbe":{"exec":{"command":["/bin/sh","-c","ps aux | grep '[n]8n'"]},"failureThreshold":30,"initialDelaySeconds":10,"periodSeconds":5},"volumeMounts":[],"volumes":[]},"mode":"regular","pdb":{"enabled":true,"maxUnavailable":1,"minAvailable":null,"unhealthyPodEvictionPolicy":"AlwaysAllow"},"readinessProbe":{"httpGet":{"path":"/healthz/readiness","port":"http"}},"resources":{},"runtimeClassName":"","startupProbe":{"exec":{"command":["/bin/sh","-c","ps aux | grep '[n]8n'"]},"failureThreshold":30,"initialDelaySeconds":10,"periodSeconds":5},"url":"","volumeMounts":[],"volumes":[],"waitMainNodeReady":{"additionalParameters":[],"enabled":false,"healthCheckPath":"/healthz","overwriteSchema":"","overwriteUrl":""}}` | Webhook node configurations |
 | webhook.affinity | object | `{}` | Webhook node affinity. For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |

@@ -60,6 +60,24 @@ jobs:
       - name: Install helm unittest plugin
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version ${{ env.HELM_UNITTEST_VERSION }}
 
+      - name: Verify the runners image exists for appVersion
+        run: |
+          # appVersion is the tag for BOTH n8nio/n8n and n8nio/runners. Renovate tracks it against
+          # n8nio/n8n, so a release that lands there first would leave anyone running
+          # taskRunners.mode=external unable to pull the sidecar. Fail closed on a definitive 404;
+          # only warn on other failures so a registry outage cannot block a release.
+          APP=$(yq eval '.appVersion' charts/n8n/Chart.yaml)
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://hub.docker.com/v2/repositories/n8nio/runners/tags/${APP}" || echo 000)
+          if [ "$code" = "404" ]; then
+            echo "::error::n8nio/runners:${APP} does not exist. appVersion is the tag for both n8n images, so this chart would break every install using taskRunners.mode=external. Wait for the runners image to publish ${APP}."
+            exit 1
+          elif [ "$code" != "200" ]; then
+            echo "::warning::Could not verify n8nio/runners:${APP} (HTTP ${code}); proceeding."
+          else
+            echo "n8nio/runners:${APP} exists."
+          fi
+
       # Also validates values.schema.json against values.yaml.
       - name: helm lint
         run: helm lint charts/n8n

@@ -62,6 +62,18 @@ securityContext:
   runAsUser: 1000
   runAsGroup: 1000
 
+# -- Image for the `wait-for-main` init containers that block worker, webhook and MCP webhook pods
+#    until the main node is ready. The default tag floats within the busybox 1.36 line, so patch
+#    updates are picked up without a chart change.
+waitContainer:
+  image:
+    # -- Repository for the wait-for-main init container.
+    repository: busybox
+    # -- Tag for the wait-for-main init container.
+    tag: "1.36"
+    # -- Pull policy for the wait-for-main init container.
+    pullPolicy: IfNotPresent
+
 # -- Security Context for the wait-for-main busybox init containers.
 waitContainerSecurityContext:
   allowPrivilegeEscalation: false

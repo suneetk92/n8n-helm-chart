@@ -4,6 +4,34 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+## 4.1.0
+
+### Added
+
+- `waitContainer.image` (`repository`, `tag`, `pullPolicy`) for the `wait-for-main` init containers.
+  `busybox:1.36` was hardcoded in four templates, so it could neither be overridden for an air-gapped
+  registry nor be seen by a dependency updater. The default is unchanged.
+
+### Changed
+
+- **Renovate replaces Dependabot.** Dependabot could not see any of this chart's image versions:
+  `appVersion` is not a dependency manifest entry, and its docker ecosystem does not parse the
+  `repository`/`tag` split that Helm values use. Renovate's `helm-values` manager handles the values
+  images, and two custom managers track `Chart.yaml` `appVersion` and
+  `sandboxService.image.version`. Patch-level n8n updates and base-image minor/patch updates
+  automerge; sandbox-service updates and n8n *major* updates wait for review.
+  `appVersion` is tracked against `n8nio/n8n`. Because it is also the tag for `n8nio/runners`, CI and
+  `chart-version.yml` both verify that `n8nio/runners:<appVersion>` exists before the chart can be
+  merged, tagged or published — a release that reached `n8nio/n8n` first would otherwise break every
+  install using `taskRunners.mode: external`. The check fails closed on a definitive 404 and only
+  warns on other registry errors, so a Docker Hub outage cannot block a release.
+- **Publishing is gated on CI.** `oci-registry.yml` now triggers on a successful `CI` run via
+  `workflow_run` instead of racing it on push, and skips a version that is already published. OCI
+  tags are immutable, so a failed chart previously could not be unpublished.
+- New `chart-version.yml` does the release bookkeeping Renovate cannot: when an image version lands
+  on `main` it bumps the chart patch version, adds a CHANGELOG entry, regenerates the README,
+  validates, publishes, and tags — **only tagging when `appVersion` itself changed.**
+
 ## 4.0.0
 
 ### Removed

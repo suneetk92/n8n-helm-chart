@@ -2428,6 +2428,52 @@
       "title": "securityContext",
       "type": "object"
     },
+    "waitContainer": {
+      "additionalProperties": false,
+      "description": "Image for the wait-for-main init containers",
+      "properties": {
+        "image": {
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "default": "busybox",
+              "description": "Repository for the wait-for-main init container",
+              "title": "repository",
+              "type": "string"
+            },
+            "tag": {
+              "default": "1.36",
+              "description": "Tag for the wait-for-main init container",
+              "title": "tag",
+              "type": "string"
+            },
+            "pullPolicy": {
+              "default": "IfNotPresent",
+              "description": "Pull policy for the wait-for-main init container",
+              "enum": [
+                "Always",
+                "Never",
+                "IfNotPresent"
+              ],
+              "title": "pullPolicy",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository",
+            "tag",
+            "pullPolicy"
+          ],
+          "title": "image",
+          "type": "object"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "title": "waitContainer",
+      "type": "object"
+    },
     "waitContainerSecurityContext": {
       "additionalProperties": true,
       "description": "Security Context for the wait-for-main busybox init containers.",

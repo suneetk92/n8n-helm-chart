@@ -1,0 +1,109 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommitsDisabled"
+  ],
+  "timezone": "Europe/Berlin",
+  "commitMessagePrefix": "[n8n]",
+  "prConcurrentLimit": 3,
+  "labels": [
+    "dependencies"
+  ],
+  "//": "Renovate replaces Dependabot here. Dependabot cannot see these versions at all: appVersion is not a dependency manifest entry, and its docker ecosystem does not parse the repository/tag split used in Helm values.",
+  "helm-values": {
+    "managerFilePatterns": [
+      "/charts/n8n/values\\.yaml/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Chart.yaml appVersion, tracked against n8nio/n8n. Note appVersion is also used as the tag for n8nio/runners, so if a release ever lands on n8nio/n8n before n8nio/runners, the task-runner sidecar will fail to pull until runners catches up.",
+      "managerFilePatterns": [
+        "/^charts/n8n/Chart\\.yaml$/"
+      ],
+      "matchStrings": [
+        "appVersion:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "n8nio/n8n",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "sandboxService.image.version \u2014 one pinned version shared by all three n8n-sandbox-service-* images, which upstream releases together.",
+      "managerFilePatterns": [
+        "/^charts/n8n/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "version:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*\\n"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "ghcr.io/n8n-io/n8n-sandbox-service-api",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "n8n itself, via the Chart.yaml appVersion custom manager. Patch and minor releases automerge; major waits for review. CI verifies n8nio/runners has published the same tag before the PR can merge, since appVersion is the tag for both images.",
+      "matchDepNames": [
+        "n8nio/n8n"
+      ],
+      "groupName": "n8n",
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Sandbox service. Preview upstream, so hold every update for review.",
+      "matchDepNames": [
+        "ghcr.io/n8n-io/n8n-sandbox-service-api"
+      ],
+      "groupName": "n8n sandbox service",
+      "automerge": false
+    },
+    {
+      "description": "Base images for the init and wait containers. Low risk, so automerge minor and patch.",
+      "matchDepNames": [
+        "node",
+        "busybox"
+      ],
+      "groupName": "base images",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "GitHub Actions, grouped so they land as one PR. Replaces the Dependabot actions-deps group.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github actions",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Never touch the image tags in values.yaml that are intentionally empty so they inherit Chart.yaml appVersion. Scoped to helm-values so it cannot disable the appVersion custom manager.",
+      "matchFileNames": [
+        "charts/n8n/values.yaml"
+      ],
+      "matchDepNames": [
+        "n8nio/n8n"
+      ],
+      "enabled": false,
+      "matchManagers": [
+        "helm-values"
+      ]
+    }
+  ]
+}

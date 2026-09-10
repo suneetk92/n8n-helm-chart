@@ -102,11 +102,29 @@ unittests/
 2. **lint-test**: `helm lint`, then `helm unittest`, then a real `helm install --wait` into a kind
    cluster using `values-kind.yaml`. Requires `check-helm-docs` to pass.
 
-**`.github/workflows/oci-registry.yml`** (on pushes to `main` touching `charts/n8n/**`, or manual
-dispatch): packages the chart and pushes it to `ghcr.io/<owner>/n8n:<version>`.
+**`.github/workflows/oci-registry.yml`**: triggers on a **successful `CI` run** via `workflow_run`
+(or manual dispatch), then packages the chart and pushes it to `ghcr.io/<owner>/n8n:<version>`. It
+skips a version that is already published, since OCI tags are immutable.
 
-Note every workflow is gated on `paths: charts/**`, so a commit touching only `.github/` triggers
-nothing.
+**`.github/workflows/chart-version.yml`** (on `main` pushes touching `Chart.yaml`/`values.yaml`):
+when an image version changed, bumps the chart patch version, adds a CHANGELOG entry, regenerates the
+README, validates, publishes, and tags — tagging **only** when `appVersion` changed. This is the
+bookkeeping Renovate cannot do, because its `bumpVersion` needs the `helmv3` manager and this chart
+has no `Chart.yaml` dependencies.
+
+`ci.yml` is gated on `paths: charts/**`, so a commit touching only `.github/` runs nothing.
+
+### Dependency Updates
+
+`renovate.json` (Renovate, not Dependabot — Dependabot cannot read `appVersion` or the
+`repository`/`tag` split in Helm values). It tracks `appVersion`, `sandboxService.image.version`, the
+`node` and `busybox` init-container images, and GitHub Actions. `appVersion` is tracked against
+`n8nio/runners` on purpose: it is the tag for both n8n images, so it must not move ahead of the
+runners image.
+
+**Note:** a push made with `GITHUB_TOKEN` does not trigger other workflows. That is why
+`chart-version.yml` validates inline and dispatches the publish itself rather than relying on CI
+firing for its own commit.
 
 ### Unit Test Convention
 

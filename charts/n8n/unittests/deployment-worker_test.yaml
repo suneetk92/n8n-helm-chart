@@ -2506,3 +2506,25 @@ tests:
               optional: true
           any: true
         template: deployment-worker.yaml
+
+  # busybox was hardcoded in four templates before 4.1.0; it now comes from values so it is both
+  # overridable and visible to Renovate's helm-values manager.
+  - it: should honour a waitContainer image override
+    set:
+      worker:
+        waitMainNodeReady:
+          enabled: true
+      waitContainer:
+        image:
+          repository: mycorp/busybox
+          tag: "1.37.0"
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "wait-for-main")].image
+          value: mycorp/busybox:1.37.0
+        template: deployment-worker.yaml
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "wait-for-main")].imagePullPolicy
+          value: Always
+        template: deployment-worker.yaml

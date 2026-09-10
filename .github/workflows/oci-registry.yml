@@ -1,10 +1,13 @@
 name: Publish Chart (OCI)
 
+# Runs only after CI succeeds on main, so a chart that fails lint, unit tests or the kind install
+# can never reach the registry. Published OCI tags are immutable, so a bad publish cannot be undone
+# without burning a version.
 on:
-  push:
+  workflow_run:
+    workflows: [ "CI" ]
+    types: [ completed ]
     branches: [ main ]
-    paths:
-      - 'charts/n8n/**'
 
   workflow_dispatch:
 
@@ -13,6 +16,13 @@ env:
 
 jobs:
   publish-oci:
+    # workflow_run fires for failures too, and for pull_request-triggered CI runs. Publish only for
+    # a successful push to main.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+
     runs-on: ubuntu-latest
 
     permissions:
@@ -22,23 +32,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # workflow_run checks out the default branch by default; pin to the exact commit CI passed on.
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Install Helm
         uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
 
+      - name: Resolve chart version
+        id: chart
+        run: echo "version=$(yq eval '.version' charts/n8n/Chart.yaml)" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already published
+        id: check
+        run: |
+          if helm show chart "oci://ghcr.io/${{ github.repository_owner }}/n8n" \
+               --version "${{ steps.chart.outputs.version }}" >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "n8n ${{ steps.chart.outputs.version }} is already published; nothing to do."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Login to GitHub Container Registry
+        if: steps.check.outputs.already == 'false'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
 
       - name: Package and push chart
+        if: steps.check.outputs.already == 'false'
         run: |
-          version=$(yq eval '.version' charts/n8n/Chart.yaml)
-          echo "::group::Publishing n8n:${version}"
+          echo "::group::Publishing n8n:${{ steps.chart.outputs.version }}"
           helm package charts/n8n --destination ./dist
           # ghcr.io/<owner>/n8n:<version> — the registry path is the owner, so the chart stays flat
-          helm push "dist/n8n-${version}.tgz" "oci://ghcr.io/${{ github.repository_owner }}"
+          helm push "dist/n8n-${{ steps.chart.outputs.version }}.tgz" "oci://ghcr.io/${{ github.repository_owner }}"
           echo "::endgroup::"
 
       - name: Remove published artifacts
