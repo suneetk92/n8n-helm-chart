@@ -1630,7 +1630,6 @@ tests:
           path: spec.template.spec.initContainers
           content:
             name: wait-for-main
-            image: busybox:1.36
           any: true
         template: statefulset-worker.yaml
 
