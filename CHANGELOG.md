@@ -4,7 +4,7 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
-## Unreleased
+## 3.2.0
 
 ### Fixed
 

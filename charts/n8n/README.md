@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 3.1.0](https://img.shields.io/badge/Version-3.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 3.2.0](https://img.shields.io/badge/Version-3.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -16,14 +16,14 @@ architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 This chart is published as an OCI artifact, so no `helm repo add` is required:
 
 ```console
-helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.1.0
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.2.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 3.1.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 3.2.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1537,8 +1537,48 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.1.0
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 3.2.0
 ```
+
+### To 3.2.0
+
+Two changes can make an upgrade fail that previously succeeded. Neither removes or renames a value.
+
+**`sandboxService` now requires its TLS certificate Secrets to be resolvable.** `tls.mode` defaults
+to `existingSecret`, and the chart previously fell back to derived `<release>-sandbox-*-tls` names
+that it never creates — so the API and runner pods mounted Secrets that did not exist and sat in
+`FailedMount` indefinitely. If you run the sandbox, pick one:
+
+- Supply the four Secrets yourself and set every
+  `sandboxService.tls.certificates.*.secretName`, or
+- Set `sandboxService.tls.mode: certManager` with `sandboxService.tls.certManager.issuerRef`.
+
+For `certManager`, the issuer must be a **CA-type** issuer (`selfSigned` or `ca`). An ACME issuer
+cannot work: two of the four certificates are `client auth` certificates carrying a `commonName`
+with no `dnsNames`, which ACME rejects, and ACME never populates the `ca.crt` both sides need to
+verify each other. A dedicated private CA is the recommended setup:
+
+```yaml
+# Issuer/n8n-sandbox-selfsigned (selfSigned) -> Certificate (isCA: true) -> Issuer (ca)
+sandboxService:
+  tls:
+    mode: certManager
+    certManager:
+      issuerRef:
+        name: n8n-sandbox-ca-issuer
+        kind: Issuer
+        group: cert-manager.io
+```
+
+**`values.schema.json` is stricter.** `securityContext.privileged`, `securityContext.runAsGroup`,
+the same two on `waitContainerSecurityContext`, and `strategy.rollingUpdate` are now declared, so a
+typo or wrong type in any of them is rejected at install instead of being silently ignored.
+
+Also note that four previously inert values now take effect:
+`sandboxService.tls.certManager.duration` / `renewBefore` (cert-manager was silently applying its
+own 90d/30d defaults), `db.sqlite.database`, `db.postgresdb.ssl.rejectUnauthorized` and
+`npmRegistry.url`. If you set any of them to something other than the chart default, review it
+before upgrading — it will now actually be applied.
 
 ## Values
 
