@@ -1,0 +1,36 @@
+name: Publish Official n8n (OCI)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Official community-charts n8n chart version to mirror to GHCR"
+        required: true
+        default: "1.24.40"
+
+env:
+  HELM_VERSION: v3.18.3
+
+jobs:
+  publish-official:
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Pull official chart and push to GHCR
+        run: |
+          VERSION="${{ inputs.version }}"
+          helm repo add community-charts https://community-charts.github.io/helm-charts/index.yaml
+          helm pull community-charts/n8n --version "$VERSION" --destination ./dist
+          echo "::group::Publishing official n8n:${VERSION}"
+          # ghcr.io/<owner>/n8n:<version> — same flat repo path the auto-published fork chart uses,
+          # so official and forked versions coexist under one package (different tags).
+          helm push "dist/n8n-${VERSION}.tgz" "oci://ghcr.io/${{ github.repository_owner }}"
+          echo "::endgroup::"
