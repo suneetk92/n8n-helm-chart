@@ -2605,6 +2605,18 @@
           "required": [],
           "title": "capabilities",
           "type": "object"
+        },
+        "privileged": {
+          "type": "boolean",
+          "description": "Run the container in privileged mode",
+          "required": [],
+          "title": "privileged"
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "Group ID the container process runs as",
+          "required": [],
+          "title": "runAsGroup"
         }
       },
       "required": [],
@@ -2662,6 +2674,18 @@
           "required": [],
           "title": "capabilities",
           "type": "object"
+        },
+        "privileged": {
+          "type": "boolean",
+          "description": "Run the container in privileged mode",
+          "required": [],
+          "title": "privileged"
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "Group ID the container process runs as",
+          "required": [],
+          "title": "runAsGroup"
         }
       },
       "required": [],
@@ -2781,6 +2805,31 @@
             "RollingUpdate",
             "Recreate"
           ]
+        },
+        "rollingUpdate": {
+          "additionalProperties": false,
+          "description": "Rolling update parameters; only used when strategy.type is RollingUpdate",
+          "properties": {
+            "maxUnavailable": {
+              "description": "Maximum number of pods that can be unavailable during the update. Accepts a count (1) or a percentage (\"25%\").",
+              "title": "maxUnavailable",
+              "type": [
+                "string",
+                "integer"
+              ]
+            },
+            "maxSurge": {
+              "description": "Maximum number of pods that can be created over the desired number. Accepts a count (1) or a percentage (\"25%\").",
+              "title": "maxSurge",
+              "type": [
+                "string",
+                "integer"
+              ]
+            }
+          },
+          "required": [],
+          "title": "rollingUpdate",
+          "type": "object"
         }
       },
       "required": [

@@ -16,6 +16,21 @@ chart:
   version: 1.0.0
   appVersion: 1.0.0
 
+# tls.mode defaults to existingSecret, which now requires all four certificate Secret names.
+# These match the names the chart used to derive implicitly, so rendered output is unchanged.
+set:
+  sandboxService:
+    tls:
+      certificates:
+        apiRegistrationServer:
+          secretName: n8n-sandbox-api-registration-tls
+        apiControlClient:
+          secretName: n8n-sandbox-api-control-client-tls
+        runnerRegistrationClient:
+          secretName: n8n-sandbox-runner-registration-tls
+        runnerControlServer:
+          secretName: n8n-sandbox-runner-control-tls
+
 tests:
   - it: should render the API configmap with default settings
     set:
@@ -410,3 +425,37 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: outside this cluster
+
+  - it: should render when tls.mode is existingSecret and all four secretNames are set
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+        tls:
+          certificates:
+            apiRegistrationServer:
+              secretName: api-reg
+            apiControlClient:
+              secretName: api-ctl
+            runnerRegistrationClient:
+              secretName: runner-reg
+            runnerControlServer:
+              secretName: runner-ctl
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: should render when tls.mode is certManager with an issuerRef
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+        tls:
+          mode: certManager
+          certManager:
+            issuerRef:
+              name: ca-issuer
+              kind: ClusterIssuer
+    asserts:
+      - notFailedTemplate: {}

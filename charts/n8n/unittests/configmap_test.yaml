@@ -1597,6 +1597,17 @@ tests:
         enabled: true
         runner:
           acknowledgePrivileged: true
+        # tls.mode defaults to existingSecret, which requires all four certificate Secret names.
+        tls:
+          certificates:
+            apiRegistrationServer:
+              secretName: n8n-sandbox-api-registration-tls
+            apiControlClient:
+              secretName: n8n-sandbox-api-control-client-tls
+            runnerRegistrationClient:
+              secretName: n8n-sandbox-runner-registration-tls
+            runnerControlServer:
+              secretName: n8n-sandbox-runner-control-tls
     documentSelector:
       path: metadata.name
       value: n8n-ai-configmap

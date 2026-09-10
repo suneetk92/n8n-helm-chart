@@ -767,7 +767,19 @@ configuration is reported instead of producing pods that crash-loop.
 {{- if not .Values.sandboxService.tls.certManager.issuerRef.name -}}
 {{- fail "sandboxService.tls.certManager.issuerRef.name is required when sandboxService.tls.mode is \"certManager\"." -}}
 {{- end -}}
-{{- else if not (has .Values.sandboxService.tls.mode (list "existingSecret" "certManager")) -}}
+{{- else if eq .Values.sandboxService.tls.mode "existingSecret" -}}
+{{/*
+The API and the runner authenticate each other with mTLS; there is no plaintext mode, so all four
+certificate Secrets are mounted unconditionally. In this mode the chart does not create them, and an
+unset secretName falls back to a derived `<release>-sandbox-*-tls` name that nothing ever creates,
+leaving the pod stuck on FailedMount indefinitely. Refuse to install instead.
+*/}}
+{{- range $name := (list "apiRegistrationServer" "apiControlClient" "runnerRegistrationClient" "runnerControlServer") -}}
+{{- if not (get $.Values.sandboxService.tls.certificates $name).secretName -}}
+{{- fail (printf "sandboxService.tls.certificates.%s.secretName is required when sandboxService.tls.mode is \"existingSecret\". The sandbox API and runner authenticate each other with mTLS, so all four certificate Secrets must already exist; leaving this unset makes the pod mount a Secret the chart never creates and hang in FailedMount. Either pre-create the four Secrets and set their names, or use sandboxService.tls.mode=certManager with sandboxService.tls.certManager.issuerRef set." $name) -}}
+{{- end -}}
+{{- end -}}
+{{- else -}}
 {{- fail "sandboxService.tls.mode must be either \"existingSecret\" or \"certManager\"." -}}
 {{- end -}}
 {{- if and (not .Values.sandboxService.auth.existingSecret) (eq .Values.sandboxService.api.store "postgres") -}}

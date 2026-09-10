@@ -1,0 +1,58 @@
+suite: test sandbox service tls validation
+
+# Deliberately has no suite-level `set` baseline: these tests assert what happens when the four
+# certificate Secret names are left at their empty defaults.
+
+templates:
+  - sandbox-statefulset-runner.yaml
+
+release:
+  name: n8n
+  namespace: n8n
+
+chart:
+  version: 1.0.0
+  appVersion: 1.0.0
+
+tests:
+  # The API and runner authenticate each other with mTLS, so all four cert Secrets are mounted
+  # unconditionally. In existingSecret mode the chart creates none of them, and an unset secretName
+  # fell back to a derived `<release>-sandbox-*-tls` name that nothing ever creates, leaving the pod
+  # stuck on FailedMount indefinitely.
+  - it: should fail when tls.mode is existingSecret and no certificate secretNames are set
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sandboxService\.tls\.certificates\.apiRegistrationServer\.secretName is required'
+
+  - it: should fail when tls.mode is existingSecret and only some secretNames are set
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+        tls:
+          certificates:
+            apiRegistrationServer:
+              secretName: api-reg
+            apiControlClient:
+              secretName: api-ctl
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sandboxService\.tls\.certificates\.runner(RegistrationClient|ControlServer)\.secretName is required'
+
+  - it: should fail when tls.mode is certManager without an issuerRef name
+    set:
+      sandboxService:
+        enabled: true
+        runner:
+          acknowledgePrivileged: true
+        tls:
+          mode: certManager
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sandboxService\.tls\.certManager\.issuerRef\.name is required'

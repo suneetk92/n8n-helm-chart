@@ -4,6 +4,31 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+## Unreleased
+
+### Fixed
+
+- `sandboxService.enabled: true` with default TLS settings is now rejected at install time instead of
+  producing pods that hang forever. `tls.mode` defaults to `existingSecret`, but nothing required the
+  four `tls.certificates.*.secretName` values, so the chart fell back to derived
+  `<release>-sandbox-*-tls` names that it never creates and the API and runner pods sat in
+  `FailedMount` indefinitely (`secret "…-sandbox-runner-registration-tls" not found`). The API and
+  runner authenticate each other with mTLS and there is no plaintext mode, so all four Secrets must
+  exist: either pre-create them and set the names, or use `tls.mode: certManager` with an
+  `issuerRef`.
+- `waitContainerSecurityContext` is now nil-guarded in the four templates that use it. It is the only
+  optional root value that was dereferenced unguarded, so setting it to `null` emitted
+  `securityContext: null` and silently discarded the hardening defaults.
+
+### Changed
+
+- `values.schema.json` now declares five keys that ship as defaults in `values.yaml` but were
+  previously accepted only because their parent allowed additional properties, so they received no
+  validation: `securityContext.privileged`, `securityContext.runAsGroup`,
+  `waitContainerSecurityContext.privileged`, `waitContainerSecurityContext.runAsGroup` and
+  `strategy.rollingUpdate` (whose `maxSurge`/`maxUnavailable` accept a count or a percentage).
+  Typos and wrong types in these are now rejected at install rather than silently ignored.
+
 ## 3.1.0
 
 ### Fixed
