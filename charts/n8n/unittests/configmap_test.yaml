@@ -45,26 +45,10 @@ tests:
           path: data.DB_TYPE
           value: postgresdb
 
-  - it: should set postgressql host when db type set to postgresdb and postgresql.enabled is true
+  - it: should set postgresql host from external postgresql host when db type set to postgresdb
     set:
       db:
         type: postgresdb
-      postgresql:
-        enabled: true
-    documentSelector:
-      path: metadata.name
-      value: n8n-database-configmap
-    asserts:
-      - equal:
-          path: data.DB_POSTGRESDB_HOST
-          value: n8n-postgresql
-
-  - it: should set postgresql host from external postgresql host when db type set to postgresdb and postgresql.enabled is false
-    set:
-      db:
-        type: postgresdb
-      postgresql:
-        enabled: false
       externalPostgresql:
         host: external-postgresql-hostname
     documentSelector:
@@ -75,30 +59,10 @@ tests:
           path: data.DB_POSTGRESDB_HOST
           value: external-postgresql-hostname
 
-  - it: should set postgresql port when db type set to postgresdb and postgresql.enabled is true
+  - it: should set postgresql port from external postgresql port when db type set to postgresdb
     set:
       db:
         type: postgresdb
-      postgresql:
-        enabled: true
-        primary:
-          service:
-            ports:
-              postgresql: 9876
-    documentSelector:
-      path: metadata.name
-      value: n8n-database-configmap
-    asserts:
-      - equal:
-          path: data.DB_POSTGRESDB_PORT
-          value: "9876"
-
-  - it: should set postgresql port from external postgresql port when db type set to postgresdb and postgresql.enabled is false
-    set:
-      db:
-        type: postgresdb
-      postgresql:
-        enabled: false
       externalPostgresql:
         port: 9876
     documentSelector:
@@ -109,28 +73,10 @@ tests:
           path: data.DB_POSTGRESDB_PORT
           value: "9876"
 
-  - it: should set postgresql database when db type set to postgresdb and postgresql.enabled is true
+  - it: should set postgresql database from external postgresql database when db type set to postgresdb
     set:
       db:
         type: postgresdb
-      postgresql:
-        enabled: true
-        auth:
-          database: my_database
-    documentSelector:
-      path: metadata.name
-      value: n8n-database-configmap
-    asserts:
-      - equal:
-          path: data.DB_POSTGRESDB_DATABASE
-          value: my_database
-
-  - it: should set postgresql database from external postgresql database when db type set to postgresdb and postgresql.enabled is false
-    set:
-      db:
-        type: postgresdb
-      postgresql:
-        enabled: false
       externalPostgresql:
         database: external_database
     documentSelector:
@@ -605,52 +551,6 @@ tests:
       - equal:
           path: data.OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
           value: "true"
-
-  - it: should set redis host redis-master and port when db type set to postgresdb and worker mode is queue and redis.enabled is true
-    set:
-      db:
-        type: postgresdb
-      worker:
-        mode: queue
-      redis:
-        enabled: true
-        master:
-          service:
-            ports:
-              redis: 6379
-    documentSelector:
-      path: metadata.name
-      value: n8n-queue-configmap
-    asserts:
-      - equal:
-          path: data.QUEUE_BULL_REDIS_HOST
-          value: n8n-redis-master
-      - equal:
-          path: data.QUEUE_BULL_REDIS_PORT
-          value: "6379"
-
-  - it: should set redis host redis-master and port when db type set to postgresdb and webhook mode is queue and redis.enabled is true
-    set:
-      db:
-        type: postgresdb
-      webhook:
-        mode: queue
-      redis:
-        enabled: true
-        master:
-          service:
-            ports:
-              redis: 6379
-    documentSelector:
-      path: metadata.name
-      value: n8n-queue-configmap
-    asserts:
-      - equal:
-          path: data.QUEUE_BULL_REDIS_HOST
-          value: n8n-redis-master
-      - equal:
-          path: data.QUEUE_BULL_REDIS_PORT
-          value: "6379"
 
   - it: should set redis host and port from external redis host and port when db type set to postgresdb and worker mode is queue and redis.enabled is false
     set:
@@ -1419,57 +1319,6 @@ tests:
       - equal:
           path: data.N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION
           value: eu-central-1
-
-  - it: should set s3 configurations from minio when binaryData.mode is s3 and minio is enabled
-    set:
-      minio:
-        enabled: true
-        buckets:
-          - name: fake-bucket
-            policy: none
-            purge: false
-            versioning: false
-      binaryData:
-        mode: s3
-        s3:
-          bucketRegion: eu-central-1
-    documentSelector:
-      path: metadata.name
-      value: n8n-binary-data-configmap
-    asserts:
-      - equal:
-          path: data.N8N_EXTERNAL_STORAGE_S3_HOST
-          value: n8n-minio:9000
-      - equal:
-          path: data.N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME
-          value: fake-bucket
-      - equal:
-          path: data.N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION
-          value: eu-central-1
-
-  - it: should set bucket name from s3 object when binaryData.mode is s3 and minio is enabled but buckets are not set
-    set:
-      minio:
-        enabled: true
-        buckets: []
-      binaryData:
-        mode: s3
-        s3:
-          bucketName: another-bucket
-          bucketRegion: eu-west-1
-    documentSelector:
-      path: metadata.name
-      value: n8n-binary-data-configmap
-    asserts:
-      - equal:
-          path: data.N8N_EXTERNAL_STORAGE_S3_HOST
-          value: n8n-minio:9000
-      - equal:
-          path: data.N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME
-          value: another-bucket
-      - equal:
-          path: data.N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION
-          value: eu-west-1
 
   - it: should match snapshot of default values
     release:

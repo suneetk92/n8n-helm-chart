@@ -2,10 +2,10 @@ log:
   level: info
 
 db:
-  type: postgresdb
+  type: sqlite
 
 worker:
-  mode: queue
+  mode: regular
   count: 1
 
   waitMainNodeReady:
@@ -22,7 +22,7 @@ worker:
     failureThreshold: 5
 
 webhook:
-  mode: queue
+  mode: regular
   count: 1
 
   waitMainNodeReady:
@@ -37,15 +37,6 @@ webhook:
     initialDelaySeconds: 60
     periodSeconds: 20
     failureThreshold: 5
-
-redis:
-  enabled: true
-
-postgresql:
-  enabled: true
-  primary:
-    persistence:
-      enabled: false
 
 nodes:
   python:

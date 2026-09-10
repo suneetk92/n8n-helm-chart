@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 2.0.0](https://img.shields.io/badge/Version-2.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
+![Version: 3.0.0](https://img.shields.io/badge/Version-3.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.38.4](https://img.shields.io/badge/AppVersion-2.38.4-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -123,20 +123,6 @@ ingress:
           pathType: ImplementationSpecific
 ```
 
-## Deployment with Bitnami's PostgreSQL
-
-```yaml
-db:
-  type: postgresdb
-
-postgresql:
-  enabled: true
- 
-  primary:
-    persistence:
-      existingClaim: "my-n8n-claim"
-```
-
 ## Deployment with External PostgreSQL
 
 ```yaml
@@ -163,27 +149,6 @@ externalPostgresql:
 
   existingSecret: "my-k8s-secret-contains-postgres-password-key-and-credential"
   existingSecretPasswordKey: "my-postgres-password-key"
-```
-
-## Queue Mode with Bitnami's Redis
-
-> **Tip**: Queue mode doesn't work with default SQLite mode
-
-```yaml
-db:
-  type: postgresdb
-
-externalPostgresql:
-  host: "postgresql-instance1.ab012cdefghi.eu-central-1.rds.amazonaws.com"
-  username: "n8nuser"
-  password: "Pa33w0rd!"
-  database: "n8n"
-
-worker:
-  mode: queue
-
-redis:
-  enabled: true
 ```
 
 ## Queue Mode with External Redis
@@ -1325,6 +1290,20 @@ This section outlines major updates and breaking changes for each version of the
 
 ###  Version-Specific Upgrade Notes
 
+#### Upgrading to Version 3.0.0
+
+Chart version 3.0.0 removes the bundled `redis`, `postgresql` and `minio` subcharts. n8n is expected to talk to externally provided services, so the chart no longer deploys (or configures) them for you.
+
+##### Breaking Changes
+
+- The `postgresql` value block (and its `enabled`/`auth`/`primary` keys) is removed. With `db.type: postgresdb`, point the chart at an external database via `externalPostgresql.host`, `.username`, `.password` (or `.existingSecret`) and `.database`.
+- The `redis` value block (and its `enabled` key) is removed. In queue mode, point the chart at an external Redis via `externalRedis.host`, `.port`, `.username`, `.password` (or `.existingSecret`).
+- The `minio` value block is removed. With `binaryData.mode: s3`, point the chart at any S3-compatible store via `binaryData.s3.host`, `.bucketName`, `.bucketRegion`, and either `.accessKey`/`.accessSecret` or `.existingSecret`.
+
+Any values file that still sets `postgresql.enabled`, `redis.enabled` or `minio.enabled` (or other keys under those blocks) now fails schema validation, because the root schema uses `additionalProperties: false`. Delete the `postgresql`, `redis` and `minio` top-level blocks from your values before upgrading.
+
+If you previously relied on the bundled subcharts, provision replacement services first (an external PostgreSQL instance, an external Redis, and an S3-compatible bucket), record their connection details in `externalPostgresql.*`, `externalRedis.*` and `binaryData.s3.*`, then run the upgrade. The chart will no longer create or migrate those databases for you — back up any data stored in a bundled subchart before switching.
+
 #### Upgrading to Version 2.0.0
 
 Chart version 2.0.0 aligns the chart with the breaking changes introduced by n8n [2.0](https://docs.n8n.io/changelog/v20-breaking-changes) and n8n [3.0](https://docs.n8n.io/changelog/v30-breaking-changes).
@@ -1551,12 +1530,6 @@ If you previously configured `diagnostics.externalTaskRunnersSentryDsn`, update 
 
 Kubernetes: `>=1.23.0-0`
 
-| Repository | Name | Version |
-|------------|------|---------|
-| https://charts.bitnami.com/bitnami | postgresql | 18.10.0 |
-| https://charts.bitnami.com/bitnami | redis | 28.0.15 |
-| https://charts.min.io/ | minio | 5.4.0 |
-
 ## Uninstall Helm Chart
 
 ```console
@@ -1750,46 +1723,6 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | main.runtimeClassName | string | `""` | Runtime class name for the main pod. For more information checkout: https://kubernetes.io/docs/concepts/containers/runtime-class/ |
 | main.volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition. |
 | main.volumes | list | `[]` | Additional volumes on the output Deployment definition. |
-| minio | object | `{"buckets":[{"name":"n8n-bucket","policy":"none","purge":false,"versioning":false}],"consoleIngress":{"enabled":false,"hosts":["minio-console.mydomain.com"],"path":"/"},"deploymentUpdate":{"type":"Recreate"},"drivesPerNode":1,"enabled":false,"ingress":{"enabled":true,"hosts":["minio.mydomain.com"],"path":"/"},"mode":"standalone","persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":true,"existingClaim":"","size":"40Gi","storageClass":"","subPath":"","volumeName":""},"policies":[{"name":"n8n-policy","statements":[{"actions":["s3:AbortMultipartUpload","s3:GetObject","s3:DeleteObject","s3:PutObject","s3:ListMultipartUploadParts"],"resources":["arn:aws:s3:::n8n-bucket/*"]},{"actions":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"resources":["arn:aws:s3:::n8n-bucket"]}]}],"pools":1,"replicas":1,"resources":{"requests":{"memory":"1Gi"}},"rootPassword":"","rootUser":"","statefulSetUpdate":{"updateStrategy":"Recreate"},"users":[{"accessKey":"n8n-user","policy":"n8n-policy","secretKey":"Change_Me"}]}` | Minio configuration |
-| minio.buckets | list | `[{"name":"n8n-bucket","policy":"none","purge":false,"versioning":false}]` | Minio buckets |
-| minio.buckets[0] | object | `{"name":"n8n-bucket","policy":"none","purge":false,"versioning":false}` | n8n bucket |
-| minio.buckets[0].policy | string | `"none"` | Policy to be set on the bucket [none|download|upload|public] |
-| minio.consoleIngress | object | `{"enabled":false,"hosts":["minio-console.mydomain.com"],"path":"/"}` | Minio console ingress |
-| minio.consoleIngress.enabled | bool | `false` | Enable ingress |
-| minio.consoleIngress.hosts | list | `["minio-console.mydomain.com"]` | Ingress hosts |
-| minio.consoleIngress.path | string | `"/"` | Ingress path |
-| minio.deploymentUpdate | object | `{"type":"Recreate"}` | Minio deployment update strategy |
-| minio.drivesPerNode | int | `1` | Number of drives attached to a node |
-| minio.enabled | bool | `false` | Enable minio |
-| minio.ingress | object | `{"enabled":true,"hosts":["minio.mydomain.com"],"path":"/"}` | Minio ingress. n8n will use this ingress to access Minio. It's required when binaryData.mode has s3. |
-| minio.ingress.enabled | bool | `true` | Enable ingress |
-| minio.ingress.hosts | list | `["minio.mydomain.com"]` | Ingress hosts |
-| minio.ingress.path | string | `"/"` | Ingress path |
-| minio.mode | string | `"standalone"` | Minio mode |
-| minio.persistence | object | `{"accessMode":"ReadWriteOnce","annotations":{},"enabled":true,"existingClaim":"","size":"40Gi","storageClass":"","subPath":"","volumeName":""}` | Minio persistence |
-| minio.persistence.accessMode | string | `"ReadWriteOnce"` | Minio persistence access mode |
-| minio.persistence.annotations | object | `{}` | Minio persistence annotations |
-| minio.persistence.enabled | bool | `true` | Enable persistence |
-| minio.persistence.existingClaim | string | `""` | Minio persistence existing claim |
-| minio.persistence.size | string | `"40Gi"` | Minio persistence size |
-| minio.persistence.storageClass | string | `""` | Minio persistence storage class |
-| minio.persistence.subPath | string | `""` | Minio persistence sub path |
-| minio.persistence.volumeName | string | `""` | Minio persistence volume name |
-| minio.policies | list | `[{"name":"n8n-policy","statements":[{"actions":["s3:AbortMultipartUpload","s3:GetObject","s3:DeleteObject","s3:PutObject","s3:ListMultipartUploadParts"],"resources":["arn:aws:s3:::n8n-bucket/*"]},{"actions":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"resources":["arn:aws:s3:::n8n-bucket"]}]}]` | Minio policies |
-| minio.policies[0] | object | `{"name":"n8n-policy","statements":[{"actions":["s3:AbortMultipartUpload","s3:GetObject","s3:DeleteObject","s3:PutObject","s3:ListMultipartUploadParts"],"resources":["arn:aws:s3:::n8n-bucket/*"]},{"actions":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"resources":["arn:aws:s3:::n8n-bucket"]}]}` | n8n policy |
-| minio.policies[0].statements[0] | object | `{"actions":["s3:AbortMultipartUpload","s3:GetObject","s3:DeleteObject","s3:PutObject","s3:ListMultipartUploadParts"],"resources":["arn:aws:s3:::n8n-bucket/*"]}` | n8n policy statements |
-| minio.pools | int | `1` | Number of expanded MinIO clusters |
-| minio.replicas | int | `1` | Number of MinIO containers running |
-| minio.resources | object | `{"requests":{"memory":"1Gi"}}` | Minio resources |
-| minio.resources.requests | object | `{"memory":"1Gi"}` | Minio requests |
-| minio.resources.requests.memory | string | `"1Gi"` | Minio requests memory |
-| minio.rootPassword | string | `""` | Minio root password. Length should be at least 8 characters. |
-| minio.rootUser | string | `""` | Minio root user. Length should be at least 3 characters. |
-| minio.statefulSetUpdate | object | `{"updateStrategy":"Recreate"}` | Minio statefulset update strategy |
-| minio.users | list | `[{"accessKey":"n8n-user","policy":"n8n-policy","secretKey":"Change_Me"}]` | Minio users |
-| minio.users[0] | object | `{"accessKey":"n8n-user","policy":"n8n-policy","secretKey":"Change_Me"}` | n8n user |
-| minio.users[0].policy | string | `"n8n-policy"` | n8n user policy |
-| minio.users[0].secretKey | string | `"Change_Me"` | n8n user secret key |
 | nameOverride | string | `""` | This is to override the chart name. |
 | nodeSelector | object | `{}` | For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
 | nodes | object | `{"builtin":{"enabled":false,"modules":[]},"compression":{"maxDecompressedSizeBytes":null,"maxZipEntries":null},"exclude":null,"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false},"include":null,"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
@@ -1855,21 +1788,6 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | podAnnotations | object | `{}` | This is for setting Kubernetes Annotations to a Pod. For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/ |
 | podLabels | object | `{}` | This is for setting Kubernetes Labels to a Pod. For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/ |
 | podSecurityContext | object | `{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","seccompProfile":{"type":"RuntimeDefault"}}` | This is for setting Security Context to a Pod. For more information checkout: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
-| postgresql | object | `{"architecture":"standalone","auth":{"database":"n8n","password":"","username":""},"enabled":false,"image":{"repository":"bitnamilegacy/postgresql"},"primary":{"persistence":{"enabled":true,"existingClaim":""},"service":{"ports":{"postgresql":5432}}}}` | Bitnami PostgreSQL configuration |
-| postgresql.architecture | string | `"standalone"` | Enable postgresql architecture. |
-| postgresql.auth | object | `{"database":"n8n","password":"","username":""}` | This is for setting up the auth. |
-| postgresql.auth.database | string | `"n8n"` | The name of the PostgreSQL database. For more information: https://docs.n8n.io/hosting/configuration/supported-databases-settings/#required-permissions |
-| postgresql.auth.password | string | `""` | This is for setting up the auth password. |
-| postgresql.auth.username | string | `""` | This is for setting up the auth username. |
-| postgresql.enabled | bool | `false` | Enable postgresql |
-| postgresql.image.repository | string | `"bitnamilegacy/postgresql"` | This is temporary workaround because of bitnami's deprecation until to completely replace it with our solution. |
-| postgresql.primary | object | `{"persistence":{"enabled":true,"existingClaim":""},"service":{"ports":{"postgresql":5432}}}` | This is for setting up the primary service. |
-| postgresql.primary.persistence | object | `{"enabled":true,"existingClaim":""}` | This is for setting up the persistence. |
-| postgresql.primary.persistence.enabled | bool | `true` | This is for setting up the persistence enabled. |
-| postgresql.primary.persistence.existingClaim | string | `""` | This is for setting up the persistence existing claim. |
-| postgresql.primary.service | object | `{"ports":{"postgresql":5432}}` | This is for setting up the primary service. |
-| postgresql.primary.service.ports | object | `{"postgresql":5432}` | This is for setting up the service ports. |
-| postgresql.primary.service.ports.postgresql | int | `5432` | This is for setting up the postgresql port. |
 | pypiRegistry | object | `{"customUvConfig":"","enabled":false,"secretKey":"uv.toml","secretName":"","url":""}` | Configuration for private Python package (PyPI) registry. Used by the runner sidecar when nodes.python.external.packages is set. |
 | pypiRegistry.customUvConfig | string | `""` | Inline uv.toml content. When set and secretName is empty, the chart creates a Secret from this content (mirrors customNpmrc behaviour). Mutually exclusive with url. |
 | pypiRegistry.enabled | bool | `false` | Enable private PyPI registry support for the runner sidecar. |
@@ -1877,13 +1795,6 @@ helm upgrade [RELEASE_NAME] community-charts/n8n
 | pypiRegistry.secretName | string | `""` | Name of an existing Kubernetes secret whose data contains a uv.toml config file. When set, the file is mounted into the runner sidecar and UV_CONFIG_FILE is set. |
 | pypiRegistry.url | string | `""` | URL of the private PyPI index (e.g. https://my.jfrog.io/artifactory/api/pypi/pypi/simple/). Used when no config file is provided; sets UV_DEFAULT_INDEX in the sidecar. For authenticated registries embed credentials inline or use customUvConfig/secretName instead. |
 | readinessProbe | object | `{}` | @deprecated Use main, worker, and webhook blocks readinessProbe field instead. This field will be removed in a future release. |
-| redis | object | `{"architecture":"standalone","auth":{"enabled":true},"enabled":false,"image":{"repository":"bitnamilegacy/redis"},"master":{"persistence":{"enabled":false},"service":{"ports":{"redis":6379}}}}` | Bitnami Redis configuration |
-| redis.architecture | string | `"standalone"` | Enable redis architecture. |
-| redis.auth | object | `{"enabled":true}` | This is for setting up the auth. |
-| redis.auth.enabled | bool | `true` | Enable password authentication |
-| redis.enabled | bool | `false` | Enable redis |
-| redis.image.repository | string | `"bitnamilegacy/redis"` | This is temporary workaround because of bitnami's deprecation until to completely replace it with our solution. |
-| redis.master.service.ports.redis | int | `6379` | Redis master service port |
 | resources | object | `{}` | @deprecated Use main, worker, and webhook blocks resources fields instead. This field will be removed in a future release. |
 | revisionHistoryLimit | string | `nil` | The number of old ReplicaSets to retain for rollback. More information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy |
 | sandboxService | object | `{"api":{"affinity":{},"defaultMaxSandboxes":50,"maxFileBytes":10485760,"nodeSelector":{},"persistence":{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClassName":""},"resources":{},"runnerHeartbeatGrace":"45s","store":"sqlite","tolerations":[]},"auth":{"apiKeys":"","existingSecret":"","keys":{"apiKeys":"api-keys","runnerApiKey":"runner-api-key","runnerApiKeys":"runner-api-keys","runnerRegistrationToken":"runner-registration-token"},"runnerApiKey":"","runnerApiKeys":"","runnerRegistrationToken":""},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/n8n-io/n8n-sandbox-service-api","runnerRepository":"ghcr.io/n8n-io/n8n-sandbox-service-runner-dind","sandboxRepository":"ghcr.io/n8n-io/n8n-sandbox-service-sandbox","tag":"","version":"1.3.4"},"replicas":1,"runner":{"acknowledgePrivileged":false,"affinity":{},"capacityTotal":1000,"controlGrpcPort":9091,"defaultCpuPercent":100,"defaultMemoryMb":512,"defaultPidsMax":256,"httpBaseUrl":"","httpPort":8080,"isolation":"privileged","nodeSelector":{},"replicas":1,"resources":{},"runtimeClassName":"","tolerations":[]},"tls":{"certManager":{"duration":"2160h","issuerRef":{"group":"cert-manager.io","kind":"Issuer","name":""},"renewBefore":"360h"},"certificates":{"apiControlClient":{"mountPath":"/tls/api-control-client","secretName":""},"apiRegistrationServer":{"mountPath":"/tls/api-registration","secretName":""},"runnerControlServer":{"mountPath":"/tls/runner-control","secretName":""},"runnerRegistrationClient":{"mountPath":"/tls/runner-registration","secretName":""}},"mode":"existingSecret"}}` | The n8n Sandbox Service: a control-plane API plus an in-cluster runner that executes AI-generated code. Deployed only when `sandboxService.enabled`. Treat the runner as root-equivalent on its node. |

@@ -175,11 +175,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ default (include "n8n.postgresql.fullname" .) .Values.externalPostgresql.existingSecret }}
-              {{- if .Values.postgresql.auth.username }}
-                  key: {{ default "password" .Values.externalPostgresql.existingSecretPasswordKey }}
-              {{- else }}
                   key: {{ default "postgres-password" .Values.externalPostgresql.existingSecretPasswordKey }}
-              {{- end }}
                   optional: true
             {{- if eq .Values.worker.mode "queue" }}
             - name: QUEUE_BULL_REDIS_USERNAME
@@ -215,23 +211,13 @@ spec:
             - name: N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                {{- if and .Values.minio.enabled (eq (len .Values.minio.users) 0) }}
-                  name: {{ template "n8n.fullname" . }}-minio
-                  key: rootUser
-                {{- else }}
                   name: {{ default (printf "%s-s3-secret" (include "n8n.fullname" .)) .Values.binaryData.s3.existingSecret }}
                   key: access-key-id
-                {{- end }}
             - name: N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
-                {{- if and .Values.minio.enabled (eq (len .Values.minio.users) 0) }}
-                  name: {{ template "n8n.fullname" . }}-minio
-                  key: rootPassword
-                {{- else }}
                   name: {{ default (printf "%s-s3-secret" (include "n8n.fullname" .)) .Values.binaryData.s3.existingSecret }}
                   key: secret-access-key
-                {{- end }}
           {{- end }}
           {{- if and .Values.nodes.builtin.enabled (eq .Values.taskRunners.mode "internal") }}
             - name: NODE_FUNCTION_ALLOW_BUILTIN

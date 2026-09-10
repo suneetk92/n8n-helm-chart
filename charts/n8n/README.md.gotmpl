@@ -123,20 +123,6 @@ ingress:
           pathType: ImplementationSpecific
 ```
 
-## Deployment with Bitnami's PostgreSQL
-
-```yaml
-db:
-  type: postgresdb
-
-postgresql:
-  enabled: true
-  
-  primary:
-    persistence:
-      existingClaim: "my-n8n-claim"
-```
-
 ## Deployment with External PostgreSQL
 
 ```yaml
@@ -163,27 +149,6 @@ externalPostgresql:
 
   existingSecret: "my-k8s-secret-contains-postgres-password-key-and-credential"
   existingSecretPasswordKey: "my-postgres-password-key"
-```
-
-## Queue Mode with Bitnami's Redis
-
-> **Tip**: Queue mode doesn't work with default SQLite mode
-
-```yaml
-db:
-  type: postgresdb
-
-externalPostgresql:
-  host: "postgresql-instance1.ab012cdefghi.eu-central-1.rds.amazonaws.com"
-  username: "n8nuser"
-  password: "Pa33w0rd!"
-  database: "n8n"
-
-worker:
-  mode: queue
-
-redis:
-  enabled: true
 ```
 
 ## Queue Mode with External Redis
@@ -1324,6 +1289,20 @@ This section outlines major updates and breaking changes for each version of the
 ---
 
 ###  Version-Specific Upgrade Notes
+
+#### Upgrading to Version 3.0.0
+
+Chart version 3.0.0 removes the bundled `redis`, `postgresql` and `minio` subcharts. n8n is expected to talk to externally provided services, so the chart no longer deploys (or configures) them for you.
+
+##### Breaking Changes
+
+- The `postgresql` value block (and its `enabled`/`auth`/`primary` keys) is removed. With `db.type: postgresdb`, point the chart at an external database via `externalPostgresql.host`, `.username`, `.password` (or `.existingSecret`) and `.database`.
+- The `redis` value block (and its `enabled` key) is removed. In queue mode, point the chart at an external Redis via `externalRedis.host`, `.port`, `.username`, `.password` (or `.existingSecret`).
+- The `minio` value block is removed. With `binaryData.mode: s3`, point the chart at any S3-compatible store via `binaryData.s3.host`, `.bucketName`, `.bucketRegion`, and either `.accessKey`/`.accessSecret` or `.existingSecret`.
+
+Any values file that still sets `postgresql.enabled`, `redis.enabled` or `minio.enabled` (or other keys under those blocks) now fails schema validation, because the root schema uses `additionalProperties: false`. Delete the `postgresql`, `redis` and `minio` top-level blocks from your values before upgrading.
+
+If you previously relied on the bundled subcharts, provision replacement services first (an external PostgreSQL instance, an external Redis, and an S3-compatible bucket), record their connection details in `externalPostgresql.*`, `externalRedis.*` and `binaryData.s3.*`, then run the upgrade. The chart will no longer create or migrate those databases for you — back up any data stored in a bundled subchart before switching.
 
 #### Upgrading to Version 2.0.0
 

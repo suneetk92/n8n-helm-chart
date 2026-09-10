@@ -890,10 +890,6 @@ tests:
             paths:
               - path: /
                 pathType: Prefix
-      postgresql:
-        enabled: true
-      redis:
-        enabled: true
     asserts:
       - matchSnapshot: { }
 
@@ -913,10 +909,6 @@ tests:
             paths:
               - path: /
                 pathType: Prefix
-      postgresql:
-        enabled: true
-      redis:
-        enabled: true
     asserts:
       - matchSnapshot: { }
 
@@ -936,9 +928,5 @@ tests:
             paths:
               - path: /
                 pathType: Prefix
-      postgresql:
-        enabled: true
-      redis:
-        enabled: true
     asserts:
       - matchSnapshot: { }

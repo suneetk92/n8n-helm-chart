@@ -47,15 +47,9 @@ data:
 {{- end }}
 {{- if eq .Values.db.type "postgresdb" }}
   DB_TYPE: {{ .Values.db.type | quote }}
-  {{- if .Values.postgresql.enabled }}
-  DB_POSTGRESDB_HOST: {{ template "n8n.fullname" . }}-postgresql
-  DB_POSTGRESDB_PORT: {{ .Values.postgresql.primary.service.ports.postgresql | quote }}
-  DB_POSTGRESDB_DATABASE: {{ .Values.postgresql.auth.database | quote }}
-  {{- else }}
   DB_POSTGRESDB_HOST: {{ .Values.externalPostgresql.host | quote }}
   DB_POSTGRESDB_PORT: {{ .Values.externalPostgresql.port | quote }}
   DB_POSTGRESDB_DATABASE: {{ .Values.externalPostgresql.database | quote }}
-  {{- end }}
   DB_POSTGRESDB_POOL_SIZE: {{ .Values.db.postgresdb.poolSize | quote }}
   DB_POSTGRESDB_CONNECTION_TIMEOUT: {{ .Values.db.postgresdb.connectionTimeout | quote }}
   DB_POSTGRESDB_IDLE_CONNECTION_TIMEOUT: {{ .Values.db.postgresdb.idleConnectionTimeout | quote }}
@@ -182,10 +176,7 @@ data:
   EXECUTIONS_MODE: "queue"
   QUEUE_BULL_REDIS_DB: {{ .Values.externalRedis.database | quote }}
   OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
-  {{- if .Values.redis.enabled }}
-  QUEUE_BULL_REDIS_HOST: {{ template "n8n.fullname" . }}-redis-master
-  QUEUE_BULL_REDIS_PORT: {{ (default 6379 .Values.redis.master.service.ports.redis | int) | quote }}
-  {{- else if and .Values.externalRedis.clusterNodes (gt (len .Values.externalRedis.clusterNodes) 0) }}
+  {{- if and .Values.externalRedis.clusterNodes (gt (len .Values.externalRedis.clusterNodes) 0) }}
     {{- $nodeList := list }}
     {{- range .Values.externalRedis.clusterNodes }}
       {{- $nodeList = append $nodeList (printf "%s:%d" .host (int .port)) }}
@@ -358,19 +349,8 @@ data:
   N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE: {{ .Values.binaryData.databaseMaxFileSize | quote }}
 {{- end }}
 {{- if eq .Values.binaryData.mode "s3" }}
-  {{- if .Values.minio.enabled }}
-  N8N_EXTERNAL_STORAGE_S3_HOST: {{ template "n8n.fullname" . }}-minio:9000
-    {{- if gt (len .Values.minio.buckets) 0 }}
-      {{- with (first .Values.minio.buckets) }}
-  N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME: {{ .name | quote }}
-      {{- end }}
-    {{- else }}
-  N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME: {{ .Values.binaryData.s3.bucketName | quote }}
-    {{- end }}
-  {{- else }}
   N8N_EXTERNAL_STORAGE_S3_HOST: {{ .Values.binaryData.s3.host | quote }}
   N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME: {{ .Values.binaryData.s3.bucketName | quote }}
-  {{- end }}
   N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION: {{ .Values.binaryData.s3.bucketRegion | quote }}
 {{- end }}
 ---

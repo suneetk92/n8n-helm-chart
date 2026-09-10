@@ -110,11 +110,7 @@ Create postgresql name secret name.
 Create PostgreSQL database username
 */}}
 {{- define "n8n.postgresql.username" -}}
-{{- if .Values.postgresql.enabled }}
-{{- printf "%s" .Values.postgresql.auth.username | default "postgres" }}
-{{- else }}
 {{- printf "%s" .Values.externalPostgresql.username | default "postgres" }}
-{{- end }}
 {{- end }}
 
 {{/*

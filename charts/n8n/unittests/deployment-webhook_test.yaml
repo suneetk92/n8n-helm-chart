@@ -585,26 +585,10 @@ tests:
             value: https://example.com
         template: deployment-webhook.yaml
 
-  - it: should set postgresdb user environment variable when postgresql.enabled is true and postgresql.auth.username is set
-    set:
-      postgresql:
-        enabled: true
-        auth:
-          username: n8npostgres
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-webhook")].env
-          content:
-            name: DB_POSTGRESDB_USER
-            value: n8npostgres
-        template: deployment-webhook.yaml
-
-  - it: should set postgresdb user environment variable when postgresql.enabled is false and externalPostgresql.username is set
+  - it: should set postgresdb user environment variable when externalPostgresql.username is set
     set:
       db:
         type: postgresdb
-      postgresql:
-        enabled: false
       externalPostgresql:
           username: n8npostgres
     asserts:
@@ -615,36 +599,10 @@ tests:
             value: n8npostgres
         template: deployment-webhook.yaml
 
-  - it: should set postgresdb password environment variable from secret with key password when postgresql.enabled is true and postgresql.auth.password is set
+  - it: should set postgresdb password environment variable from external secret with custom key when existingSecretPasswordKey is set
     set:
       db:
         type: postgresdb
-      postgresql:
-        enabled: true
-        auth:
-          username: n8npostgres
-          password: n8npostgrespassword
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[?(@.name == "n8n-webhook")].env
-          content:
-            name: DB_POSTGRESDB_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: n8n-postgresql
-                key: password
-                optional: true
-        template: deployment-webhook.yaml
-
-  - it: should set postgresdb password environment variable from external secret with custom key when postgresql.auth.username is set and existingSecretPasswordKey is set
-    set:
-      db:
-        type: postgresdb
-      postgresql:
-        enabled: true
-        auth:
-          username: n8npostgres
-          password: n8npostgrespassword
       externalPostgresql:
         existingSecretPasswordKey: custom-postgres-password
     asserts:
@@ -659,14 +617,10 @@ tests:
                 optional: true
         template: deployment-webhook.yaml
 
-  - it: should set postgresdb password environment variable from secret with key postgres-password when postgresql.auth.username is not set
+  - it: should set postgresdb password environment variable from secret with key postgres-password
     set:
       db:
         type: postgresdb
-      postgresql:
-        enabled: true
-        auth:
-          username: ""
     asserts:
       - contains:
           path: spec.template.spec.containers[?(@.name == "n8n-webhook")].env
