@@ -62,7 +62,7 @@ jobs:
         run: helm unittest --strict --file 'unittests/**/*.yaml' charts/n8n
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.14.0
+        uses: helm/kind-action@v1.15.0
 
       - name: Install into kind
         run: |
