@@ -4,6 +4,8 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+<!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
+
 ## 4.1.1
 
 ### Changed
@@ -32,12 +34,12 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
   merged, tagged or published — a release that reached `n8nio/n8n` first would otherwise break every
   install using `taskRunners.mode: external`. The check fails closed on a definitive 404 and only
   warns on other registry errors, so a Docker Hub outage cannot block a release.
-- **Publishing is gated on CI.** `oci-registry.yml` now triggers on a successful `CI` run via
-  `workflow_run` instead of racing it on push, and skips a version that is already published. OCI
-  tags are immutable, so a failed chart previously could not be unpublished.
+- **Only tagged versions are published.** `oci-registry.yml` triggers on `v*` tags rather than racing
+  CI on push, verifies a human-pushed tag has a green `CI` run, and skips a version that is already
+  published. OCI tags are immutable, so a bad chart previously could not be unpublished.
 - New `chart-version.yml` does the release bookkeeping Renovate cannot: when an image version lands
-  on `main` it bumps the chart patch version, adds a CHANGELOG entry, regenerates the README,
-  validates, publishes, and tags — **only tagging when `appVersion` itself changed.**
+  on `main` it bumps the chart version, adds a CHANGELOG entry, regenerates the README, validates,
+  tags, creates the GitHub release, and dispatches the publish — **only when `appVersion` changed.**
 
 ## 4.0.0
 

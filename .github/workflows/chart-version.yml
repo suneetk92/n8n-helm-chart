@@ -92,7 +92,16 @@ jobs:
           [ "$NODE_NOW" != "$NODE_TAG" ] && notes="${notes}- npm-install init container \`node:${NODE_TAG}\` -> \`node:${NODE_NOW}\`."$'\n'
           [ "$BB_NOW"   != "$BB_TAG"   ] && notes="${notes}- wait-for-main init container \`busybox:${BB_TAG}\` -> \`busybox:${BB_NOW}\`."$'\n'
 
-          NEXT=$(echo "$CHART_NOW" | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')
+          # Mirror the n8n bump type so the chart version says something about what moved. A major n8n
+          # release maps to a chart *minor*: the chart major is reserved for breaking changes to the
+          # chart's own values API, which an upstream image bump is not.
+          bump=patch
+          [ "$(echo "$APP_TAG" | cut -d. -f1)" != "$(echo "$APP_NOW" | cut -d. -f1)" ] && bump=minor
+          [ "$(echo "$APP_TAG" | cut -d. -f2)" != "$(echo "$APP_NOW" | cut -d. -f2)" ] && bump=minor
+          echo "n8n ${APP_TAG} -> ${APP_NOW} is a ${bump}-level chart bump."
+
+          NEXT=$(echo "$CHART_NOW" | awk -F. -v b="$bump" \
+            '{ if (b == "minor") printf "%d.%d.0", $1, $2+1; else printf "%d.%d.%d", $1, $2, $3+1 }')
           {
             echo "release=true"
             echo "next=$NEXT"
@@ -158,11 +167,18 @@ jobs:
           set -euo pipefail
           yq eval -i ".version = \"${NEXT}\"" charts/n8n/Chart.yaml
           python3 - <<'EOF'
-          import os, pathlib
+          import os, pathlib, sys
           ver, notes = os.environ["NEXT"], os.environ["NOTES"].rstrip()
-          p = pathlib.Path("CHANGELOG.md"); t = p.read_text()
-          marker = 'accompanied by upgrade steps in the chart README\'s "Upgrading" section.\n\n'
-          p.write_text(t.replace(marker, f"{marker}## {ver}\n\n### Changed\n\n{notes}\n\n", 1))
+          marker = "<!-- next-release -->"
+          p = pathlib.Path("CHANGELOG.md")
+          lines = p.read_text().splitlines(keepends=True)
+          at = [i for i, line in enumerate(lines) if marker in line]
+          # Anchoring on prose used to mean a reworded intro silently produced no entry, while the
+          # release still tagged and published. Fail the job instead.
+          if len(at) != 1:
+              sys.exit(f"::error::Expected exactly one '{marker}' line in CHANGELOG.md, found {len(at)}.")
+          lines.insert(at[0] + 1, f"\n## {ver}\n\n### Changed\n\n{notes}\n")
+          p.write_text("".join(lines))
           EOF
 
           # Chart.yaml changed, so regenerate the README once more to pick up the new version.
