@@ -1830,7 +1830,7 @@ before upgrading — it will now actually be applied.
 | main.volumes | list | `[]` | Additional volumes on the output Deployment definition. |
 | nameOverride | string | `""` | This is to override the chart name. |
 | nodeSelector | object | `{}` | For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
-| nodes | object | `{"builtin":{"enabled":false,"modules":[]},"compression":{"maxDecompressedSizeBytes":null,"maxZipEntries":null},"exclude":null,"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false},"include":null,"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
+| nodes | object | `{"builtin":{"enabled":false,"modules":[]},"compression":{"maxDecompressedSizeBytes":null,"maxZipEntries":null},"exclude":null,"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false},"include":null,"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
 | nodes.builtin | object | `{"enabled":false,"modules":[]}` | Enable built-in node functions (e.g., HTTP Request, Code Node, etc.) |
 | nodes.builtin.enabled | bool | `false` | Enable built-in modules for the Code node |
 | nodes.builtin.modules | list | `[]` | List of built-in Node.js modules to allow in the Code node (e.g., crypto, fs). Use '*' to allow all. |
@@ -1850,11 +1850,11 @@ before upgrading — it will now actually be applied.
 | nodes.external.persistence.storageClass | string | `""` | Storage class for the PVC. Empty string uses the cluster default. |
 | nodes.external.reinstallMissingPackages | bool | `false` | Whether to reinstall missing packages. For more information, see https://docs.n8n.io/integrations/community-nodes/troubleshooting/#error-missing-packages |
 | nodes.include | string | `nil` | Nodes that should be loaded, rendered as `NODES_INCLUDE`. Leave unset (`~`) to load everything that isn't excluded. |
-| nodes.initContainer | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"},"resources":{}}` | Image for the init container to install npm packages |
-| nodes.initContainer.image | object | `{"pullPolicy":"IfNotPresent","repository":"node","tag":"20-alpine"}` | Image for the init container to install npm packages |
+| nodes.initContainer | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"},"resources":{}}` | Image for the init container to install npm packages |
+| nodes.initContainer.image | object | `{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"}` | Image for the init container to install npm packages |
 | nodes.initContainer.image.pullPolicy | string | `"IfNotPresent"` | Pull policy for the init container to install npm packages |
 | nodes.initContainer.image.repository | string | `"node"` | Repository for the init container to install npm packages |
-| nodes.initContainer.image.tag | string | `"20-alpine"` | Tag for the init container to install npm packages |
+| nodes.initContainer.image.tag | string | `"24-alpine"` | Tag for the init container to install npm packages |
 | nodes.initContainer.resources | object | `{}` | Resources for the init container |
 | nodes.python | object | `{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}` | Python Code node configuration. Requires n8n 1.111.0+ and taskRunners.mode: external. |
 | nodes.python.builtin | object | `{"modules":[]}` | Built-in Python module access for the Code node. |
