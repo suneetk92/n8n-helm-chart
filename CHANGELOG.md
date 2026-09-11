@@ -4,6 +4,13 @@ All notable changes to the n8n chart are documented here. The chart follows
 [semantic versioning](https://semver.org/); breaking changes bump the major version and are
 accompanied by upgrade steps in the chart README's "Upgrading" section.
 
+## 4.1.1
+
+### Changed
+
+- n8n `2.38.4` -> `2.39.2` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+- wait-for-main init container `busybox:1.36` -> `busybox:1.38`.
+
 ## 4.1.0
 
 ### Added
