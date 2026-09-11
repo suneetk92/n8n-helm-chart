@@ -4,10 +4,10 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    ":semanticCommitsDisabled"
+    ":semanticCommitsEnabled"
   ],
   "timezone": "Europe/Berlin",
-  "commitMessagePrefix": "[n8n]",
+  "semanticCommitScope": "deps",
   "prConcurrentLimit": 3,
   "prHourlyLimit": 0,
   "platformAutomerge": false,
@@ -24,7 +24,7 @@
       "customType": "regex",
       "description": "Chart.yaml appVersion, tracked against n8nio/n8n. Note appVersion is also used as the tag for n8nio/runners, so if a release ever lands on n8nio/n8n before n8nio/runners, the task-runner sidecar will fail to pull until runners catches up.",
       "matchStrings": [
-        "appVersion:\\s*\"(?<currentValue>[^\"]+)\""
+        "(?m)^appVersion:\\s*\"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "n8nio/n8n",
@@ -35,9 +35,9 @@
     },
     {
       "customType": "regex",
-      "description": "sandboxService.image.version \u2014 one pinned version shared by all three n8n-sandbox-service-* images, which upstream releases together.",
+      "description": "sandboxService.image.version \u2014 one pinned version shared by all three n8n-sandbox-service-* images, which upstream releases together. Anchored to the repository line above it: a bare `version:` matcher would claim any other semver `version:` key added to values.yaml later.",
       "matchStrings": [
-        "version:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)\\s*\\n"
+        "repository:\\s*ghcr\\.io/n8n-io/n8n-sandbox-service-api\\s*\\n(?:[^\\n]*\\n)*?\\s*version:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
       ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "ghcr.io/n8n-io/n8n-sandbox-service-api",
@@ -49,7 +49,7 @@
   ],
   "packageRules": [
     {
-      "description": "n8n itself, via the Chart.yaml appVersion custom manager. Patch and minor releases automerge; major waits for review. CI verifies n8nio/runners has published the same tag before the PR can merge, since appVersion is the tag for both images.",
+      "description": "n8n itself, via the Chart.yaml appVersion custom manager. Patch and minor releases automerge; major waits for review. CI verifies n8nio/runners has published the same tag before the PR can merge, since appVersion is the tag for both images. The commit type carries the intended chart bump: an n8n minor is a chart feat/minor, an n8n patch a chart fix/patch.",
       "matchDepNames": [
         "n8nio/n8n"
       ],
@@ -58,18 +58,31 @@
         "patch",
         "minor"
       ],
-      "automerge": true
+      "automerge": true,
+      "semanticCommitType": "fix"
     },
     {
-      "description": "Sandbox service. Preview upstream, so hold every update for review.",
+      "description": "An n8n minor release is the one update that warrants a feat commit, and so a chart minor.",
+      "matchDepNames": [
+        "n8nio/n8n"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
+      "semanticCommitType": "feat"
+    },
+    {
+      "description": "Sandbox service. Preview upstream, so hold every update for review. chore: it does not cut a chart release on its own; it rides along in the next n8n release.",
       "matchDepNames": [
         "ghcr.io/n8n-io/n8n-sandbox-service-api"
       ],
       "groupName": "n8n sandbox service",
-      "automerge": false
+      "automerge": false,
+      "semanticCommitType": "chore"
     },
     {
-      "description": "Base images for the init and wait containers. Low risk, so automerge minor and patch.",
+      "description": "Base images for the init and wait containers. Low risk, so automerge minor and patch. chore: these do not cut a chart release on their own either.",
       "matchDepNames": [
         "node",
         "busybox"
@@ -79,10 +92,11 @@
         "minor",
         "patch"
       ],
-      "automerge": true
+      "automerge": true,
+      "semanticCommitType": "chore"
     },
     {
-      "description": "GitHub Actions, grouped so they land as one PR. Replaces the Dependabot actions-deps group.",
+      "description": "GitHub Actions, grouped so they land as one PR. Never chart-affecting, so always chore.",
       "matchManagers": [
         "github-actions"
       ],
@@ -92,7 +106,8 @@
         "patch",
         "digest"
       ],
-      "automerge": true
+      "automerge": true,
+      "semanticCommitType": "chore"
     },
     {
       "description": "Never touch the image tags in values.yaml that are intentionally empty so they inherit Chart.yaml appVersion. Scoped to helm-values so it cannot disable the appVersion custom manager.",

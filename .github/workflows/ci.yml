@@ -1,15 +1,20 @@
 name: CI
 
+# Workflow files are in `paths` too: without them a workflow-only PR gets no checks at all, so
+# Renovate has nothing to gate automerge on and a broken release workflow surfaces only at the next
+# release.
 on:
   push:
     branches: [ main ]
     paths:
       - 'charts/**'
+      - '.github/workflows/**'
 
   pull_request:
     branches: [ main ]
     paths:
       - 'charts/**'
+      - '.github/workflows/**'
 
 env:
   HELM_VERSION: v3.18.3
