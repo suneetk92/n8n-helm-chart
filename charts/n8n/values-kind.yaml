@@ -39,6 +39,14 @@ webhook:
     failureThreshold: 5
 
 nodes:
+  # The npm-install init container renders only when nodes.external.packages is non-empty, so without
+  # this the node image was merely templated, never pulled or run — a node major bump could break the
+  # image, npm, or the volume permissions and still go green. One tiny non-community package is enough:
+  # it lands in /npmdata rather than /nodesdata/nodes, so n8n never tries to load it as a node.
+  external:
+    packages:
+      - "is-odd@3.0.1"
+
   python:
     enabled: true
     builtin:
