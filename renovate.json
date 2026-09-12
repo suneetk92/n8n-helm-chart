@@ -8,15 +8,10 @@
   "timezone": "Europe/Berlin",
   "semanticCommits": "enabled",
   "prHourlyLimit": 0,
-  "platformAutomerge": false,
+  "platformAutomerge": true,
   "labels": [
     "dependencies"
   ],
-  "helm-values": {
-    "managerFilePatterns": [
-      "/charts/n8n/values\\.yaml/"
-    ]
-  },
   "customManagers": [
     {
       "customType": "regex",
@@ -47,7 +42,7 @@
   ],
   "packageRules": [
     {
-      "description": "n8n itself, via the Chart.yaml appVersion custom manager. Patch and minor releases automerge; major waits for review. CI verifies n8nio/runners has published the same tag before the PR can merge, since appVersion is the tag for both images. The commit type carries the intended chart bump: an n8n minor is a chart feat/minor, an n8n patch a chart fix/patch.",
+      "description": "n8n itself, via the Chart.yaml appVersion custom manager. Patch and minor releases automerge; major does not, because it matches only the rule below. CI verifies n8nio/runners has published the same tag before the PR can merge, since appVersion is the tag for both images. The commit type carries the intended chart bump: a patch is a chart fix/patch. The fix set here applies to patch only — the rule below matches minor as well and, being later in the array, overrides the type there.",
       "matchDepNames": [
         "n8nio/n8n"
       ],
@@ -60,7 +55,7 @@
       "semanticCommitType": "fix"
     },
     {
-      "description": "An n8n minor release is the one update that warrants a feat commit, and so a chart minor.",
+      "description": "An n8n minor release is the one update that warrants a feat commit, and so a chart minor. Layered over the rule above: for minor it overrides only the commit type, leaving that rule's group and automerge intact. Major matches here alone, so it is never automerged — do not make that explicit with automerge:false, which would apply to minor too and disable its automerge.",
       "matchDepNames": [
         "n8nio/n8n"
       ],
@@ -108,12 +103,13 @@
       "semanticCommitType": "chore"
     },
     {
-      "description": "Never touch the image tags in values.yaml that are intentionally empty so they inherit Chart.yaml appVersion. Scoped to helm-values so it cannot disable the appVersion custom manager.",
+      "description": "Never touch the image tags in values.yaml that are intentionally empty so they inherit Chart.yaml appVersion. Both images use that pattern. Scoped to helm-values so it cannot disable the appVersion custom manager. Inert while the tags stay empty — helm-values skips a dep with no version — so this only bites if a tag is ever pinned.",
       "matchFileNames": [
         "charts/n8n/values.yaml"
       ],
       "matchDepNames": [
-        "n8nio/n8n"
+        "n8nio/n8n",
+        "n8nio/runners"
       ],
       "enabled": false,
       "matchManagers": [
