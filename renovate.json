@@ -13,8 +13,8 @@
     "dependencies"
   ],
   "helm-values": {
-    "fileMatch": [
-      "charts/n8n/values\\.yaml"
+    "managerFilePatterns": [
+      "/charts/n8n/values\\.yaml/"
     ]
   },
   "customManagers": [
@@ -27,21 +27,21 @@
       "datasourceTemplate": "docker",
       "depNameTemplate": "n8nio/n8n",
       "versioningTemplate": "semver",
-      "fileMatch": [
-        "^charts/n8n/Chart\\.yaml$"
+      "managerFilePatterns": [
+        "/^charts/n8n/Chart\\.yaml$/"
       ]
     },
     {
       "customType": "regex",
-      "description": "sandboxService.image.version \u2014 one pinned version shared by all three n8n-sandbox-service-* images, which upstream releases together. Anchored to the repository line above it: a bare `version:` matcher would claim any other semver `version:` key added to values.yaml later.",
+      "description": "sandboxService.image.version — one pinned version shared by all three n8n-sandbox-service-* images, which upstream releases together. Anchored to the repository line above it: a bare `version:` matcher would claim any other semver `version:` key added to values.yaml later.",
       "matchStrings": [
         "repository:\\s*ghcr\\.io/n8n-io/n8n-sandbox-service-api\\s*\\n(?:[^\\n]*\\n)*?\\s*version:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
       ],
       "datasourceTemplate": "docker",
       "depNameTemplate": "ghcr.io/n8n-io/n8n-sandbox-service-api",
       "versioningTemplate": "semver",
-      "fileMatch": [
-        "^charts/n8n/values\\.yaml$"
+      "managerFilePatterns": [
+        "/^charts/n8n/values\\.yaml$/"
       ]
     }
   ],
