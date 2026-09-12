@@ -10,8 +10,14 @@ name: Chart Version
 # Renovate cannot do this part: its `bumpVersion` only works with the helmv3 manager, which needs
 # Chart.yaml `dependencies`, and this chart has none.
 #
-# It validates inline and dispatches the publish itself because a push made with GITHUB_TOKEN does
-# not trigger other workflows, so neither CI nor the tag-triggered publish would fire for its commit.
+# Pushes to main go out with RELEASE_TOKEN, a PAT: main is protected by a ruleset requiring the
+# lint-test check, and GITHUB_TOKEN is not a bypass actor. The tag push deliberately keeps
+# GITHUB_TOKEN. A tag pushed by a PAT would trigger the tag-driven publish, which requires a
+# *completed* successful CI run for the commit — CI is still running at that point, so it would fail,
+# and it would race the dispatch below. Rulesets targeting a branch do not restrict tags.
+#
+# It validates inline and dispatches the publish itself because a tag pushed with GITHUB_TOKEN does
+# not trigger other workflows, so the tag-triggered publish would never fire.
 #
 # It cannot loop: its own commit changes only the chart version, never appVersion.
 
@@ -145,8 +151,11 @@ jobs:
 
       - name: Commit the regenerated README when not releasing
         if: steps.detect.outputs.release != 'true'
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           set -euo pipefail
+          : "${RELEASE_TOKEN:?not set. main requires the lint-test check and GITHUB_TOKEN cannot bypass it; add a fine-grained PAT with contents:write as the RELEASE_TOKEN secret.}"
           if git diff --quiet -- charts/n8n/README.md; then
             echo "README already up to date."
             exit 0
@@ -155,7 +164,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add charts/n8n/README.md
           git commit -m "[n8n] Regenerate README for updated values"
-          git push origin HEAD:main
+          git push "https://x-access-token:${RELEASE_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
           echo "Pushed a regenerated README."
 
       - name: Bump chart version and changelog
@@ -203,16 +212,19 @@ jobs:
         if: steps.detect.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NEXT: ${{ steps.detect.outputs.next }}
           NOTES: ${{ steps.detect.outputs.notes }}
         run: |
           set -euo pipefail
+          : "${RELEASE_TOKEN:?not set. main requires the lint-test check and GITHUB_TOKEN cannot bypass it; add a fine-grained PAT with contents:write as the RELEASE_TOKEN secret.}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A charts/n8n CHANGELOG.md
           git commit -m "[n8n] Release ${NEXT}" -m "${NOTES}"
-          git push origin HEAD:main
+          git push "https://x-access-token:${RELEASE_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
 
+          # Deliberately origin, i.e. GITHUB_TOKEN: see the header comment.
           git tag -a "v${NEXT}" -m "n8n chart ${NEXT}" -m "${NOTES}"
           git push origin "v${NEXT}"
 
