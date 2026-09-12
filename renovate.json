@@ -3,12 +3,10 @@
   "description": "Renovate replaces Dependabot here. Dependabot cannot see these versions at all: appVersion is not a dependency manifest entry, and its docker ecosystem does not parse the repository/tag split used in Helm values.",
   "extends": [
     "config:recommended",
-    ":dependencyDashboard",
-    ":semanticCommitsEnabled"
+    ":dependencyDashboard"
   ],
   "timezone": "Europe/Berlin",
-  "semanticCommitScope": "deps",
-  "prConcurrentLimit": 3,
+  "semanticCommits": "enabled",
   "prHourlyLimit": 0,
   "platformAutomerge": false,
   "labels": [
