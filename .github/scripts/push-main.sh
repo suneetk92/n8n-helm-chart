@@ -52,4 +52,19 @@ while :; do
 done
 
 echo "lint-test passed for ${SHA}; fast-forwarding main."
-git push origin HEAD:main
+
+# The Checks API reporting success and the ruleset agreeing are not the same instant: the first
+# attempt was once rejected with GH013 six seconds after the check completed, even though the check
+# run was present on this exact SHA. Retry rather than fail a release over a few seconds of lag.
+for attempt in $(seq 1 6); do
+  if git push origin HEAD:main; then
+    exit 0
+  fi
+  if [ "${attempt}" -lt 6 ]; then
+    echo "Push rejected; ruleset evaluation may still be catching up. Retrying in 30s (${attempt}/6)."
+    sleep 30
+  fi
+done
+
+echo "::error::main rejected the push after 6 attempts, though lint-test passed on ${SHA}. A check run from another branch may simply not satisfy a required check for a direct push."
+exit 1
