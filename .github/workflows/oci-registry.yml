@@ -43,8 +43,9 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
-      # Only for human-pushed tags. A dispatch from chart-version.yml has already run the same lint,
-      # unit tests and kind install, and its commit was pushed by GITHUB_TOKEN so CI never fired.
+      # Only for human-pushed tags. A dispatch from chart-version.yml points at a commit CI already
+      # passed on its release/** branch — that run is what let it reach main at all — and the tag was
+      # pushed by GITHUB_TOKEN, so no tag-triggered run exists to gate.
       - name: Require a passing CI run for this commit
         if: github.event_name == 'push'
         env:

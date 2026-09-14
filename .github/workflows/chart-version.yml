@@ -10,16 +10,23 @@ name: Chart Version
 # Renovate cannot do this part: its `bumpVersion` only works with the helmv3 manager, which needs
 # Chart.yaml `dependencies`, and this chart has none.
 #
-# Pushes to main go out with RELEASE_TOKEN, a PAT: main is protected by a ruleset requiring the
-# lint-test check, and GITHUB_TOKEN is not a bypass actor. The tag push deliberately keeps
-# GITHUB_TOKEN. A tag pushed by a PAT would trigger the tag-driven publish, which requires a
-# *completed* successful CI run for the commit — CI is still running at that point, so it would fail,
-# and it would race the dispatch below. Rulesets targeting a branch do not restrict tags.
+# main requires the lint-test check, so this workflow does not push to main directly. It hands each
+# commit to .github/scripts/push-main.sh, which publishes it to a release/** branch, runs CI against
+# that SHA, and only then fast-forwards main. That is why no lint or unit-test steps live here any
+# more: duplicating them would not satisfy the required check, since only a check run attached to the
+# commit does that. ci.yml is now the single place the chart is validated.
 #
-# It validates inline and dispatches the publish itself because a tag pushed with GITHUB_TOKEN does
-# not trigger other workflows, so the tag-triggered publish would never fire.
+# No PAT is involved. Everything runs on GITHUB_TOKEN, which is why `actions: write` is needed — a
+# GITHUB_TOKEN push triggers no workflow, so CI is requested via workflow_dispatch, the one trigger
+# it is allowed to fire.
 #
-# It cannot loop: its own commit changes only the chart version, never appVersion.
+# It dispatches the publish itself because the tag is pushed with GITHUB_TOKEN, which does not
+# trigger other workflows. Now that the release commit carries a genuine CI run, oci-registry.yml's
+# CI gate would also pass for a PAT-pushed tag, so the tag could trigger the publish directly — a
+# simplification deliberately left for a separate change.
+#
+# It cannot loop: its own commit changes only the chart version, never appVersion, and main is
+# fast-forwarded with GITHUB_TOKEN, which triggers nothing.
 
 on:
   push:
@@ -29,6 +36,10 @@ on:
       - 'charts/n8n/values.yaml'
       - 'charts/n8n/README.md.gotmpl'
 
+  # Manual recovery: re-cutting a release after a failed run cannot rely on the push trigger, since
+  # the files it watches are already at their final state.
+  workflow_dispatch:
+
 # Serialize releases. Two image bumps merging close together would otherwise race, and the second
 # push would fail as a non-fast-forward. Queue rather than cancel: every bump deserves its release.
 concurrency:
@@ -36,8 +47,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  HELM_VERSION: v3.18.3
-  HELM_UNITTEST_VERSION: v0.8.2
   HELM_DOCS_VERSION: v1.14.2
 
 permissions:
@@ -116,11 +125,8 @@ jobs:
             echo "NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v5
-        with:
-          version: ${{ env.HELM_VERSION }}
-
+      # Cheap pre-flight so an impossible release fails here rather than after a full CI cycle. CI
+      # checks this again on the release branch; that run is the one main's required check consumes.
       - name: Verify the runners image exists for appVersion
         if: steps.detect.outputs.release == 'true'
         run: |
@@ -152,10 +158,9 @@ jobs:
       - name: Commit the regenerated README when not releasing
         if: steps.detect.outputs.release != 'true'
         env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          : "${RELEASE_TOKEN:?not set. main requires the lint-test check and GITHUB_TOKEN cannot bypass it; add a fine-grained PAT with contents:write as the RELEASE_TOKEN secret.}"
           if git diff --quiet -- charts/n8n/README.md; then
             echo "README already up to date."
             exit 0
@@ -164,8 +169,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add charts/n8n/README.md
           git commit -m "[n8n] Regenerate README for updated values"
-          git push "https://x-access-token:${RELEASE_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
-          echo "Pushed a regenerated README."
+          .github/scripts/push-main.sh
 
       - name: Bump chart version and changelog
         if: steps.detect.outputs.release == 'true'
@@ -193,36 +197,21 @@ jobs:
           # Chart.yaml changed, so regenerate the README once more to pick up the new version.
           helm-docs --chart-search-root=charts --template-files=README.md.gotmpl
 
-      - name: Validate
-        if: steps.detect.outputs.release == 'true'
-        run: |
-          helm plugin install https://github.com/helm-unittest/helm-unittest.git --version ${{ env.HELM_UNITTEST_VERSION }}
-          helm lint charts/n8n
-          helm unittest --strict --file 'unittests/**/*.yaml' charts/n8n
-
-      - name: Create kind cluster
-        if: steps.detect.outputs.release == 'true'
-        uses: helm/kind-action@v1.15.0
-
-      - name: Install into kind
-        if: steps.detect.outputs.release == 'true'
-        run: helm install n8n charts/n8n --values charts/n8n/values-kind.yaml --wait --timeout 600s
-
       - name: Commit, tag, release and publish
         if: steps.detect.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NEXT: ${{ steps.detect.outputs.next }}
           NOTES: ${{ steps.detect.outputs.notes }}
         run: |
           set -euo pipefail
-          : "${RELEASE_TOKEN:?not set. main requires the lint-test check and GITHUB_TOKEN cannot bypass it; add a fine-grained PAT with contents:write as the RELEASE_TOKEN secret.}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A charts/n8n CHANGELOG.md
           git commit -m "[n8n] Release ${NEXT}" -m "${NOTES}"
-          git push "https://x-access-token:${RELEASE_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+
+          # Blocks until CI passes on this commit; the tag below must never point at a failed build.
+          .github/scripts/push-main.sh
 
           # Deliberately origin, i.e. GITHUB_TOKEN: see the header comment.
           git tag -a "v${NEXT}" -m "n8n chart ${NEXT}" -m "${NOTES}"
@@ -240,6 +229,6 @@ jobs:
           gh release create "v${NEXT}" --title "n8n chart ${NEXT}" --notes-file /tmp/release-notes.md
 
           # The tag push above was made with GITHUB_TOKEN, so it does not trigger the tag-driven
-          # publish workflow. Dispatch it; this job already ran the same checks CI would.
+          # publish workflow. Dispatch it; CI has already passed for this commit.
           gh workflow run "Publish Chart (OCI)" --ref main
           echo "Released v${NEXT} and dispatched the publish workflow."

@@ -1,20 +1,24 @@
 name: CI
 
-# Workflow files are in `paths` too: without them a workflow-only PR gets no checks at all, so
-# Renovate has nothing to gate automerge on and a broken release workflow surfaces only at the next
-# release.
+# No `paths` filter on either trigger. lint-test is a required check on main, and a required check
+# that never starts stays pending forever, so anything that must reach main has to produce a run
+# unconditionally — a PR touching only renovate.json or CHANGELOG.md would otherwise be unmergeable,
+# including Renovate's own config-migration PRs.
+#
+# release/** and workflow_dispatch are here because chart-version.yml cannot push to a protected main
+# directly. It publishes each release commit to a release/** branch, runs this workflow against that
+# exact SHA, waits for the result, then fast-forwards main — check runs belong to the commit, so this
+# run is what satisfies main's requirement. The dispatch trigger is what avoids needing a PAT: the
+# branch push is made with GITHUB_TOKEN and so triggers nothing, and workflow_dispatch is the one
+# exception GITHUB_TOKEN may trigger. See .github/scripts/push-main.sh.
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'charts/**'
-      - '.github/workflows/**'
+    branches: [ main, 'release/**' ]
 
-  # No `paths` filter here, unlike `push`: lint-test is a required check on main, and a required
-  # check that never starts is pending forever. A PR touching only renovate.json or CHANGELOG.md
-  # would be unmergeable, including Renovate's own config-migration PRs.
   pull_request:
     branches: [ main ]
+
+  workflow_dispatch:
 
 env:
   HELM_VERSION: v3.18.3
