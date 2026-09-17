@@ -10,20 +10,20 @@ name: Chart Version
 # Renovate cannot do this part: its `bumpVersion` only works with the helmv3 manager, which needs
 # Chart.yaml `dependencies`, and this chart has none.
 #
-# main requires the lint-test check, so this workflow does not push to main directly. It hands each
-# commit to .github/scripts/push-main.sh, which publishes it to a release/** branch, runs CI against
-# that SHA, and only then fast-forwards main. That is why no lint or unit-test steps live here any
-# more: duplicating them would not satisfy the required check, since only a check run attached to the
-# commit does that. ci.yml is now the single place the chart is validated.
+# main requires the lint-test check and has no bypass actors, and a direct push cannot satisfy that —
+# see .github/scripts/merge-to-main.sh, which every commit here goes through. It opens a pull request
+# and merges it once CI passes. That is why no lint or unit-test steps live here any more: only a
+# check run on the commit satisfies the requirement, so ci.yml is the single place the chart is
+# validated.
 #
-# No PAT is involved. Everything runs on GITHUB_TOKEN, which is why `actions: write` is needed — a
-# GITHUB_TOKEN push triggers no workflow, so CI is requested via workflow_dispatch, the one trigger
-# it is allowed to fire.
+# RELEASE_TOKEN, a PAT, is required for exactly one reason: a PR opened with GITHUB_TOKEN triggers no
+# pull_request run, so lint-test would never report on it. The PAT needs contents:write and
+# pull-requests:write.
 #
-# It dispatches the publish itself because the tag is pushed with GITHUB_TOKEN, which does not
-# trigger other workflows. Now that the release commit carries a genuine CI run, oci-registry.yml's
-# CI gate would also pass for a PAT-pushed tag, so the tag could trigger the publish directly — a
-# simplification deliberately left for a separate change.
+# It dispatches the publish itself, and must: the tag is pushed with GITHUB_TOKEN, which triggers
+# nothing, and even a PAT-pushed tag would fail oci-registry.yml's CI gate. That gate looks for a
+# successful CI run on the tagged SHA, and the tagged SHA is the *squashed* commit on main, which
+# never had a run of its own — CI ran on the release PR's head commit instead.
 #
 # It cannot loop: its own commit changes only the chart version, never appVersion, and main is
 # fast-forwarded with GITHUB_TOKEN, which triggers nothing.
@@ -51,6 +51,7 @@ env:
 
 permissions:
   contents: write
+  pull-requests: write
   actions: write
 
 jobs:
@@ -159,6 +160,7 @@ jobs:
         if: steps.detect.outputs.release != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           set -euo pipefail
           if git diff --quiet -- charts/n8n/README.md; then
@@ -169,7 +171,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add charts/n8n/README.md
           git commit -m "[n8n] Regenerate README for updated values"
-          .github/scripts/push-main.sh
+          .github/scripts/merge-to-main.sh "[n8n] Regenerate README for updated values"
 
       - name: Bump chart version and changelog
         if: steps.detect.outputs.release == 'true'
@@ -201,6 +203,7 @@ jobs:
         if: steps.detect.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NEXT: ${{ steps.detect.outputs.next }}
           NOTES: ${{ steps.detect.outputs.notes }}
         run: |
@@ -210,11 +213,12 @@ jobs:
           git add -A charts/n8n CHANGELOG.md
           git commit -m "[n8n] Release ${NEXT}" -m "${NOTES}"
 
-          # Blocks until CI passes on this commit; the tag below must never point at a failed build.
-          .github/scripts/push-main.sh
+          # Blocks until the PR is merged; the tag below must never point at a failed build.
+          .github/scripts/merge-to-main.sh "[n8n] Release ${NEXT}" "${NOTES}"
 
-          # Deliberately origin, i.e. GITHUB_TOKEN: see the header comment.
-          git tag -a "v${NEXT}" -m "n8n chart ${NEXT}" -m "${NOTES}"
+          # origin/main, not HEAD: the merge squashed this commit, so HEAD is not what landed. The tag
+          # push uses GITHUB_TOKEN, which triggers nothing, hence the explicit dispatch below.
+          git tag -a "v${NEXT}" -m "n8n chart ${NEXT}" -m "${NOTES}" origin/main
           git push origin "v${NEXT}"
 
           {
