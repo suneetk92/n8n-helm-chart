@@ -6,6 +6,13 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
 
 <!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
 
+## 4.2.0
+
+### Changed
+
+- n8n `2.39.2` -> `2.40.3` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+- npm-install init container `node:20-alpine` -> `node:24-alpine`.
+
 ## 4.1.1
 
 ### Changed
