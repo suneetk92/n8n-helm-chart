@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 4.1.1](https://img.shields.io/badge/Version-4.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.39.5](https://img.shields.io/badge/AppVersion-2.39.5-informational?style=flat-square)
+![Version: 4.2.0](https://img.shields.io/badge/Version-4.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.40.3](https://img.shields.io/badge/AppVersion-2.40.3-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -16,14 +16,14 @@ architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 This chart is published as an OCI artifact, so no `helm repo add` is required:
 
 ```console
-helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.1.1
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.2.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 4.1.1`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 4.2.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1537,7 +1537,7 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.1.1
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.2.0
 ```
 
 ### To 4.0.0
@@ -1609,7 +1609,7 @@ workloads before upgrading**, otherwise Helm fails with a "field is immutable" e
 ```console
 kubectl delete deployment <release>-sandbox-api -n <namespace>
 kubectl delete statefulset <release>-sandbox-runner -n <namespace>
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.1.1
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.2.0
 ```
 
 Deleting them is safe: sandboxes are ephemeral, the API's state lives on its PVC, and the certificate
@@ -1900,7 +1900,7 @@ before upgrading — it will now actually be applied.
 | pypiRegistry.secretName | string | `""` | Name of an existing Kubernetes secret whose data contains a uv.toml config file. When set, the file is mounted into the runner sidecar and UV_CONFIG_FILE is set. |
 | pypiRegistry.url | string | `""` | URL of the private PyPI index (e.g. https://my.jfrog.io/artifactory/api/pypi/pypi/simple/). Used when no config file is provided; sets UV_DEFAULT_INDEX in the sidecar. For authenticated registries embed credentials inline or use customUvConfig/secretName instead. |
 | revisionHistoryLimit | string | `nil` | The number of old ReplicaSets to retain for rollback. More information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy |
-| sandboxService | object | `{"api":{"affinity":{},"defaultMaxSandboxes":50,"maxFileBytes":10485760,"nodeSelector":{},"persistence":{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClassName":""},"resources":{},"runnerHeartbeatGrace":"45s","store":"sqlite","tolerations":[]},"auth":{"apiKeys":"","existingSecret":"","keys":{"apiKeys":"api-keys","runnerApiKey":"runner-api-key","runnerApiKeys":"runner-api-keys","runnerRegistrationToken":"runner-registration-token"},"runnerApiKey":"","runnerApiKeys":"","runnerRegistrationToken":""},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/n8n-io/n8n-sandbox-service-api","runnerRepository":"ghcr.io/n8n-io/n8n-sandbox-service-runner-dind","sandboxRepository":"ghcr.io/n8n-io/n8n-sandbox-service-sandbox","tag":"","version":"1.3.4"},"replicas":1,"runner":{"acknowledgePrivileged":false,"affinity":{},"capacityTotal":1000,"controlGrpcPort":9091,"defaultCpuPercent":100,"defaultMemoryMb":512,"defaultPidsMax":256,"httpBaseUrl":"","httpPort":8080,"isolation":"privileged","nodeSelector":{},"replicas":1,"resources":{},"runtimeClassName":"","tolerations":[]},"tls":{"certManager":{"duration":"2160h","issuerRef":{"group":"cert-manager.io","kind":"Issuer","name":""},"renewBefore":"360h"},"certificates":{"apiControlClient":{"mountPath":"/tls/api-control-client","secretName":""},"apiRegistrationServer":{"mountPath":"/tls/api-registration","secretName":""},"runnerControlServer":{"mountPath":"/tls/runner-control","secretName":""},"runnerRegistrationClient":{"mountPath":"/tls/runner-registration","secretName":""}},"mode":"existingSecret"}}` | The n8n Sandbox Service: a control-plane API plus an in-cluster runner that executes AI-generated code. Deployed only when `sandboxService.enabled`. Treat the runner as root-equivalent on its node. |
+| sandboxService | object | `{"api":{"affinity":{},"defaultMaxSandboxes":50,"maxFileBytes":10485760,"nodeSelector":{},"persistence":{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClassName":""},"resources":{},"runnerHeartbeatGrace":"45s","store":"sqlite","tolerations":[]},"auth":{"apiKeys":"","existingSecret":"","keys":{"apiKeys":"api-keys","runnerApiKey":"runner-api-key","runnerApiKeys":"runner-api-keys","runnerRegistrationToken":"runner-registration-token"},"runnerApiKey":"","runnerApiKeys":"","runnerRegistrationToken":""},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/n8n-io/n8n-sandbox-service-api","runnerRepository":"ghcr.io/n8n-io/n8n-sandbox-service-runner-dind","sandboxRepository":"ghcr.io/n8n-io/n8n-sandbox-service-sandbox","tag":"","version":"1.4.0"},"replicas":1,"runner":{"acknowledgePrivileged":false,"affinity":{},"capacityTotal":1000,"controlGrpcPort":9091,"defaultCpuPercent":100,"defaultMemoryMb":512,"defaultPidsMax":256,"httpBaseUrl":"","httpPort":8080,"isolation":"privileged","nodeSelector":{},"replicas":1,"resources":{},"runtimeClassName":"","tolerations":[]},"tls":{"certManager":{"duration":"2160h","issuerRef":{"group":"cert-manager.io","kind":"Issuer","name":""},"renewBefore":"360h"},"certificates":{"apiControlClient":{"mountPath":"/tls/api-control-client","secretName":""},"apiRegistrationServer":{"mountPath":"/tls/api-registration","secretName":""},"runnerControlServer":{"mountPath":"/tls/runner-control","secretName":""},"runnerRegistrationClient":{"mountPath":"/tls/runner-registration","secretName":""}},"mode":"existingSecret"}}` | The n8n Sandbox Service: a control-plane API plus an in-cluster runner that executes AI-generated code. Deployed only when `sandboxService.enabled`. Treat the runner as root-equivalent on its node. |
 | sandboxService.api.defaultMaxSandboxes | int | `50` | Default per-tenant sandbox quota (`SANDBOX_API_DEFAULT_MAX_SANDBOXES`). `0` means unlimited. |
 | sandboxService.api.maxFileBytes | int | `10485760` | Maximum file upload size in bytes accepted by the API (`SANDBOX_API_MAX_FILE_BYTES`). |
 | sandboxService.api.persistence | object | `{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClassName":""}` | Persist the SQLite store so sandbox state survives API pod restarts. Ignored when `store` is `postgres`. |
@@ -1923,7 +1923,7 @@ before upgrading — it will now actually be applied.
 | sandboxService.image.runnerRepository | string | `"ghcr.io/n8n-io/n8n-sandbox-service-runner-dind"` | Sandbox runner image repository (Docker-in-Docker build). |
 | sandboxService.image.sandboxRepository | string | `"ghcr.io/n8n-io/n8n-sandbox-service-sandbox"` | Sandbox image used for the per-execution sandbox containers created by the runner. |
 | sandboxService.image.tag | string | `""` | Image tag. Defaults to the pinned version below when empty. |
-| sandboxService.image.version | string | `"1.3.4"` | Overrides the pinned service version used as the default image tag. The API, runner and sandbox images are released together and must match. |
+| sandboxService.image.version | string | `"1.4.0"` | Overrides the pinned service version used as the default image tag. The API, runner and sandbox images are released together and must match. |
 | sandboxService.replicas | int | `1` | Number of API replicas. Keep `1` unless `api.store` is `postgres`; the default SQLite store cannot be shared between replicas. |
 | sandboxService.runner.acknowledgePrivileged | bool | `false` | Explicit acceptance of the privileged DinD security trade-off. Required when `isolation` is `privileged`. The namespace also needs Pod Security Admission level `privileged`. |
 | sandboxService.runner.capacityTotal | int | `1000` | Reported capacity for placement (`SANDBOX_RUNNER_CAPACITY_TOTAL`). `0` means unlimited. |
