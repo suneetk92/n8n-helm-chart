@@ -43,10 +43,10 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
-      # Only for human-pushed tags. A dispatch from chart-version.yml points at a commit whose content
-      # CI passed on the release pull request that merged it; the squashed commit on main has no run of
-      # its own, so this gate would fail it, which is exactly why that path dispatches rather than
-      # relying on the tag.
+      # Only for human-pushed tags. chart-version.yml pushes its release commit with GITHUB_TOKEN, so
+      # that commit has no CI run of its own and this gate would fail it — which is exactly why that
+      # path dispatches instead of relying on the tag. Its content did pass CI on the pull request it
+      # was derived from.
       - name: Require a passing CI run for this commit
         if: github.event_name == 'push'
         env:

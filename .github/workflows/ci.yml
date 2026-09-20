@@ -5,10 +5,9 @@ name: CI
 # unconditionally — a PR touching only renovate.json or CHANGELOG.md would otherwise be unmergeable,
 # including Renovate's own config-migration PRs.
 #
-# chart-version.yml lands its release commits as pull requests, so the `pull_request` trigger is what
-# produces the lint-test run those releases wait on — a direct push cannot satisfy the requirement,
-# whatever checks the commit already carries. That is also why the release PR must be opened by a PAT:
-# a PR opened with GITHUB_TOKEN would trigger nothing here. See .github/scripts/merge-to-main.sh.
+# chart-version.yml pushes its release commits straight to main under the ruleset's Actions bypass, so
+# they produce no run here. That is deliberate: those commits only bump the version and regenerate the
+# changelog and README from a commit this workflow already validated on its pull request.
 on:
   push:
     branches: [ main ]
