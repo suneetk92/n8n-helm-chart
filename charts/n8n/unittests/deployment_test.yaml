@@ -1120,6 +1120,16 @@ tests:
             value: fake-value
         template: deployment.yaml
 
+  - it: should leave the task runner container uncapped when resources are not overridden
+    set:
+      taskRunners:
+        mode: external
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "n8n-task-runners")].resources
+          value: {}
+        template: deployment.yaml
+
   - it: should set task runner container when taskRunners.mode is external
     set:
       taskRunners:

@@ -5505,10 +5505,6 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "cpu",
-                    "memory"
-                  ],
                   "title": "requests",
                   "type": "object"
                 },
@@ -5522,18 +5518,10 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "cpu",
-                    "memory"
-                  ],
                   "title": "limits",
                   "type": "object"
                 }
               },
-              "required": [
-                "requests",
-                "limits"
-              ],
               "title": "resources",
               "type": "object"
             },
@@ -5550,7 +5538,6 @@
             "port",
             "nodeOptions",
             "image",
-            "resources",
             "pythonSitePackagesDir"
           ],
           "title": "external",

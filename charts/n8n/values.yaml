@@ -985,20 +985,18 @@ taskRunners:
       # -- Overrides the image tag whose default is the chart appVersion.
       tag: ""
 
-    # -- The resources for the external task runner
-    resources:
-      # -- The resources requests for the external task runner
-      requests:
-        # -- The CPU request for the external task runner
-        cpu: 100m
-        # -- The memory request for the external task runner
-        memory: 32Mi
-      # -- The limits for the external task runner
-      limits:
-        # -- The CPU limit for the external task runner
-        cpu: 2000m
-        # -- The memory limit for the external task runner
-        memory: 512Mi
+    # -- This block is for setting up the resource management for the external task runner container more information can be found here: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    resources: {}
+    # Unset by default, like every other container in this chart. A memory limit here is enforced by
+    # the kernel, so a Code node that exceeds it takes the whole runner down with an OOMKill instead
+    # of failing that one execution. If you do want to specify resources, uncomment the following
+    # lines and adjust them as necessary.
+    # requests:
+    #   cpu: 100m
+    #   memory: 32Mi
+    # limits:
+    #   cpu: 2000m
+    #   memory: 512Mi
 
     # -- Path to the Python venv's site-packages directory inside the `n8nio/runners` image. Used to mount a `.pth` file that exposes packages installed by `nodes.python.external.packages` to the Python runner, which always runs with `-I` (isolated mode) and therefore ignores `PYTHONPATH`. Update this if the image's bundled Python minor version changes.
     pythonSitePackagesDir: /opt/runners/task-runner-python/.venv/lib/python3.13/site-packages
