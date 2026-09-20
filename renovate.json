@@ -66,12 +66,12 @@
       "semanticCommitType": "feat"
     },
     {
-      "description": "Sandbox service. Preview upstream, so hold every update for review. chore: it does not cut a chart release on its own; it rides along in the next n8n release.",
+      "description": "Sandbox service. Automerged like every other dependency here: CI renders the chart against the new version, and the update rides along in the next n8n release rather than cutting one. chore: it does not cut a chart release on its own.",
       "matchDepNames": [
         "ghcr.io/n8n-io/n8n-sandbox-service-api"
       ],
       "groupName": "n8n sandbox service",
-      "automerge": false,
+      "automerge": true,
       "semanticCommitType": "chore"
     },
     {
