@@ -53,6 +53,8 @@ permissions:
   contents: write
   pull-requests: write
   actions: write
+  # For the failure issue at the end of the job.
+  issues: write
 
 jobs:
   release:
@@ -236,3 +238,31 @@ jobs:
           # publish workflow. Dispatch it; CI has already passed for this commit.
           gh workflow run "Publish Chart (OCI)" --ref main
           echo "Released v${NEXT} and dispatched the publish workflow."
+
+      # A red run here is easy to miss: nothing else reports it, and the symptom is an absence — no
+      # tag, no release, no package. That is how RELEASE_TOKEN's lapsed pull-requests permission went
+      # unnoticed for six days while six n8n bumps landed with no chart to show for them. An issue is
+      # the one signal that stays visible until somebody closes it.
+      - name: Report a failed release
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          TITLE="Chart release is failing"
+          body=$(printf '%s\n\n%s\n' \
+            "\`chart-version.yml\` failed: ${RUN_URL}" \
+            "No chart was released. Every n8n bump that lands while this is broken ships nothing, and the missing releases do not queue up — the next successful run cuts a single version covering all of them.")
+
+          # Comment on the open issue rather than opening a second one: a pile of identical issues is
+          # its own kind of silence. Matched client-side on an exact title rather than via --search,
+          # whose index lags behind issue creation and would let duplicates through.
+          existing=$(TITLE="${TITLE}" gh issue list --state open --limit 100 --json number,title \
+            --jq '[.[] | select(.title == env.TITLE)] | .[0].number // ""')
+          if [ -n "${existing}" ]; then
+            gh issue comment "${existing}" --body "${body}"
+            echo "Commented on existing issue #${existing}."
+          else
+            gh issue create --title "${TITLE}" --body "${body}"
+          fi
