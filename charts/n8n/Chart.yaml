@@ -19,7 +19,7 @@ version: 4.3.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "2.41.0"
+appVersion: "2.41.1"
 kubeVersion: ">=1.23.0-0"
 home: https://n8n.io
 maintainers:
