@@ -1338,7 +1338,7 @@ sandboxService:
     # -- Image tag. Defaults to the pinned version below when empty.
     tag: ""
     # -- Overrides the pinned service version used as the default image tag. The API, runner and sandbox images are released together and must match.
-    version: 1.4.0
+    version: 1.5.0
     # -- Image pull policy.
     pullPolicy: IfNotPresent
     # -- Sandbox runner image repository (Docker-in-Docker build).
