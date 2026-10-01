@@ -6,6 +6,12 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
 
 <!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
 
+## 4.4.1
+
+### Changed
+
+- n8n `2.42.0` -> `2.42.2` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+
 ## 4.4.0
 
 ### Changed
