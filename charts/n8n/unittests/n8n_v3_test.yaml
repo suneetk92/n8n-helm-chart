@@ -1,0 +1,315 @@
+suite: test n8n 3.0 alignment
+
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+
+release:
+  name: n8n
+  namespace: n8n
+
+chart:
+  version: 1.0.0
+  appVersion: 1.0.0
+
+tests:
+  - it: should render N8N_STORAGE_PATH even when binaryData.mode is unset
+    set:
+      binaryData:
+        localStoragePath: /data/n8n-storage
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - equal:
+          path: data.N8N_STORAGE_PATH
+          value: /data/n8n-storage
+      - notExists:
+          path: data.N8N_BINARY_DATA_STORAGE_PATH
+
+  - it: should not render N8N_STORAGE_PATH by default so the n8n default applies
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_STORAGE_PATH
+
+  - it: should never render the removed OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS in queue mode
+    set:
+      db:
+        type: postgresdb
+      worker:
+        mode: queue
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-queue-configmap
+    asserts:
+      - equal:
+          path: data.EXECUTIONS_MODE
+          value: queue
+      - notExists:
+          path: data.OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+
+  - it: should use N8N_WEBHOOK_URL and not the deprecated WEBHOOK_URL
+    set:
+      webhook:
+        url: https://example.com
+    template: deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_WEBHOOK_URL
+            value: https://example.com
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: WEBHOOK_URL
+            value: https://example.com
+
+  - it: should set S3 auth auto detect and skip the key pair when binaryData.s3.authAutoDetect is true
+    set:
+      binaryData:
+        mode: s3
+        s3:
+          host: s3.eu-central-1.amazonaws.com
+          bucketName: n8n
+          authAutoDetect: true
+    asserts:
+      - equal:
+          path: data.N8N_EXTERNAL_STORAGE_S3_AUTH_AUTO_DETECT
+          value: "true"
+        template: configmap.yaml
+        documentSelector:
+          path: metadata.name
+          value: n8n-binary-data-configmap
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: access-key-id
+                name: n8n-s3-secret
+        template: deployment.yaml
+      - hasDocuments:
+          count: 1
+        template: secret.yaml
+      - equal:
+          path: metadata.name
+          value: n8n-encryption-key-secret-v2
+        template: secret.yaml
+
+  - it: should not set S3 auth auto detect by default
+    set:
+      binaryData:
+        mode: s3
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_EXTERNAL_STORAGE_S3_AUTH_AUTO_DETECT
+
+  - it: should render the Azure Blob settings when binaryData.mode is azure
+    set:
+      binaryData:
+        mode: azure
+        azure:
+          containerName: n8n-binary
+          accountName: n8nstorage
+          endpoint: https://n8nstorage.blob.core.windows.net
+          authAutoDetect: true
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-binary-data-configmap
+    asserts:
+      - equal:
+          path: data.N8N_DEFAULT_BINARY_DATA_MODE
+          value: azure
+      - equal:
+          path: data.N8N_EXTERNAL_STORAGE_AZURE_CONTAINER_NAME
+          value: n8n-binary
+      - equal:
+          path: data.N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_NAME
+          value: n8nstorage
+      - equal:
+          path: data.N8N_EXTERNAL_STORAGE_AZURE_ENDPOINT
+          value: https://n8nstorage.blob.core.windows.net
+      - equal:
+          path: data.N8N_EXTERNAL_STORAGE_AZURE_AUTH_AUTO_DETECT
+          value: "true"
+
+  - it: should create an Azure secret and wire the connection string and account key when they are set
+    set:
+      binaryData:
+        mode: azure
+        azure:
+          containerName: n8n-binary
+          connectionString: DefaultEndpointsProtocol=https;AccountName=x
+          accountKey: key123
+    asserts:
+      - equal:
+          path: data.connection-string
+          value: RGVmYXVsdEVuZHBvaW50c1Byb3RvY29sPWh0dHBzO0FjY291bnROYW1lPXg=
+        template: secret.yaml
+        documentSelector:
+          path: metadata.name
+          value: n8n-azure-secret
+      - equal:
+          path: data.account-key
+          value: a2V5MTIz
+        template: secret.yaml
+        documentSelector:
+          path: metadata.name
+          value: n8n-azure-secret
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EXTERNAL_STORAGE_AZURE_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: n8n-azure-secret
+                key: connection-string
+                optional: true
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: n8n-azure-secret
+                key: account-key
+                optional: true
+        template: deployment.yaml
+
+  - it: should use the existing Azure secret and create none when binaryData.azure.existingSecret is set
+    set:
+      binaryData:
+        mode: azure
+        azure:
+          containerName: n8n-binary
+          accountKey: ignored
+          existingSecret: my-azure-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-azure-secret
+                key: account-key
+                optional: true
+        template: deployment.yaml
+      - hasDocuments:
+          count: 1
+        template: secret.yaml
+      - equal:
+          path: metadata.name
+          value: n8n-encryption-key-secret-v2
+        template: secret.yaml
+
+  - it: should not inject any Azure secret env var with authAutoDetect and no secret values
+    set:
+      binaryData:
+        mode: azure
+        azure:
+          containerName: n8n-binary
+          accountName: n8nstorage
+          authAutoDetect: true
+    template: deployment.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[?(@.name == "n8n-main")].env
+          content:
+            name: N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: n8n-azure-secret
+                key: account-key
+                optional: true
+
+  - it: should enable unverified packages automatically when a community package is listed
+    set:
+      nodes:
+        external:
+          packages:
+            - n8n-nodes-http-to-s3@1.0.0
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_UNVERIFIED_PACKAGES_ENABLED
+          value: "true"
+
+  - it: should not set unverified packages when only non-community packages are listed
+    set:
+      nodes:
+        external:
+          packages:
+            - moment@2.29.4
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_UNVERIFIED_PACKAGES_ENABLED
+
+  - it: should not set unverified packages by default so the n8n default applies
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - notExists:
+          path: data.N8N_UNVERIFIED_PACKAGES_ENABLED
+
+  - it: should let nodes.external.unverifiedPackages false override the automatic enablement
+    set:
+      nodes:
+        external:
+          unverifiedPackages: false
+          packages:
+            - n8n-nodes-http-to-s3@1.0.0
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_UNVERIFIED_PACKAGES_ENABLED
+          value: "false"
+
+  - it: should let nodes.external.unverifiedPackages true be set without listing packages
+    set:
+      nodes:
+        external:
+          unverifiedPackages: true
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: n8n-security-configmap
+    asserts:
+      - equal:
+          path: data.N8N_UNVERIFIED_PACKAGES_ENABLED
+          value: "true"
+
+  - it: should reject an unsupported binaryData.mode
+    set:
+      binaryData:
+        mode: default
+    template: configmap.yaml
+    asserts:
+      - failedTemplate: {}

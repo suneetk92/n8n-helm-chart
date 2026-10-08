@@ -531,9 +531,8 @@ tests:
       - equal:
           path: data.EXECUTIONS_MODE
           value: "queue"
-      - equal:
+      - notExists:
           path: data.OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
-          value: "true"
 
   - it: should set execution mode to queue when db type set to postgresdb and webhook.mode is queue
     set:
@@ -548,9 +547,8 @@ tests:
       - equal:
           path: data.EXECUTIONS_MODE
           value: "queue"
-      - equal:
+      - notExists:
           path: data.OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
-          value: "true"
 
   - it: should set redis host and port from external redis host and port when db type set to postgresdb and worker mode is queue and redis.enabled is false
     set:
@@ -1221,7 +1219,7 @@ tests:
           path: data.N8N_DEFAULT_BINARY_DATA_MODE
           value: s3
 
-  - it: should set binary data storage path from binaryData.localStoragePath when binaryData.mode is filesystem
+  - it: should set N8N_STORAGE_PATH from binaryData.localStoragePath when binaryData.mode is filesystem
     set:
       binaryData:
         mode: filesystem
@@ -1231,8 +1229,10 @@ tests:
       value: n8n-binary-data-configmap
     asserts:
       - equal:
-          path: data.N8N_BINARY_DATA_STORAGE_PATH
+          path: data.N8N_STORAGE_PATH
           value: /home/node/.n8n/binaryData
+      - notExists:
+          path: data.N8N_BINARY_DATA_STORAGE_PATH
 
   - it: should set s3 configurations from binaryData.s3 with any region format when binaryData.mode is s3
     set:
