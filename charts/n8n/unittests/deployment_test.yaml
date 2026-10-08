@@ -623,7 +623,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[?(@.name == "n8n-main")].env
           content:
-            name: WEBHOOK_URL
+            name: N8N_WEBHOOK_URL
             value: https://example.com
         template: deployment.yaml
 

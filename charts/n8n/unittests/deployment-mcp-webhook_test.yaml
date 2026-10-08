@@ -477,7 +477,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[?(@.name == "n8n-mcp-webhook")].env
           content:
-            name: WEBHOOK_URL
+            name: N8N_WEBHOOK_URL
             value: https://example.com
         template: deployment-mcp-webhook.yaml
 

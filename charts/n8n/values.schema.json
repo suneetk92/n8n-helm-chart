@@ -51,7 +51,7 @@
       "properties": {
         "mode": {
           "default": null,
-          "description": "The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (null) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/",
+          "description": "The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store, `azure` in Azure Blob Storage. Leave unset (null) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. `default` (in-memory) is no longer accepted. `s3` and `azure` are Enterprise features. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/",
           "required": [],
           "title": "mode",
           "oneOf": [
@@ -60,7 +60,8 @@
               "enum": [
                 "filesystem",
                 "database",
-                "s3"
+                "s3",
+                "azure"
               ]
             },
             {
@@ -70,7 +71,7 @@
         },
         "localStoragePath": {
           "default": "",
-          "description": "Path for binary data storage in 'filesystem' mode. If not set, the default path will be used. For more information, see https://docs.n8n.io/hosting/configuration/environment-variables/binary-data/",
+          "description": "Root directory of n8n's file storage (N8N_STORAGE_PATH, default <N8N_USER_FOLDER>/storage). Rendered whenever set, regardless of binaryData.mode.",
           "required": [],
           "title": "localStoragePath",
           "type": "string"
@@ -109,6 +110,13 @@
               "title": "bucketRegion",
               "type": "string"
             },
+            "authAutoDetect": {
+              "default": false,
+              "description": "Authenticate with the credentials available to the pod (IRSA, EKS Pod Identity, instance profile) instead of a key pair. When true, accessKey, accessSecret and existingSecret are ignored.",
+              "required": [],
+              "title": "authAutoDetect",
+              "type": "boolean"
+            },
             "accessKey": {
               "default": "",
               "description": "Access key in S3-compatible external storage",
@@ -135,18 +143,86 @@
             "host",
             "bucketName",
             "bucketRegion",
+            "authAutoDetect",
             "accessKey",
             "accessSecret",
             "existingSecret"
           ],
           "title": "s3",
           "type": "object"
+        },
+        "azure": {
+          "additionalProperties": false,
+          "description": "Azure Blob Storage external storage configuration. Only used when binaryData.mode is azure.",
+          "properties": {
+            "containerName": {
+              "default": "",
+              "description": "Name of the blob container to store binary data in.",
+              "required": [],
+              "title": "containerName",
+              "type": "string"
+            },
+            "accountName": {
+              "default": "",
+              "description": "Storage account name. Needed with accountKey or authAutoDetect; not needed with a connection string.",
+              "required": [],
+              "title": "accountName",
+              "type": "string"
+            },
+            "endpoint": {
+              "default": "",
+              "description": "Custom blob endpoint, for example for Azurite or a sovereign cloud. Leave empty for the public Azure endpoint.",
+              "required": [],
+              "title": "endpoint",
+              "type": "string"
+            },
+            "authAutoDetect": {
+              "default": false,
+              "description": "Authenticate with the identity available to the pod (workload identity, managed identity) instead of a key.",
+              "required": [],
+              "title": "authAutoDetect",
+              "type": "boolean"
+            },
+            "connectionString": {
+              "default": "",
+              "description": "Storage account connection string, stored in a Secret created by this chart.",
+              "required": [],
+              "title": "connectionString",
+              "type": "string"
+            },
+            "accountKey": {
+              "default": "",
+              "description": "Storage account key, stored in a Secret created by this chart.",
+              "required": [],
+              "title": "accountKey",
+              "type": "string"
+            },
+            "existingSecret": {
+              "default": "",
+              "description": "Existing Secret holding connection-string and/or account-key keys.",
+              "required": [],
+              "title": "existingSecret",
+              "type": "string"
+            }
+          },
+          "required": [
+            "containerName",
+            "accountName",
+            "endpoint",
+            "authAutoDetect",
+            "connectionString",
+            "accountKey",
+            "existingSecret"
+          ],
+          "title": "azure",
+          "type": "object"
         }
       },
       "required": [
         "localStoragePath",
         "databaseMaxFileSize",
-        "s3"
+        "s3",
+        "azure"
       ],
       "title": "binaryData",
       "type": "object"
@@ -1184,6 +1260,20 @@
               "required": [],
               "title": "reinstallMissingPackages",
               "type": "boolean"
+            },
+            "unverifiedPackages": {
+              "default": null,
+              "description": "Whether n8n may load community packages that n8n has not verified (N8N_UNVERIFIED_PACKAGES_ENABLED). Leave unset (null) to have the chart set it to true whenever packages lists a community package (n8n-nodes-*), and leave the n8n default otherwise; set true or false to force it.",
+              "required": [],
+              "title": "unverifiedPackages",
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "packages": {
               "default": [],

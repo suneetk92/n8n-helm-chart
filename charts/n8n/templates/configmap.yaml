@@ -25,6 +25,11 @@ data:
 {{- if not (kindIs "invalid" .Values.nodes.include) }}
   NODES_INCLUDE: {{ .Values.nodes.include | toJson | quote }}
 {{- end }}
+{{- if not (kindIs "invalid" .Values.nodes.external.unverifiedPackages) }}
+  N8N_UNVERIFIED_PACKAGES_ENABLED: {{ .Values.nodes.external.unverifiedPackages | quote }}
+{{- else if include "n8n.communityPackages" . }}
+  N8N_UNVERIFIED_PACKAGES_ENABLED: "true"
+{{- end }}
 {{- if not (kindIs "invalid" .Values.nodes.compression.maxDecompressedSizeBytes) }}
   N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES: {{ .Values.nodes.compression.maxDecompressedSizeBytes | int64 | quote }}
 {{- end }}
@@ -181,7 +186,6 @@ metadata:
 data:
   EXECUTIONS_MODE: "queue"
   QUEUE_BULL_REDIS_DB: {{ .Values.externalRedis.database | quote }}
-  OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
   {{- if and .Values.externalRedis.clusterNodes (gt (len .Values.externalRedis.clusterNodes) 0) }}
     {{- $nodeList := list }}
     {{- range .Values.externalRedis.clusterNodes }}
@@ -360,8 +364,8 @@ data:
 {{- if not (kindIs "invalid" .Values.binaryData.mode) }}
   N8N_DEFAULT_BINARY_DATA_MODE: {{ .Values.binaryData.mode | quote }}
 {{- end }}
-{{- if and (eq .Values.binaryData.mode "filesystem") (ne .Values.binaryData.localStoragePath "") }}
-  N8N_BINARY_DATA_STORAGE_PATH: {{ .Values.binaryData.localStoragePath | quote }}
+{{- if ne .Values.binaryData.localStoragePath "" }}
+  N8N_STORAGE_PATH: {{ .Values.binaryData.localStoragePath | quote }}
 {{- end }}
 {{- if eq .Values.binaryData.mode "database" }}
   N8N_BINARY_DATA_DATABASE_MAX_FILE_SIZE: {{ .Values.binaryData.databaseMaxFileSize | quote }}
@@ -370,6 +374,21 @@ data:
   N8N_EXTERNAL_STORAGE_S3_HOST: {{ .Values.binaryData.s3.host | quote }}
   N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME: {{ .Values.binaryData.s3.bucketName | quote }}
   N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION: {{ .Values.binaryData.s3.bucketRegion | quote }}
+  {{- if .Values.binaryData.s3.authAutoDetect }}
+  N8N_EXTERNAL_STORAGE_S3_AUTH_AUTO_DETECT: "true"
+  {{- end }}
+{{- end }}
+{{- if eq .Values.binaryData.mode "azure" }}
+  N8N_EXTERNAL_STORAGE_AZURE_CONTAINER_NAME: {{ .Values.binaryData.azure.containerName | quote }}
+  {{- with .Values.binaryData.azure.accountName }}
+  N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_NAME: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.binaryData.azure.endpoint }}
+  N8N_EXTERNAL_STORAGE_AZURE_ENDPOINT: {{ . | quote }}
+  {{- end }}
+  {{- if .Values.binaryData.azure.authAutoDetect }}
+  N8N_EXTERNAL_STORAGE_AZURE_AUTH_AUTO_DETECT: "true"
+  {{- end }}
 {{- end }}
 ---
 # -- Execution lifecycle, request-size limits and the durable scheduler. Consumed by every n8n container (main, worker, webhook, MCP webhook).

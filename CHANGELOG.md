@@ -6,6 +6,45 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
 
 <!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
 
+## 5.0.0
+
+Moves the chart to **n8n 3.x**. See "To 5.0.0" in the chart README for upgrade steps.
+
+### Changed
+
+- **Breaking:** the chart now targets n8n 3.0 (`appVersion`). Review the
+  [n8n 3.0 breaking changes](https://docs.n8n.io/changelog/v30-breaking-changes): removed nodes, the
+  Execute Sub-workflow Local File / URL sources, `$getPairedItem` and AI Agent v1 are workflow-level
+  and need migrating by hand.
+- **Breaking:** `binaryData.localStoragePath` now renders `N8N_STORAGE_PATH` (previously
+  `N8N_BINARY_DATA_STORAGE_PATH`, deprecated in n8n 3.0) and does so in every binary data mode, not
+  only `filesystem`. n8n 3.0 renames its `binaryData` directory to `storage`; a volume mounted at
+  `/home/node/.n8n/binaryData` must move to `/home/node/.n8n/storage`.
+- `webhook.url` renders `N8N_WEBHOOK_URL` instead of the deprecated `WEBHOOK_URL`, which now also
+  covers test webhooks.
+- n8n 3.0 stops loading unverified community packages by default. The chart sets
+  `N8N_UNVERIFIED_PACKAGES_ENABLED=true` whenever `nodes.external.packages` lists a community package
+  (`n8n-nodes-*`), so installed community nodes keep loading.
+- Queue mode: manual executions always run on workers in n8n 3.0. Size worker memory accordingly.
+- `taskRunners.taskTimeout`, `binaryData.mode`, `binaryData.localStoragePath` and the SSRF and
+  `aiAssistant.modules` documentation reflect the n8n 3.0 defaults (task timeout 60 s, expanded SSRF
+  block list, Chat Hub off by default).
+- The S3 credential env vars for the binary data store are rendered from one shared helper
+  (`n8n.binaryData.secretEnv`) instead of four copies.
+
+### Added
+
+- `binaryData.mode: azure` and `binaryData.azure.*` for Azure Blob Storage: container, account name,
+  endpoint, connection string, account key, an existing Secret, or `authAutoDetect` for workload and
+  managed identity.
+- `binaryData.s3.authAutoDetect` (`N8N_EXTERNAL_STORAGE_S3_AUTH_AUTO_DETECT`) to authenticate with the
+  pod's own AWS identity (IRSA, EKS Pod Identity, instance profile) instead of an access key pair.
+- `nodes.external.unverifiedPackages` to force `N8N_UNVERIFIED_PACKAGES_ENABLED` on or off.
+
+### Removed
+
+- `OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS` is no longer set in queue mode; n8n 3.0 removed the variable.
+
 ## 4.5.1
 
 ### Changed

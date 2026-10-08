@@ -94,7 +94,6 @@ should match snapshot of default values:
     apiVersion: v1
     data:
       EXECUTIONS_MODE: queue
-      OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
       QUEUE_BULL_REDIS_DB: "0"
       QUEUE_BULL_REDIS_DUALSTACK: "false"
       QUEUE_BULL_REDIS_HOST: ""
@@ -222,7 +221,7 @@ should match snapshot of default values:
       template:
         metadata:
           annotations:
-            checksum/config: ef22563bb192a7acbf0f416d9cc00b8fcff0bef999827143ab6131522e683676
+            checksum/config: 9d5b7e26866c1ee9bb6ce21854a33f7b74910b5fc3521879b7bee021467929c1
           labels:
             app.kubernetes.io/component: worker
             app.kubernetes.io/instance: n8n
@@ -510,7 +509,6 @@ should match snapshot of postgres ssl certificate values:
     apiVersion: v1
     data:
       EXECUTIONS_MODE: queue
-      OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
       QUEUE_BULL_REDIS_DB: "0"
       QUEUE_BULL_REDIS_DUALSTACK: "false"
       QUEUE_BULL_REDIS_HOST: ""
@@ -638,7 +636,7 @@ should match snapshot of postgres ssl certificate values:
       template:
         metadata:
           annotations:
-            checksum/config: da2fe12e773f274cb71c09812f037a178df71a39f0ec927d4732408e1a128720
+            checksum/config: 2f7c963c6f30e9b65a9f87cf43d86319c558de505a32385cd7f19da0c1c22de5
           labels:
             app.kubernetes.io/component: worker
             app.kubernetes.io/instance: n8n
@@ -951,7 +949,6 @@ should match snapshot of worker persistence:
     apiVersion: v1
     data:
       EXECUTIONS_MODE: queue
-      OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
       QUEUE_BULL_REDIS_DB: "0"
       QUEUE_BULL_REDIS_DUALSTACK: "false"
       QUEUE_BULL_REDIS_HOST: ""
@@ -1079,7 +1076,7 @@ should match snapshot of worker persistence:
       template:
         metadata:
           annotations:
-            checksum/config: ef22563bb192a7acbf0f416d9cc00b8fcff0bef999827143ab6131522e683676
+            checksum/config: 9d5b7e26866c1ee9bb6ce21854a33f7b74910b5fc3521879b7bee021467929c1
           labels:
             app.kubernetes.io/component: worker
             app.kubernetes.io/instance: n8n

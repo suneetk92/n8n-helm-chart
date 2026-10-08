@@ -4,7 +4,7 @@
 
 A Helm chart for fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.
 
-![Version: 4.5.1](https://img.shields.io/badge/Version-4.5.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.43.1](https://img.shields.io/badge/AppVersion-2.43.1-informational?style=flat-square)
+![Version: 5.0.0](https://img.shields.io/badge/Version-5.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v3-rc](https://img.shields.io/badge/AppVersion-v3--rc-informational?style=flat-square)
 
 ## Official Documentation
 
@@ -16,14 +16,14 @@ architecture and development notes live in [`CLAUDE.md`](CLAUDE.md).
 This chart is published as an OCI artifact, so no `helm repo add` is required:
 
 ```console
-helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.5.1
+helm install [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 5.0.0
 ```
 
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
-> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 4.5.1`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
+> **Tip**: Inspect the defaults before installing with `helm show values oci://ghcr.io/suneetk92/n8n --version 5.0.0`. Available versions are listed on the [package page](https://github.com/suneetk92?tab=packages&repo_name=n8n-helm-chart).
 
 ## Full Example
 
@@ -1058,23 +1058,31 @@ license:
 
 ## Binary Data Storage Configuration
 
-`binaryData.mode` selects where n8n stores binary data. Leave it unset (`~`) to let n8n choose for the deployment mode (`filesystem` in regular mode, `database` in queue mode). n8n 2.0 removed the in-memory mode, so `default` is no longer a valid value.
+`binaryData.mode` selects where n8n stores binary data. Leave it unset (`~`) to let n8n choose for the deployment mode (`filesystem` in regular mode, `database` in queue mode). The in-memory `default` mode no longer exists and is rejected by the values schema.
 
 ```yaml
 binaryData:
-  # filesystem | database | s3 (unset = n8n default for the deployment mode)
+  # filesystem | database | s3 | azure (unset = n8n default for the deployment mode)
   mode: filesystem
 ```
+
+`s3` and `azure` are n8n Enterprise features. On Community Edition use `filesystem` or `database`.
 
 ### Filesystem
 
-Override the storage path with `binaryData.localStoragePath`. It is only rendered in `filesystem` mode, so make sure the path is covered by a writable volume.
+n8n keeps its file storage, and with it the `filesystem` binary data, under `N8N_STORAGE_PATH` (default `/home/node/.n8n/storage`). Override it with `binaryData.localStoragePath`. It is rendered whenever set, whatever the mode, so make sure the path is on a writable and persistent volume. Enabling `main.persistence` covers the default path.
 
 ```yaml
 binaryData:
   mode: filesystem
-  localStoragePath: /home/node/.n8n/binaryData
+  localStoragePath: /home/node/.n8n/storage
+
+main:
+  persistence:
+    enabled: true
 ```
+
+In queue mode every worker writes binary data, so main and workers must share the volume (`ReadWriteMany`), or use `database` / an external store instead.
 
 ### Database
 
@@ -1101,7 +1109,7 @@ binaryData:
     accessSecret: "your-secret-access-key"
 ```
 
-If you have an existing secret for the s3 access key and access secret with `access-key-id` and `secret-access-key` seret key names respectively, configure it as follows:
+If you have an existing secret for the s3 access key and access secret with `access-key-id` and `secret-access-key` secret key names respectively, configure it as follows:
 
 ```yaml
 binaryData:
@@ -1112,6 +1120,47 @@ binaryData:
     bucketRegion: "us-east-1"
     existingSecret: "your-existing-secret"
 ```
+
+On AWS, skip the key pair entirely and let the pod authenticate with its own identity (IRSA, EKS Pod Identity or an instance profile). With `authAutoDetect: true` no Secret is created and no credential env vars are injected:
+
+```yaml
+binaryData:
+  mode: s3
+  s3:
+    host: "s3.eu-central-1.amazonaws.com"
+    bucketName: "your-bucket-name"
+    bucketRegion: "eu-central-1"
+    authAutoDetect: true
+```
+
+### Azure Blob Storage external storage
+
+Azure settings are only used when `binaryData.mode` is `azure`. Authenticate with a connection string, an account name plus key, or the pod's own identity:
+
+```yaml
+binaryData:
+  mode: azure
+  azure:
+    containerName: "n8n-binary"
+    accountName: "mystorageaccount"
+    # Pick one:
+    connectionString: "DefaultEndpointsProtocol=https;AccountName=..."   # or
+    accountKey: "your-account-key"                                      # or
+    authAutoDetect: true                                                # workload identity / managed identity
+```
+
+For production keep the secret values out of `values.yaml` with an existing Secret that holds a `connection-string` and/or `account-key` key:
+
+```yaml
+binaryData:
+  mode: azure
+  azure:
+    containerName: "n8n-binary"
+    accountName: "mystorageaccount"
+    existingSecret: "your-existing-secret"
+```
+
+Use `endpoint` for Azurite or a sovereign cloud.
 
 ## Extra Manifests
 
@@ -1537,8 +1586,36 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.5.1
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 5.0.0
 ```
+
+### To 5.0.0
+
+Chart 5.0.0 moves the chart to **n8n 3.x**. Read the [n8n 3.0 breaking changes](https://docs.n8n.io/changelog/v30-breaking-changes) first: removed nodes, the Execute Sub-workflow Local File / URL sources, `$getPairedItem`, AI Agent v1 and others are workflow-level and cannot be handled by the chart. Before upgrading, check **Settings > Migration Report** on your 2.x instance, which lists the affected workflows.
+
+**What the chart changed for you**
+
+| Change | Detail |
+|---|---|
+| `WEBHOOK_URL` -> `N8N_WEBHOOK_URL` | `webhook.url` now renders the new variable, which also covers test webhooks. If you set `WEBHOOK_URL` yourself through `extraEnvVars` / `extraEnv`, rename it. |
+| `OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS` removed | n8n 3.0 always runs manual executions on workers in queue mode, so the chart no longer sets the variable. **Review worker memory**: workers now also run the executions you start from the editor. |
+| `N8N_BINARY_DATA_STORAGE_PATH` -> `N8N_STORAGE_PATH` | `binaryData.localStoragePath` now renders `N8N_STORAGE_PATH`, and it is rendered in every mode, not only `filesystem`. See the storage directory note below. |
+| Community packages | n8n 3.0 stops loading unverified community packages by default. The chart sets `N8N_UNVERIFIED_PACKAGES_ENABLED=true` for you whenever `nodes.external.packages` lists a community package (`n8n-nodes-*`), so installed nodes keep loading. Force it either way with `nodes.external.unverifiedPackages`. |
+
+**What you may need to do**
+
+- **Storage directory renamed.** On first start n8n 3.0 renames `~/.n8n/binaryData` to `~/.n8n/storage`. With `main.persistence` on its default `mountPath` (`/home/node/.n8n`) this just works. If you mount a volume at `/home/node/.n8n/binaryData`, mount it at `/home/node/.n8n/storage` instead, or set `binaryData.localStoragePath` to the old path to keep it. If both directories exist n8n refuses to start: move the contents of `binaryData` into `storage`, remove `binaryData`, then start n8n. If you pinned `localStoragePath` to a custom path the chart now sets `N8N_STORAGE_PATH`; do not also set `N8N_BINARY_DATA_STORAGE_PATH` to a different value, n8n refuses to start with both.
+- **Task runner timeout.** n8n's own default dropped from 300 to 60 seconds. The chart already defaulted `taskRunners.taskTimeout` to 60, so nothing changes for you, but Code node tasks that need more than a minute must set it explicitly.
+- **SSRF protection.** With `ssrfProtection.enabled: true`, the built-in block list now also covers the shared address space (`100.64.0.0/10`) and IPv6 transition ranges. If workflows call hosts in those ranges (common with Tailscale or carrier-grade NAT), add them to `ssrfProtection.allowedIpRanges` or `allowedHostnames`. Keep `default` in `blockedIpRanges` if you set it, otherwise you must list every built-in range yourself.
+- **Compression node limits** drop to 256 MiB / 1000 entries; raise `nodes.compression.*` if you unpack larger archives (unchanged since 2.0.0, listed for completeness).
+- **Chat Hub is off by default** and is removed in n8n 4.0. To keep it on the 3.x line, add `chat-hub` to `N8N_ENABLED_MODULES` and keep your other modules, for example `extraEnvVars: {N8N_ENABLED_MODULES: "agents,chat-hub"}` (or `aiAssistant.modules` when `aiAssistant.enabled`).
+- **Removed environment variables.** n8n 3.0 also drops `N8N_PRE_EXECUTE_ERROR_CREATES_EXECUTION`, `N8N_DB_PING_TIMEOUT` (use `DB_PING_TIMEOUT_MS`), `N8N_RUNNERS_ENABLED`, `N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN`, `N8N_WORKFLOW_TAGS_DISABLED` and the `tmpl` expression evaluator variables. The chart never set them; remove them from any `extraEnvVars` / `extraEnv` you carry.
+
+**New in 5.0.0**
+
+- `binaryData.mode: azure` with `binaryData.azure.*` (container, account, endpoint, connection string / key / existing Secret, or `authAutoDetect`).
+- `binaryData.s3.authAutoDetect` to use the pod's own AWS identity instead of an access key pair.
+- `nodes.external.unverifiedPackages` to control `N8N_UNVERIFIED_PACKAGES_ENABLED`.
 
 ### To 4.0.0
 
@@ -1609,7 +1686,7 @@ workloads before upgrading**, otherwise Helm fails with a "field is immutable" e
 ```console
 kubectl delete deployment <release>-sandbox-api -n <namespace>
 kubectl delete statefulset <release>-sandbox-runner -n <namespace>
-helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 4.5.1
+helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/n8n --version 5.0.0
 ```
 
 Deleting them is safe: sandboxes are ephemeral, the API's state lives on its PVC, and the certificate
@@ -1672,7 +1749,7 @@ before upgrading — it will now actually be applied.
 | aiAssistant.modelApiKey | string | `""` | Model API key written into the chart-managed Secret as `N8N_INSTANCE_AI_MODEL_API_KEY`. Ignored when `existingModelApiKeySecret` is set. Prefer `existingModelApiKeySecret` so the key stays out of your values file. |
 | aiAssistant.modelApiKeyKey | string | `"api-key"` | Key inside `existingModelApiKeySecret` that holds the API key. |
 | aiAssistant.modelUrl | string | `""` | OpenAI-compatible endpoint for a local or custom model server (`N8N_INSTANCE_AI_MODEL_URL`). Leave empty to use the provider's hosted API. |
-| aiAssistant.modules | list | `["instance-ai"]` | Modules to load via `N8N_ENABLED_MODULES`, for example `["instance-ai", "agents"]`. `agents` can be run without `instance-ai`; keep both for AI-assisted agent building. |
+| aiAssistant.modules | list | `["instance-ai"]` | Modules to load via `N8N_ENABLED_MODULES`, for example `["instance-ai", "agents"]`. `chat-hub` is off by default since n8n 3.0 and is removed in n8n 4.0; add it here only to keep Chat Hub on the 3.x line. `agents` can be run without `instance-ai`; keep both for AI-assisted agent building. |
 | aiAssistant.sandbox | object | `{"apiKeyKey":"api-key","enabled":false,"existingApiKeySecret":"","provider":"n8n-sandbox","serviceUrl":""}` | Sandbox used to run AI-generated code. Required for n8n Assistant. |
 | aiAssistant.sandbox.apiKeyKey | string | `"api-key"` | Key inside `existingApiKeySecret` that holds the API key. |
 | aiAssistant.sandbox.enabled | bool | `false` | Point n8n at a sandbox service (`N8N_INSTANCE_AI_SANDBOX_ENABLED`). |
@@ -1684,13 +1761,22 @@ before upgrading — it will now actually be applied.
 | api.enabled | bool | `true` | Whether to enable the Public API |
 | api.path | string | `"api"` | Path segment for the Public API |
 | api.swagger | object | `{"enabled":true}` | Whether to enable the Swagger UI for the Public API |
-| binaryData | object | `{"databaseMaxFileSize":512,"localStoragePath":"","mode":null,"s3":{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}}` | Configuration for binary data storage |
+| binaryData | object | `{"azure":{"accountKey":"","accountName":"","authAutoDetect":false,"connectionString":"","containerName":"","endpoint":"","existingSecret":""},"databaseMaxFileSize":512,"localStoragePath":"","mode":null,"s3":{"accessKey":"","accessSecret":"","authAutoDetect":false,"bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}}` | Configuration for binary data storage |
+| binaryData.azure | object | `{"accountKey":"","accountName":"","authAutoDetect":false,"connectionString":"","containerName":"","endpoint":"","existingSecret":""}` | Azure Blob Storage external storage configuration. Only used when `binaryData.mode` is `azure`. Authenticate with `connectionString`, with `accountName` plus `accountKey`, or with `authAutoDetect` (workload identity, managed identity). |
+| binaryData.azure.accountKey | string | `""` | Storage account key. Stored in a Secret created by this chart, so prefer `existingSecret` for production. |
+| binaryData.azure.accountName | string | `""` | Storage account name (`N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_NAME`). Needed with `accountKey` or `authAutoDetect`; not needed with a connection string. |
+| binaryData.azure.authAutoDetect | bool | `false` | Authenticate with the identity available to the pod (workload identity, managed identity, `AZURE_*` environment variables) instead of a key (`N8N_EXTERNAL_STORAGE_AZURE_AUTH_AUTO_DETECT`). |
+| binaryData.azure.connectionString | string | `""` | Storage account connection string. Stored in a Secret created by this chart, so prefer `existingSecret` for production. |
+| binaryData.azure.containerName | string | `""` | Name of the blob container to store binary data in (`N8N_EXTERNAL_STORAGE_AZURE_CONTAINER_NAME`). |
+| binaryData.azure.endpoint | string | `""` | Custom blob endpoint, for example for Azurite or a sovereign cloud (`N8N_EXTERNAL_STORAGE_AZURE_ENDPOINT`). Leave empty for the public Azure endpoint. |
+| binaryData.azure.existingSecret | string | `""` | Existing Secret holding `connection-string` and/or `account-key` keys. When set, this chart creates no Secret and `connectionString` and `accountKey` are ignored. |
 | binaryData.databaseMaxFileSize | int | `512` | Maximum size (in MiB) of a single file n8n stores when `binaryData.mode` is `database`. Cannot exceed `1024`, which is the database column limit; storing a larger file fails. Only rendered when `binaryData.mode` is `database`. |
-| binaryData.localStoragePath | string | `""` | Path for binary data storage in `filesystem` mode. If not set, n8n uses `<N8N_USER_FOLDER>/binaryData`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
-| binaryData.mode | string | `nil` | The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
-| binaryData.s3 | object | `{"accessKey":"","accessSecret":"","bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}` | S3-compatible external storage configurations. Only used when `binaryData.mode` is `s3`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/external-data-storage/ |
+| binaryData.localStoragePath | string | `""` | Root directory of n8n's file storage (`N8N_STORAGE_PATH`, default `<N8N_USER_FOLDER>/storage`, i.e. `/home/node/.n8n/storage`). Binary data in `filesystem` mode lives under it, along with other n8n file storage. Rendered whenever set, regardless of `binaryData.mode`. Make sure the path is on a writable, persistent volume. n8n 3.0 renamed the old `binaryData` directory to `storage`; see the 5.0.0 upgrade notes. |
+| binaryData.mode | string | `nil` | The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store, `azure` in Azure Blob Storage. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. `default` (in-memory) is no longer accepted. `s3` and `azure` are Enterprise features. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/ |
+| binaryData.s3 | object | `{"accessKey":"","accessSecret":"","authAutoDetect":false,"bucketName":"","bucketRegion":"us-east-1","existingSecret":"","host":""}` | S3-compatible external storage configurations. Only used when `binaryData.mode` is `s3`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/external-data-storage/ |
 | binaryData.s3.accessKey | string | `""` | Access key in S3-compatible external storage |
 | binaryData.s3.accessSecret | string | `""` | Access secret in S3-compatible external storage. |
+| binaryData.s3.authAutoDetect | bool | `false` | Authenticate with the credentials available to the pod (IRSA, EKS Pod Identity, instance profile, `AWS_*` environment variables) instead of a key pair (`N8N_EXTERNAL_STORAGE_S3_AUTH_AUTO_DETECT`). When true, `accessKey`, `accessSecret` and `existingSecret` are ignored. |
 | binaryData.s3.bucketName | string | `""` | Name of the n8n bucket in S3-compatible external storage. |
 | binaryData.s3.bucketRegion | string | `"us-east-1"` | Region of the n8n bucket in S3-compatible external storage. For example, us-east-1 |
 | binaryData.s3.existingSecret | string | `""` | This is for setting up the s3 file storage existing secret. Must contain access-key-id and secret-access-key keys. |
@@ -1830,7 +1916,7 @@ before upgrading — it will now actually be applied.
 | main.volumes | list | `[]` | Additional volumes on the output Deployment definition. |
 | nameOverride | string | `""` | This is to override the chart name. |
 | nodeSelector | object | `{}` | For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
-| nodes | object | `{"builtin":{"enabled":false,"modules":[]},"compression":{"maxDecompressedSizeBytes":null,"maxZipEntries":null},"exclude":null,"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false},"include":null,"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
+| nodes | object | `{"builtin":{"enabled":false,"modules":[]},"compression":{"maxDecompressedSizeBytes":null,"maxZipEntries":null},"exclude":null,"external":{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false,"unverifiedPackages":null},"include":null,"initContainer":{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"},"resources":{}},"python":{"builtin":{"modules":[]},"enabled":false,"external":{"allowAll":false,"packages":[]},"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}}}` | Node configurations for built-in and external npm packages |
 | nodes.builtin | object | `{"enabled":false,"modules":[]}` | Enable built-in node functions (e.g., HTTP Request, Code Node, etc.) |
 | nodes.builtin.enabled | bool | `false` | Enable built-in modules for the Code node |
 | nodes.builtin.modules | list | `[]` | List of built-in Node.js modules to allow in the Code node (e.g., crypto, fs). Use '*' to allow all. |
@@ -1838,7 +1924,7 @@ before upgrading — it will now actually be applied.
 | nodes.compression.maxDecompressedSizeBytes | string | `nil` | Maximum total decompressed output size in bytes (`N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES`). Unset uses the n8n default (268435456, i.e. 256 MiB). |
 | nodes.compression.maxZipEntries | string | `nil` | Maximum number of entries allowed in a ZIP archive (`N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES`). Unset uses the n8n default (1000). |
 | nodes.exclude | string | `nil` | Nodes that should not be loaded, rendered as `NODES_EXCLUDE`. Leave unset (`~`) to use the n8n default, which excludes `n8n-nodes-base.executeCommand` and `n8n-nodes-base.localFileTrigger` from n8n 2.0 onwards. Set to `[]` to load every node, or list node types to exclude more of them. |
-| nodes.external | object | `{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false}` | External npm packages to install and allow in the Code node |
+| nodes.external | object | `{"allowAll":false,"packages":[],"persistence":{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""},"reinstallMissingPackages":false,"unverifiedPackages":null}` | External npm packages to install and allow in the Code node |
 | nodes.external.allowAll | bool | `false` | Allow all external npm packages |
 | nodes.external.packages | list | `[]` | List of npm package names and versions (e.g., "package-name@1.0.0") |
 | nodes.external.persistence | object | `{"accessMode":"ReadWriteOnce","annotations":{},"enabled":false,"existingClaim":"","size":"1Gi","storageClass":""}` | Persistence for community node packages installed by the init container. Optional PVC so packages survive pod restarts without re-downloading. |
@@ -1849,6 +1935,7 @@ before upgrading — it will now actually be applied.
 | nodes.external.persistence.size | string | `"1Gi"` | Size of the PVC. |
 | nodes.external.persistence.storageClass | string | `""` | Storage class for the PVC. Empty string uses the cluster default. |
 | nodes.external.reinstallMissingPackages | bool | `false` | Whether to reinstall missing packages. For more information, see https://docs.n8n.io/integrations/community-nodes/troubleshooting/#error-missing-packages |
+| nodes.external.unverifiedPackages | string | `nil` | Whether n8n may load community packages that n8n has not verified (`N8N_UNVERIFIED_PACKAGES_ENABLED`). n8n 3.0 defaults this to `false`, which would stop every community node installed through `packages` from loading. Leave unset (`~`) to have the chart set it to `true` whenever `packages` lists a community package (`n8n-nodes-*`) and leave the n8n default otherwise; set `true` or `false` to force it. |
 | nodes.include | string | `nil` | Nodes that should be loaded, rendered as `NODES_INCLUDE`. Leave unset (`~`) to load everything that isn't excluded. |
 | nodes.initContainer | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"},"resources":{}}` | Image for the init container to install npm packages |
 | nodes.initContainer.image | object | `{"pullPolicy":"IfNotPresent","repository":"node","tag":"24-alpine"}` | Image for the init container to install npm packages |
@@ -2001,7 +2088,7 @@ before upgrading — it will now actually be applied.
 | smtp.ssl | bool | `true` | Use implicit TLS (`N8N_SMTP_SSL`). Keep `true` for port 465, set `false` with `startTls: true` for 587. |
 | smtp.startTls | bool | `true` | Upgrade to TLS with STARTTLS (`N8N_SMTP_STARTTLS`). |
 | smtp.user | string | `""` | Username for SMTP auth (`N8N_SMTP_USER`). |
-| ssrfProtection | object | `{"allowedHostnames":[],"allowedIpRanges":[],"blockedHostnames":[],"blockedIpRanges":[],"dnsCacheMaxSize":1048576,"enabled":false}` | SSRF protection for outbound requests from user-controllable nodes. Available from n8n 2.12; not license-gated. This is application-level defence-in-depth and does not replace network policy. |
+| ssrfProtection | object | `{"allowedHostnames":[],"allowedIpRanges":[],"blockedHostnames":[],"blockedIpRanges":[],"dnsCacheMaxSize":1048576,"enabled":false}` | SSRF protection for outbound requests from user-controllable nodes. Available from n8n 2.12; not license-gated. This is application-level defence-in-depth and does not replace network policy. n8n 3.0 expands the built-in block list with the shared address space (`100.64.0.0/10`) and IPv6 transition ranges; allow hosts in those ranges explicitly if workflows need them. |
 | ssrfProtection.allowedHostnames | list | `[]` | Hostname patterns allowed to bypass the blocklist (`N8N_SSRF_ALLOWED_HOSTNAMES`), supports wildcards such as `*.n8n.internal`. Takes precedence over the IP allowlist. |
 | ssrfProtection.allowedIpRanges | list | `[]` | CIDR ranges allowed to bypass the blocklist (`N8N_SSRF_ALLOWED_IP_RANGES`). Takes precedence over `blockedIpRanges`. |
 | ssrfProtection.blockedHostnames | list | `[]` | Hostnames that are always blocked (`N8N_SSRF_BLOCKED_HOSTNAMES`). |
@@ -2028,7 +2115,7 @@ before upgrading — it will now actually be applied.
 | taskRunners.maxConcurrency | int | `5` | The maximum concurrency for the task |
 | taskRunners.mode | string | `"internal"` | Use `internal` to use internal task runner, or use `external` to have external sidecar task runner. For more information please follow the documentation: https://docs.n8n.io/hosting/configuration/task-runners/#task-runner-modes |
 | taskRunners.taskHeartbeatInterval | int | `30` | The heartbeat interval for the task in seconds |
-| taskRunners.taskTimeout | int | `60` | The timeout for the task in seconds |
+| taskRunners.taskTimeout | int | `60` | The timeout for a task in seconds (`N8N_RUNNERS_TASK_TIMEOUT`). n8n 3.0 lowered its own default from 300 to 60 seconds; Code node tasks that run longer are aborted, so raise this for long-running code. |
 | timezone | string | `"Europe/Berlin"` | For instance, the Schedule node uses it to know at what time the workflow should start. Find you timezone from here: https://momentjs.com/timezone/ |
 | tolerations | list | `[]` | For more information checkout: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | versionNotifications.enabled | bool | `false` | Whether to request notifications about new n8n versions |
