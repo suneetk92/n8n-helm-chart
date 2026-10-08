@@ -6,6 +6,43 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
 
 <!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
 
+## 4.5.1
+
+### Changed
+
+- n8n `2.43.0` -> `2.43.1` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+
+## 4.5.0
+
+### Changed
+
+- n8n `2.42.3` -> `2.43.0` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+
+## 4.4.2
+
+### Changed
+
+- n8n `2.42.2` -> `2.42.3` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+- Sandbox service `1.5.0` -> `1.6.0` (all three `n8n-sandbox-service-*` images).
+
+## 4.4.1
+
+### Changed
+
+- n8n `2.42.0` -> `2.42.2` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+
+## 4.4.0
+
+### Changed
+
+- n8n `2.41.3` -> `2.42.0` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+
+## 4.3.3
+
+### Changed
+
+- n8n `2.41.2` -> `2.41.3` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+
 ## 4.3.2
 
 ### Changed

@@ -5,8 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 This repository hosts a single production-grade Kubernetes Helm chart for `n8n`, living at
-`charts/n8n`. It began as a fork of `community-charts/helm-charts` and has since been substantially
-rewritten. The chart is published as an OCI artifact to GitHub Container Registry
+`charts/n8n`. The chart is published as an OCI artifact to GitHub Container Registry
 (`ghcr.io/suneetk92/n8n`) by `.github/workflows/oci-registry.yml`.
 
 Chart-specific guidance (architecture, operating modes, external docs, non-obvious patterns) lives

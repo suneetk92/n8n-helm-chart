@@ -61,7 +61,3 @@ helm-docs --chart-search-root=charts --template-files=README.md.gotmpl
 ## License
 
 [MIT License](LICENSE).
-
-This chart began as a fork of
-[community-charts/helm-charts](https://github.com/community-charts/helm-charts); the original
-copyright is retained in [`LICENSE`](LICENSE).
