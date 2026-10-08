@@ -6,6 +6,12 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
 
 <!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
 
+## 4.5.2
+
+### Removed
+
+- `maintainers` from `Chart.yaml` and the generated README's Maintainers section.
+
 ## 4.5.1
 
 ### Changed
