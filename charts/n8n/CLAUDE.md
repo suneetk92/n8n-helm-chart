@@ -100,6 +100,8 @@ All three fields exist on `main`, `worker`, `webhook`, and `webhook.mcp`. Each h
 
 ## Key Values Interactions
 
+- `binaryData.localStoragePath` renders `N8N_STORAGE_PATH` (not the deprecated `N8N_BINARY_DATA_STORAGE_PATH`) in every mode; setting both to different values makes n8n 3.x refuse to start.
+- `nodes.external.unverifiedPackages` is tri-state: unset auto-enables `N8N_UNVERIFIED_PACKAGES_ENABLED` when `nodes.external.packages` lists an `n8n-nodes-*` package, because n8n 3.0 otherwise stops loading unverified community nodes.
 - `nodes.external.persistence` is only meaningful when `main.persistence` (and `worker.persistence` in queue mode) does **not** cover `/home/node/.n8n`. If main persistence is already enabled, community packages persist via the main PVC automatically.
 - `main.forceToUseStatefulset: true` forces StatefulSet regardless of replica count.
 - `worker.autoscaling.enabled: true` requires `ReadWriteMany` for any shared PVCs.
@@ -115,3 +117,4 @@ All three fields exist on `main`, `worker`, `webhook`, and `webhook.mcp`. Each h
 | `n8n.npmInstallScript` | Full npm install shell script for the init container |
 | `n8n.taskRunners.uvInstallCommand` | uv pip install command for the task runner sidecar |
 | `n8n.isCommunityPackage` | Returns `"true"` if a package (with or without `@version`/`@scope`) has a name starting with `n8n-nodes-`; used by `n8n.communityPackages` and `n8n.nonCommunityPackages` |
+| `n8n.binaryData.secretEnv` | Secret-backed env vars (S3 key pair, Azure connection string / account key) for the external binary data store; included by `deployment.yaml`, `statefulset.yaml`, `deployment-worker.yaml` and `statefulset-worker.yaml`. Renders nothing for other modes or with `authAutoDetect`. |

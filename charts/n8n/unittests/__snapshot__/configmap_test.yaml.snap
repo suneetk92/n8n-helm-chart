@@ -270,7 +270,6 @@ should match snapshot of external redis values:
     data:
       EXECUTIONS_MODE: queue
       N8N_DISABLE_PRODUCTION_MAIN_PROCESS: "true"
-      OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
       QUEUE_BULL_REDIS_CLUSTER_NODES: redis-1:6379,redis-2:6379
       QUEUE_BULL_REDIS_DB: "0"
       QUEUE_BULL_REDIS_DUALSTACK: "true"

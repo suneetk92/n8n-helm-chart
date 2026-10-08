@@ -221,7 +221,7 @@ spec:
                   key: {{ default "redis-password" .Values.externalRedis.existingPasswordKey }}
                   optional: true
           {{- if .Values.webhook.url }}
-            - name: WEBHOOK_URL
+            - name: N8N_WEBHOOK_URL
               value: {{ .Values.webhook.url | quote }}
           {{- end }}
           {{- if eq .Values.taskRunners.mode "external" }}
@@ -231,17 +231,8 @@ spec:
                   name: {{ template "n8n.taskRunners.fullname" . }}-secret
                   key: worker-auth-token
           {{- end }}
-          {{- if eq .Values.binaryData.mode "s3" }}
-            - name: N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ default (printf "%s-s3-secret" (include "n8n.fullname" .)) .Values.binaryData.s3.existingSecret }}
-                  key: access-key-id
-            - name: N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ default (printf "%s-s3-secret" (include "n8n.fullname" .)) .Values.binaryData.s3.existingSecret }}
-                  key: secret-access-key
+          {{- with (include "n8n.binaryData.secretEnv" .) }}
+          {{- . | nindent 12 }}
           {{- end }}
           {{- if and .Values.nodes.builtin.enabled (eq .Values.taskRunners.mode "internal") }}
             - name: NODE_FUNCTION_ALLOW_BUILTIN

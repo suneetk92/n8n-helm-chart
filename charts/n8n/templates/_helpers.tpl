@@ -846,3 +846,44 @@ Whether n8n containers should consume the AI ConfigMap.
 {{- if .Values.aiAssistant.enabled -}}true{{- end -}}
 {{- end }}
 
+{{/*
+Secret-backed env vars for the external binary data store (S3 or Azure Blob). Renders nothing for other modes.
+S3 skips the key pair when authAutoDetect is on (IRSA, pod identity, instance profile). Azure keys are optional
+so that either a connection string or an account key (or neither, with authAutoDetect) can be supplied.
+*/}}
+{{- define "n8n.binaryData.secretEnv" -}}
+{{- if eq .Values.binaryData.mode "s3" }}
+{{- if not .Values.binaryData.s3.authAutoDetect }}
+{{- $name := default (printf "%s-s3-secret" (include "n8n.fullname" .)) .Values.binaryData.s3.existingSecret }}
+- name: N8N_EXTERNAL_STORAGE_S3_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ $name }}
+      key: access-key-id
+- name: N8N_EXTERNAL_STORAGE_S3_ACCESS_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ $name }}
+      key: secret-access-key
+{{- end }}
+{{- else if eq .Values.binaryData.mode "azure" }}
+{{- $az := .Values.binaryData.azure }}
+{{- $name := default (printf "%s-azure-secret" (include "n8n.fullname" .)) $az.existingSecret }}
+{{- if or $az.existingSecret $az.connectionString }}
+- name: N8N_EXTERNAL_STORAGE_AZURE_CONNECTION_STRING
+  valueFrom:
+    secretKeyRef:
+      name: {{ $name }}
+      key: connection-string
+      optional: true
+{{- end }}
+{{- if or $az.existingSecret $az.accountKey }}
+- name: N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ $name }}
+      key: account-key
+      optional: true
+{{- end }}
+{{- end }}
+{{- end -}}

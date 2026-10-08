@@ -158,6 +158,8 @@ nodes:
     allowAll: false
     # -- Whether to reinstall missing packages. For more information, see https://docs.n8n.io/integrations/community-nodes/troubleshooting/#error-missing-packages
     reinstallMissingPackages: false
+    # -- Whether n8n may load community packages that n8n has not verified (`N8N_UNVERIFIED_PACKAGES_ENABLED`). n8n 3.0 defaults this to `false`, which would stop every community node installed through `packages` from loading. Leave unset (`~`) to have the chart set it to `true` whenever `packages` lists a community package (`n8n-nodes-*`) and leave the n8n default otherwise; set `true` or `false` to force it.
+    unverifiedPackages: ~
     # -- List of npm package names and versions (e.g., "package-name@1.0.0")
     packages: []
       # - "moment@2.29.4"
@@ -258,9 +260,9 @@ npmRegistry:
 
 # -- Configuration for binary data storage
 binaryData:
-  # -- The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. Note that n8n 2.0 removed the in-memory mode, so `default` is no longer accepted. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
+  # -- The binary data mode. `filesystem` stores binary data on disk, `database` in the database, `s3` in an S3-compatible store, `azure` in Azure Blob Storage. Leave unset (`~`) to use the n8n default for the deployment mode: `filesystem` in regular mode, `database` in queue mode. `default` (in-memory) is no longer accepted. `s3` and `azure` are Enterprise features. Binary data pruning operates on the active mode only. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
   mode: ~
-  # -- Path for binary data storage in `filesystem` mode. If not set, n8n uses `<N8N_USER_FOLDER>/binaryData`. For more information, see https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/binary-data/
+  # -- Root directory of n8n's file storage (`N8N_STORAGE_PATH`, default `<N8N_USER_FOLDER>/storage`, i.e. `/home/node/.n8n/storage`). Binary data in `filesystem` mode lives under it, along with other n8n file storage. Rendered whenever set, regardless of `binaryData.mode`. Make sure the path is on a writable, persistent volume. n8n 3.0 renamed the old `binaryData` directory to `storage`; see the 5.0.0 upgrade notes.
   localStoragePath: ""
   # -- Maximum size (in MiB) of a single file n8n stores when `binaryData.mode` is `database`. Cannot exceed `1024`, which is the database column limit; storing a larger file fails. Only rendered when `binaryData.mode` is `database`.
   databaseMaxFileSize: 512
@@ -272,11 +274,29 @@ binaryData:
     bucketName: ""
     # -- Region of the n8n bucket in S3-compatible external storage. For example, us-east-1
     bucketRegion: "us-east-1"
+    # -- Authenticate with the credentials available to the pod (IRSA, EKS Pod Identity, instance profile, `AWS_*` environment variables) instead of a key pair (`N8N_EXTERNAL_STORAGE_S3_AUTH_AUTO_DETECT`). When true, `accessKey`, `accessSecret` and `existingSecret` are ignored.
+    authAutoDetect: false
     # -- Access key in S3-compatible external storage
     accessKey: ""
     # -- Access secret in S3-compatible external storage.
     accessSecret: ""
     # -- This is for setting up the s3 file storage existing secret. Must contain access-key-id and secret-access-key keys.
+    existingSecret: ""
+  # -- Azure Blob Storage external storage configuration. Only used when `binaryData.mode` is `azure`. Authenticate with `connectionString`, with `accountName` plus `accountKey`, or with `authAutoDetect` (workload identity, managed identity).
+  azure:
+    # -- Name of the blob container to store binary data in (`N8N_EXTERNAL_STORAGE_AZURE_CONTAINER_NAME`).
+    containerName: ""
+    # -- Storage account name (`N8N_EXTERNAL_STORAGE_AZURE_ACCOUNT_NAME`). Needed with `accountKey` or `authAutoDetect`; not needed with a connection string.
+    accountName: ""
+    # -- Custom blob endpoint, for example for Azurite or a sovereign cloud (`N8N_EXTERNAL_STORAGE_AZURE_ENDPOINT`). Leave empty for the public Azure endpoint.
+    endpoint: ""
+    # -- Authenticate with the identity available to the pod (workload identity, managed identity, `AZURE_*` environment variables) instead of a key (`N8N_EXTERNAL_STORAGE_AZURE_AUTH_AUTO_DETECT`).
+    authAutoDetect: false
+    # -- Storage account connection string. Stored in a Secret created by this chart, so prefer `existingSecret` for production.
+    connectionString: ""
+    # -- Storage account key. Stored in a Secret created by this chart, so prefer `existingSecret` for production.
+    accountKey: ""
+    # -- Existing Secret holding `connection-string` and/or `account-key` keys. When set, this chart creates no Secret and `connectionString` and `accountKey` are ignored.
     existingSecret: ""
 
 # -- n8n database configurations
@@ -947,7 +967,7 @@ webhook:
 taskRunners:
   # -- Use `internal` to use internal task runner, or use `external` to have external sidecar task runner. For more information please follow the documentation: https://docs.n8n.io/hosting/configuration/task-runners/#task-runner-modes
   mode: internal
-  # -- The timeout for the task in seconds
+  # -- The timeout for a task in seconds (`N8N_RUNNERS_TASK_TIMEOUT`). n8n 3.0 lowered its own default from 300 to 60 seconds; Code node tasks that run longer are aborted, so raise this for long-running code.
   taskTimeout: 60
   # -- The heartbeat interval for the task in seconds
   taskHeartbeatInterval: 30
@@ -1224,7 +1244,7 @@ operations:
   # -- Maximum size in bytes of execution data loaded when displaying an execution (`EXECUTIONS_DATA_MAX_DISPLAY_SIZE`). Larger executions are shown as "too large to display". `0` disables the limit.
   maxDisplaySize: 104857600
 
-# -- SSRF protection for outbound requests from user-controllable nodes. Available from n8n 2.12; not license-gated. This is application-level defence-in-depth and does not replace network policy.
+# -- SSRF protection for outbound requests from user-controllable nodes. Available from n8n 2.12; not license-gated. This is application-level defence-in-depth and does not replace network policy. n8n 3.0 expands the built-in block list with the shared address space (`100.64.0.0/10`) and IPv6 transition ranges; allow hosts in those ranges explicitly if workflows need them.
 ssrfProtection:
   # -- Enable SSRF validation of outbound HTTP requests (`N8N_SSRF_PROTECTION_ENABLED`). Enabling it blocks RFC1918, loopback and link-local ranges by default, so internal services stop being reachable until allowlisted below.
   enabled: false
@@ -1294,7 +1314,7 @@ instanceOwner:
 aiAssistant:
   # -- Enable the AI module surface and render its ConfigMap. Does not by itself pick modules; see `modules`.
   enabled: false
-  # -- Modules to load via `N8N_ENABLED_MODULES`, for example `["instance-ai", "agents"]`. `agents` can be run without `instance-ai`; keep both for AI-assisted agent building.
+  # -- Modules to load via `N8N_ENABLED_MODULES`, for example `["instance-ai", "agents"]`. `chat-hub` is off by default since n8n 3.0 and is removed in n8n 4.0; add it here only to keep Chat Hub on the 3.x line. `agents` can be run without `instance-ai`; keep both for AI-assisted agent building.
   modules:
     - instance-ai
   # -- Model in `provider/model` form (`N8N_INSTANCE_AI_MODEL`). Supported providers: `anthropic`, `openai`, `openrouter`.

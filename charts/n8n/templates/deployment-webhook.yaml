@@ -146,7 +146,7 @@ spec:
             - name: N8N_DISABLE_UI
               value: "true"
           {{- if .Values.webhook.url }}
-            - name: WEBHOOK_URL
+            - name: N8N_WEBHOOK_URL
               value: {{ .Values.webhook.url | quote }}
           {{- end }}
             - name: DB_POSTGRESDB_USER
