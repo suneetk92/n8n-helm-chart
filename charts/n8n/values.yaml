@@ -183,7 +183,7 @@ nodes:
       # -- Repository for the init container to install npm packages
       repository: node
       # -- Tag for the init container to install npm packages
-      tag: "24-alpine"
+      tag: "26-alpine"
       # -- Pull policy for the init container to install npm packages
       pullPolicy: IfNotPresent
     # -- Resources for the init container
