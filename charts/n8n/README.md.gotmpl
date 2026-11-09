@@ -1058,23 +1058,31 @@ license:
 
 ## Binary Data Storage Configuration
 
-`binaryData.mode` selects where n8n stores binary data. Leave it unset (`~`) to let n8n choose for the deployment mode (`filesystem` in regular mode, `database` in queue mode). n8n 2.0 removed the in-memory mode, so `default` is no longer a valid value.
+`binaryData.mode` selects where n8n stores binary data. Leave it unset (`~`) to let n8n choose for the deployment mode (`filesystem` in regular mode, `database` in queue mode). The in-memory `default` mode no longer exists and is rejected by the values schema.
 
 ```yaml
 binaryData:
-  # filesystem | database | s3 (unset = n8n default for the deployment mode)
+  # filesystem | database | s3 | azure (unset = n8n default for the deployment mode)
   mode: filesystem
 ```
+
+`s3` and `azure` are n8n Enterprise features. On Community Edition use `filesystem` or `database`.
 
 ### Filesystem
 
-Override the storage path with `binaryData.localStoragePath`. It is only rendered in `filesystem` mode, so make sure the path is covered by a writable volume.
+n8n keeps its file storage, and with it the `filesystem` binary data, under `N8N_STORAGE_PATH` (default `/home/node/.n8n/storage`). Override it with `binaryData.localStoragePath`. It is rendered whenever set, whatever the mode, so make sure the path is on a writable and persistent volume. Enabling `main.persistence` covers the default path.
 
 ```yaml
 binaryData:
   mode: filesystem
-  localStoragePath: /home/node/.n8n/binaryData
+  localStoragePath: /home/node/.n8n/storage
+
+main:
+  persistence:
+    enabled: true
 ```
+
+In queue mode every worker writes binary data, so main and workers must share the volume (`ReadWriteMany`), or use `database` / an external store instead.
 
 ### Database
 
@@ -1101,7 +1109,7 @@ binaryData:
     accessSecret: "your-secret-access-key"
 ```
 
-If you have an existing secret for the s3 access key and access secret with `access-key-id` and `secret-access-key` seret key names respectively, configure it as follows:
+If you have an existing secret for the s3 access key and access secret with `access-key-id` and `secret-access-key` secret key names respectively, configure it as follows:
 
 ```yaml
 binaryData:
@@ -1112,6 +1120,47 @@ binaryData:
     bucketRegion: "us-east-1"
     existingSecret: "your-existing-secret"
 ```
+
+On AWS, skip the key pair entirely and let the pod authenticate with its own identity (IRSA, EKS Pod Identity or an instance profile). With `authAutoDetect: true` no Secret is created and no credential env vars are injected:
+
+```yaml
+binaryData:
+  mode: s3
+  s3:
+    host: "s3.eu-central-1.amazonaws.com"
+    bucketName: "your-bucket-name"
+    bucketRegion: "eu-central-1"
+    authAutoDetect: true
+```
+
+### Azure Blob Storage external storage
+
+Azure settings are only used when `binaryData.mode` is `azure`. Authenticate with a connection string, an account name plus key, or the pod's own identity:
+
+```yaml
+binaryData:
+  mode: azure
+  azure:
+    containerName: "n8n-binary"
+    accountName: "mystorageaccount"
+    # Pick one:
+    connectionString: "DefaultEndpointsProtocol=https;AccountName=..."   # or
+    accountKey: "your-account-key"                                      # or
+    authAutoDetect: true                                                # workload identity / managed identity
+```
+
+For production keep the secret values out of `values.yaml` with an existing Secret that holds a `connection-string` and/or `account-key` key:
+
+```yaml
+binaryData:
+  mode: azure
+  azure:
+    containerName: "n8n-binary"
+    accountName: "mystorageaccount"
+    existingSecret: "your-existing-secret"
+```
+
+Use `endpoint` for Azurite or a sovereign cloud.
 
 ## Extra Manifests
 
@@ -1537,6 +1586,34 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ```console
 helm upgrade [RELEASE_NAME] oci://ghcr.io/suneetk92/{{ template "chart.name" . }} --version {{ template "chart.version" . }}
 ```
+
+### To 5.0.0
+
+Chart 5.0.0 moves the chart to **n8n 3.x**. Read the [n8n 3.0 breaking changes](https://docs.n8n.io/changelog/v30-breaking-changes) first: removed nodes, the Execute Sub-workflow Local File / URL sources, `$getPairedItem`, AI Agent v1 and others are workflow-level and cannot be handled by the chart. Before upgrading, check **Settings > Migration Report** on your 2.x instance, which lists the affected workflows.
+
+**What the chart changed for you**
+
+| Change | Detail |
+|---|---|
+| `WEBHOOK_URL` -> `N8N_WEBHOOK_URL` | `webhook.url` now renders the new variable, which also covers test webhooks. If you set `WEBHOOK_URL` yourself through `extraEnvVars` / `extraEnv`, rename it. |
+| `OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS` removed | n8n 3.0 always runs manual executions on workers in queue mode, so the chart no longer sets the variable. **Review worker memory**: workers now also run the executions you start from the editor. |
+| `N8N_BINARY_DATA_STORAGE_PATH` -> `N8N_STORAGE_PATH` | `binaryData.localStoragePath` now renders `N8N_STORAGE_PATH`, and it is rendered in every mode, not only `filesystem`. See the storage directory note below. |
+| Community packages | n8n 3.0 stops loading unverified community packages by default. The chart sets `N8N_UNVERIFIED_PACKAGES_ENABLED=true` for you whenever `nodes.external.packages` lists a community package (`n8n-nodes-*`), so installed nodes keep loading. Force it either way with `nodes.external.unverifiedPackages`. |
+
+**What you may need to do**
+
+- **Storage directory renamed.** On first start n8n 3.0 renames `~/.n8n/binaryData` to `~/.n8n/storage`. With `main.persistence` on its default `mountPath` (`/home/node/.n8n`) this just works. If you mount a volume at `/home/node/.n8n/binaryData`, mount it at `/home/node/.n8n/storage` instead, or set `binaryData.localStoragePath` to the old path to keep it. If both directories exist n8n refuses to start: move the contents of `binaryData` into `storage`, remove `binaryData`, then start n8n. If you pinned `localStoragePath` to a custom path the chart now sets `N8N_STORAGE_PATH`; do not also set `N8N_BINARY_DATA_STORAGE_PATH` to a different value, n8n refuses to start with both.
+- **Task runner timeout.** n8n's own default dropped from 300 to 60 seconds. The chart already defaulted `taskRunners.taskTimeout` to 60, so nothing changes for you, but Code node tasks that need more than a minute must set it explicitly.
+- **SSRF protection.** With `ssrfProtection.enabled: true`, the built-in block list now also covers the shared address space (`100.64.0.0/10`) and IPv6 transition ranges. If workflows call hosts in those ranges (common with Tailscale or carrier-grade NAT), add them to `ssrfProtection.allowedIpRanges` or `allowedHostnames`. Keep `default` in `blockedIpRanges` if you set it, otherwise you must list every built-in range yourself.
+- **Compression node limits** drop to 256 MiB / 1000 entries; raise `nodes.compression.*` if you unpack larger archives (unchanged since 2.0.0, listed for completeness).
+- **Chat Hub is off by default** and is removed in n8n 4.0. To keep it on the 3.x line, add `chat-hub` to `N8N_ENABLED_MODULES` and keep your other modules, for example `extraEnvVars: {N8N_ENABLED_MODULES: "agents,chat-hub"}` (or `aiAssistant.modules` when `aiAssistant.enabled`).
+- **Removed environment variables.** n8n 3.0 also drops `N8N_PRE_EXECUTE_ERROR_CREATES_EXECUTION`, `N8N_DB_PING_TIMEOUT` (use `DB_PING_TIMEOUT_MS`), `N8N_RUNNERS_ENABLED`, `N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN`, `N8N_WORKFLOW_TAGS_DISABLED` and the `tmpl` expression evaluator variables. The chart never set them; remove them from any `extraEnvVars` / `extraEnv` you carry.
+
+**New in 5.0.0**
+
+- `binaryData.mode: azure` with `binaryData.azure.*` (container, account, endpoint, connection string / key / existing Secret, or `authAutoDetect`).
+- `binaryData.s3.authAutoDetect` to use the pod's own AWS identity instead of an access key pair.
+- `nodes.external.unverifiedPackages` to control `N8N_UNVERIFIED_PACKAGES_ENABLED`.
 
 ### To 4.0.0
 
