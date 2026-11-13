@@ -6,6 +6,14 @@ accompanied by upgrade steps in the chart README's "Upgrading" section.
 
 <!-- next-release --><!-- chart-version.yml inserts each release directly below this marker. Do not remove or reword it: the workflow fails if it is missing. -->
 
+## 5.1.1
+
+### Changed
+
+- n8n `3.2.0` -> `3.2.2` (`appVersion`, the tag for both `n8nio/n8n` and `n8nio/runners`).
+- Sandbox service `1.14.0` -> `1.15.0` (all three `n8n-sandbox-service-*` images).
+- npm-install init container `node:24-alpine` -> `node:26-alpine`.
+
 ## 5.1.0
 
 ### Changed
